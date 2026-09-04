@@ -7,6 +7,7 @@ This directory contains supporting product, architecture, API, operations, secur
 - [Project overview](../README.md)
 - [Implementation blueprint](../IMPLEMENTATION-BLUEPRINT.md)
 - [Implementation roadmap](../TODO-ROADMAP.md)
+- [Architecture decision records](adr/README.md)
 - [Contributing guide](../CONTRIBUTING.md)
 - [Security policy](../SECURITY.md)
 - [Changelog](../CHANGELOG.md)
@@ -19,10 +20,27 @@ This directory contains supporting product, architecture, API, operations, secur
 
 - [Versioning and release procedure](project/versioning.md)
 
+## API, operations, and security
+
+- [REST and OpenAPI blueprint](../IMPLEMENTATION-BLUEPRINT.md#10-rest-and-openapi-blueprint)
+- [Docker and deployment blueprint](../IMPLEMENTATION-BLUEPRINT.md#17-docker-and-deployment-blueprint)
+- [Observability and operations blueprint](../IMPLEMENTATION-BLUEPRINT.md#19-observability-and-operations)
+- [Security policy](../SECURITY.md)
+- [Authentication, authorization, and security blueprint](../IMPLEMENTATION-BLUEPRINT.md#16-authentication-authorization-and-security)
+
+Generated API references and implementation runbooks will be indexed here as
+their owning roadmap stories produce them.
+
+## Decision governance
+
+The approved product design is authoritative over the implementation blueprint.
+If the blueprint and product design conflict, implementation stops until an ADR
+resolves the conflict. An accepted ADR is superseded by adding a new ADR, never
+by silently rewriting the existing record.
+
 ## Planned sections
 
-- `adr/` — accepted architecture decision records.
 - `api/` — generated and explanatory API documentation.
 - `operations/` — deployment, backup, restore, and runbooks.
 - `security/` — detailed security design and operational guidance.
-- `frontend/` — frontend-specific implementation notes and temporary facade-gap tracking.
+- `frontend/` — frontend implementation notes and facade-gap tracking.

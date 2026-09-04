@@ -97,11 +97,11 @@ The approved total remains 22-30 weeks for one experienced full-time developer.
 
 ### HND-01 Freeze approved documentation
 
-- [ ] Place `IMPLEMENTATION-BLUEPRINT.md` v0.2 at repository root.
-- [ ] Place the approved design PDF in `docs/product/` without modifying it.
-- [ ] Create ADR files ADR-001 through ADR-026 with approved status and decision text.
-- [ ] Add a documentation index linking the design, blueprint, roadmap, ADRs, API, operations, and security documents.
-- [ ] Record the rule that blueprint/product conflicts stop implementation pending an ADR.
+- [x] Place `IMPLEMENTATION-BLUEPRINT.md` v0.2 at repository root.
+- [x] Place the approved design PDF in `docs/product/` without modifying it.
+- [x] Create ADR files ADR-001 through ADR-026 with approved status and decision text.
+- [x] Add a documentation index linking the design, blueprint, roadmap, ADRs, API, operations, and security documents.
+- [x] Record the rule that blueprint/product conflicts stop implementation pending an ADR.
 
 ### HND-02 Record toolchain and dependency baseline
 
