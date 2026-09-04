@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inventory Atlas label proof - A4 grid and 50x30 mm</title>
+  <!--
+    Stage 0 (HND-03) label proof. Geometry is expressed in real millimetres so it
+    prints at actual physical size with browser scaling disabled ("Scale: 100%",
+    "Margins: None", "Fit to page" OFF). This is a geometry/layout proof only; the
+    real QR/Code 128 symbols are rendered server-side from a versioned template
+    snapshot in LAB-02. The dashed boxes mark the QR area and the Code 128 area so
+    the printed cell size, margins, and gaps can be measured with a ruler.
+
+    Template A: A4 grid of 50x30 mm labels
+      - Page: 210 x 297 mm, page margin 10 mm
+      - Label: 50 x 30 mm, column gap 5 mm, row gap 5 mm
+      - Result: 3 columns x 8 rows = 24 labels
+    Template B: standalone custom 50 x 30 mm label
+  -->
+  <style>
+    :root {
+      --label-w: 50mm;
+      --label-h: 30mm;
+      --page-margin: 10mm;
+      --col-gap: 5mm;
+      --row-gap: 5mm;
+    }
+    html, body { margin: 0; padding: 0; background: #fff; color: #000; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, "Helvetica Neue", sans-serif; }
+
+    @page { size: A4; margin: 0; }
+
+    .sheet {
+      width: 210mm;
+      min-height: 297mm;
+      padding: var(--page-margin);
+      page-break-after: always;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, var(--label-w));
+      grid-auto-rows: var(--label-h);
+      column-gap: var(--col-gap);
+      row-gap: var(--row-gap);
+    }
+    .label {
+      width: var(--label-w);
+      height: var(--label-h);
+      border: 0.2mm solid #000;
+      padding: 1.5mm;
+      display: flex;
+      gap: 1.5mm;
+      align-items: center;
+      overflow: hidden;
+    }
+    .qr {
+      width: 22mm;
+      height: 22mm;
+      border: 0.2mm dashed #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2mm;
+      text-align: center;
+    }
+    .meta { flex: 1; min-width: 0; }
+    .human {
+      font-family: "Courier New", monospace;
+      font-size: 3mm;
+      letter-spacing: 0.2mm;
+    }
+    .code128 {
+      margin-top: 1.5mm;
+      height: 8mm;
+      border: 0.2mm dashed #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2mm;
+    }
+    .caption { padding: var(--page-margin); font-size: 3.5mm; }
+    @media print { .caption { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="caption">
+    Print at 100% scale, no page margins, "fit to page" off. Measure a label:
+    it must be exactly 50 x 30 mm. Template A (A4 grid) is page 1; template B
+    (standalone 50 x 30 mm) is page 2.
+  </div>
+
+  <!-- Template A: A4 grid, 3 x 8 = 24 labels -->
+  <section class="sheet">
+    <div class="grid">
+      <!-- 24 identical proof cells -->
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+    </div>
+  </section>
+
+  <!-- Template B: standalone custom 50 x 30 mm label -->
+  <section class="sheet">
+    <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+  </section>
+</body>
+</html>

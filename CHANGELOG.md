@@ -12,6 +12,7 @@ The project follows the version policy in `docs/project/versioning.md`.
 - Approved implementation blueprint.
 - Executable TODO roadmap.
 - Initial repository documentation and agent working rules.
+- Stage 0 reference fixtures, hardware and physical-label records, deferred-choice review, and ordered Stage 1 handoff.
 
 ## Planned
 

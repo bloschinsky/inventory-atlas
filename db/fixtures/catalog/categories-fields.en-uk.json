@@ -1,0 +1,198 @@
+{
+  "$schema": "https://inventory-atlas.local/fixtures/catalog-1.json",
+  "fixtureVersion": "1.0.0",
+  "description": "Representative bilingual catalog and typed-field fixtures for CAT-01 and CAT-02. English is the source locale; Ukrainian is complete for every user-facing label. Stable keys never change when labels change.",
+  "locales": ["en", "uk"],
+  "categories": [
+    {
+      "key": "electronics",
+      "position": 1,
+      "labels": { "en": "Electronics", "uk": "Електроніка" },
+      "placeholderMediaKey": "category.electronics"
+    },
+    {
+      "key": "books",
+      "position": 2,
+      "labels": { "en": "Books", "uk": "Книги" },
+      "placeholderMediaKey": "category.books"
+    },
+    {
+      "key": "tools",
+      "position": 3,
+      "labels": { "en": "Tools", "uk": "Інструменти" },
+      "placeholderMediaKey": "category.tools"
+    },
+    {
+      "key": "documents",
+      "position": 4,
+      "labels": { "en": "Documents", "uk": "Документи" },
+      "placeholderMediaKey": "category.documents",
+      "archived": true,
+      "archivedNote": "Archived entry retained so historical Items still resolve, per CAT-01 acceptance criteria."
+    }
+  ],
+  "lifecycleStatuses": [
+    { "key": "active", "position": 1, "labels": { "en": "Active", "uk": "Активний" } },
+    { "key": "stored", "position": 2, "labels": { "en": "Stored", "uk": "На зберіганні" } },
+    { "key": "loaned", "position": 3, "labels": { "en": "Loaned", "uk": "Позичений" } },
+    { "key": "disposed", "position": 4, "labels": { "en": "Disposed", "uk": "Утилізований" } }
+  ],
+  "fieldDefinitions": [
+    {
+      "key": "serial_number",
+      "scope": "item",
+      "type": "text",
+      "position": 1,
+      "labels": { "en": "Serial number", "uk": "Серійний номер" },
+      "appliesToCategories": ["electronics"],
+      "required": false,
+      "repeatable": false,
+      "flags": { "searchable": true, "filterable": true, "sortable": false },
+      "publicVisibility": false
+    },
+    {
+      "key": "author",
+      "scope": "item",
+      "type": "text",
+      "position": 2,
+      "labels": { "en": "Author", "uk": "Автор" },
+      "appliesToCategories": ["books"],
+      "required": false,
+      "repeatable": true,
+      "flags": { "searchable": true, "filterable": true, "sortable": true },
+      "publicVisibility": true
+    },
+    {
+      "key": "quantity",
+      "scope": "item",
+      "type": "integer",
+      "position": 3,
+      "labels": { "en": "Quantity", "uk": "Кількість" },
+      "required": true,
+      "repeatable": false,
+      "validation": { "min": 0, "max": 100000 },
+      "flags": { "searchable": false, "filterable": true, "sortable": true },
+      "publicVisibility": true
+    },
+    {
+      "key": "weight",
+      "scope": "item",
+      "type": "decimal",
+      "position": 4,
+      "labels": { "en": "Weight", "uk": "Вага" },
+      "unit": { "en": "kg", "uk": "кг" },
+      "required": false,
+      "repeatable": false,
+      "validation": { "min": 0 },
+      "flags": { "searchable": false, "filterable": true, "sortable": true },
+      "publicVisibility": true
+    },
+    {
+      "key": "purchase_price",
+      "scope": "item",
+      "type": "money",
+      "position": 5,
+      "labels": { "en": "Purchase price", "uk": "Ціна придбання" },
+      "required": false,
+      "repeatable": false,
+      "flags": { "searchable": false, "filterable": true, "sortable": true },
+      "publicVisibility": false
+    },
+    {
+      "key": "purchased_at",
+      "scope": "item",
+      "type": "date",
+      "position": 6,
+      "labels": { "en": "Purchased on", "uk": "Дата придбання" },
+      "required": false,
+      "repeatable": false,
+      "flags": { "searchable": false, "filterable": true, "sortable": true },
+      "publicVisibility": false
+    },
+    {
+      "key": "is_fragile",
+      "scope": "item",
+      "type": "boolean",
+      "position": 7,
+      "labels": { "en": "Fragile", "uk": "Крихке" },
+      "required": false,
+      "repeatable": false,
+      "flags": { "searchable": false, "filterable": true, "sortable": false },
+      "publicVisibility": true
+    },
+    {
+      "key": "condition",
+      "scope": "item",
+      "type": "select",
+      "position": 8,
+      "labels": { "en": "Condition", "uk": "Стан" },
+      "required": false,
+      "repeatable": false,
+      "flags": { "searchable": true, "filterable": true, "sortable": false },
+      "publicVisibility": true,
+      "options": [
+        { "key": "new", "position": 1, "labels": { "en": "New", "uk": "Новий" } },
+        { "key": "used", "position": 2, "labels": { "en": "Used", "uk": "Вживаний" } },
+        { "key": "broken", "position": 3, "labels": { "en": "Broken", "uk": "Несправний" }, "archived": true }
+      ]
+    },
+    {
+      "key": "materials",
+      "scope": "item",
+      "type": "multiselect",
+      "position": 9,
+      "labels": { "en": "Materials", "uk": "Матеріали" },
+      "required": false,
+      "repeatable": false,
+      "flags": { "searchable": true, "filterable": true, "sortable": false },
+      "publicVisibility": true,
+      "options": [
+        { "key": "metal", "position": 1, "labels": { "en": "Metal", "uk": "Метал" } },
+        { "key": "plastic", "position": 2, "labels": { "en": "Plastic", "uk": "Пластик" } },
+        { "key": "wood", "position": 3, "labels": { "en": "Wood", "uk": "Дерево" } }
+      ],
+      "note": "multiselect and select reject repeatable = true (CAT-02). Persisted as ordered scalar value_option_id rows only, never a UUID array."
+    },
+    {
+      "key": "shelf_capacity",
+      "scope": "storage_node",
+      "type": "integer",
+      "position": 1,
+      "labels": { "en": "Shelf capacity", "uk": "Місткість полиці" },
+      "required": false,
+      "repeatable": false,
+      "validation": { "min": 0 },
+      "flags": { "searchable": false, "filterable": true, "sortable": true },
+      "publicVisibility": false
+    }
+  ],
+  "sampleItems": [
+    {
+      "publicIdPlaceholder": "item-router",
+      "category": "electronics",
+      "lifecycleStatus": "active",
+      "core": { "title": { "en": "Wi-Fi router", "uk": "Wi-Fi роутер" } },
+      "attributes": {
+        "serial_number": "SN-000-DEMO",
+        "quantity": 1,
+        "is_fragile": true,
+        "condition": "used",
+        "materials": ["metal", "plastic"]
+      },
+      "tags": ["network", "home-lab"]
+    },
+    {
+      "publicIdPlaceholder": "item-novel",
+      "category": "books",
+      "lifecycleStatus": "stored",
+      "core": { "title": { "en": "Kobzar", "uk": "Кобзар" } },
+      "attributes": {
+        "author": ["Taras Shevchenko"],
+        "quantity": 3,
+        "condition": "new",
+        "materials": ["wood"]
+      },
+      "tags": ["classics", "ukrainian-literature"]
+    }
+  ]
+}

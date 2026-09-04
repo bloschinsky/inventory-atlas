@@ -22,6 +22,17 @@ This directory contains supporting product, architecture, API, operations, secur
 - [Toolchain baseline and update policy](project/toolchain.md)
 - [Initial dependencies and license review](project/dependencies.md)
 - [Browser support baseline](project/browser-support.md)
+- [Reference hardware and performance dataset profile](project/reference-hardware.md)
+- [Physical label test matrix](project/physical-label-matrix.md)
+- [Stage 1 implementation handoff](project/stage-1-handoff.md)
+
+## Reference and acceptance fixtures
+
+- [Fixtures overview](../db/fixtures/README.md)
+- [Bilingual catalog and field fixtures](../db/fixtures/catalog/categories-fields.en-uk.json)
+- [Storage tree fixtures](../db/fixtures/storage/tree-fixtures.json)
+- [Media capability fixtures](../db/fixtures/media/README.md)
+- [Label proofs (A4 grid and 50x30 mm)](../db/fixtures/labels/README.md)
 
 ## API, operations, and security
 

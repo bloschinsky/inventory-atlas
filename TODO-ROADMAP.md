@@ -113,27 +113,27 @@ The approved total remains 22-30 weeks for one experienced full-time developer.
 
 ### HND-03 Build proofs and reference fixtures
 
-- [ ] Record reference homelab hardware and storage profile for performance gates.
-- [ ] Create representative English/Ukrainian catalog and field fixtures.
-- [ ] Create tree fixtures including an eight-level subtree and cross-root move cases.
-- [ ] Create known JPEG, PNG, WebP, and HEIC capability fixtures.
-- [ ] Produce a proof label for A4 grid and 50x30 mm output.
+- [x] Record reference homelab hardware and storage profile for performance gates.
+- [x] Create representative English/Ukrainian catalog and field fixtures.
+- [x] Create tree fixtures including an eight-level subtree and cross-root move cases.
+- [x] Create known JPEG, PNG, WebP, and HEIC capability fixtures.
+- [x] Produce a proof label for A4 grid and 50x30 mm output.
 - [ ] Record printer, iPhone, and Android devices used by the physical label matrix.
 
 ### HND-04 Confirm deferred choices do not block schema v1
 
-- [ ] Confirm the final public domain is not required to create schema v1.
-- [ ] Confirm printer-specific profiles are deferred beyond the two approved MVP templates.
-- [ ] Confirm marketplace and carrier connectors remain post-MVP.
-- [ ] Confirm local media is the MVP default and S3/MinIO remains optional.
-- [ ] Confirm compact job execution is the default and a separate worker remains an optional deployment profile.
+- [x] Confirm the final public domain is not required to create schema v1.
+- [x] Confirm printer-specific profiles are deferred beyond the two approved MVP templates.
+- [x] Confirm marketplace and carrier connectors remain post-MVP.
+- [x] Confirm local media is the MVP default and S3/MinIO remains optional.
+- [x] Confirm compact job execution is the default and a separate worker remains an optional deployment profile.
 
 ### Stage 0 exit checklist
 
 - [ ] Every task in HND-01 through HND-04 is complete.
-- [ ] No deferred choice blocks migration 0001 or repository bootstrap.
-- [ ] Reference fixtures and hardware profile are versioned or documented.
-- [ ] Stage 1 pull requests are assigned and ordered.
+- [x] No deferred choice blocks migration 0001 or repository bootstrap.
+- [x] Reference fixtures and hardware profile are versioned or documented.
+- [x] Stage 1 pull requests are assigned and ordered.
 
 ## 5. Stage 1 - Foundation
 

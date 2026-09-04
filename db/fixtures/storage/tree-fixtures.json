@@ -1,0 +1,67 @@
+{
+  "$schema": "https://inventory-atlas.local/fixtures/storage-tree-1.json",
+  "fixtureVersion": "1.0.0",
+  "description": "Storage-tree fixtures for STO-01 (build/browse) and STO-02 (atomic move). Includes an eight-level subtree and explicit cross-root move cases. Node keys are stable placeholders; loaders map them to immutable UUID public IDs and lowercase UUID-hex ltree labels. Rename changes display data only and never rewrites storage_nodes.path.",
+  "locales": ["en", "uk"],
+  "roots": [
+    { "key": "warehouse-a", "labels": { "en": "Warehouse A", "uk": "Склад A" } },
+    { "key": "warehouse-b", "labels": { "en": "Warehouse B", "uk": "Склад B" } }
+  ],
+  "nodes": [
+    { "key": "warehouse-a", "parent": null, "depth": 0, "root": "warehouse-a", "labels": { "en": "Warehouse A", "uk": "Склад A" } },
+
+    { "key": "a-l1", "parent": "warehouse-a", "depth": 1, "root": "warehouse-a", "labels": { "en": "Zone 1", "uk": "Зона 1" } },
+    { "key": "a-l2", "parent": "a-l1", "depth": 2, "root": "warehouse-a", "labels": { "en": "Aisle 1", "uk": "Ряд 1" } },
+    { "key": "a-l3", "parent": "a-l2", "depth": 3, "root": "warehouse-a", "labels": { "en": "Rack 1", "uk": "Стелаж 1" } },
+    { "key": "a-l4", "parent": "a-l3", "depth": 4, "root": "warehouse-a", "labels": { "en": "Shelf 1", "uk": "Полиця 1" } },
+    { "key": "a-l5", "parent": "a-l4", "depth": 5, "root": "warehouse-a", "labels": { "en": "Bin 1", "uk": "Секція 1" } },
+    { "key": "a-l6", "parent": "a-l5", "depth": 6, "root": "warehouse-a", "labels": { "en": "Box 1", "uk": "Коробка 1" } },
+    { "key": "a-l7", "parent": "a-l6", "depth": 7, "root": "warehouse-a", "labels": { "en": "Case 1", "uk": "Кейс 1" } },
+    { "key": "a-l8", "parent": "a-l7", "depth": 8, "root": "warehouse-a", "labels": { "en": "Pouch 1", "uk": "Пакет 1" } },
+
+    { "key": "warehouse-b", "parent": null, "depth": 0, "root": "warehouse-b", "labels": { "en": "Warehouse B", "uk": "Склад B" } },
+    { "key": "b-l1", "parent": "warehouse-b", "depth": 1, "root": "warehouse-b", "labels": { "en": "Zone 1", "uk": "Зона 1" } },
+    { "key": "b-l2", "parent": "b-l1", "depth": 2, "root": "warehouse-b", "labels": { "en": "Aisle 1", "uk": "Ряд 1" } }
+  ],
+  "notes": {
+    "eightLevelSubtree": "warehouse-a -> a-l1 -> ... -> a-l8 is a nine-node chain whose deepest node sits at depth 8, satisfying the eight-level subtree requirement in blueprint sections 20.3 and HND-03.",
+    "privacy": "Exact path is private by default (STO-01); public breadcrumb behavior is validated separately."
+  },
+  "moveCases": [
+    {
+      "name": "cross-root-move",
+      "description": "Move a subtree from Warehouse A into Warehouse B. path, depth, and tree_root_id must update for every descendant (STO-02).",
+      "moveNode": "a-l3",
+      "fromParent": "a-l2",
+      "toParent": "b-l2",
+      "expected": {
+        "affectedSubtreeRoot": "a-l3",
+        "subtreeNodeCount": 6,
+        "descendantCount": 5,
+        "newRoot": "warehouse-b",
+        "depthDeltaForMovedNode": 0
+      }
+    },
+    {
+      "name": "reject-own-descendant",
+      "description": "Moving a node into one of its own descendants must be rejected before any subtree mutation (STO-02 acceptance criteria).",
+      "moveNode": "a-l3",
+      "toParent": "a-l6",
+      "expected": { "rejected": true, "reason": "target-is-own-descendant" }
+    },
+    {
+      "name": "reject-archived-target",
+      "description": "Moving into an archived or missing target rolls back without partial updates.",
+      "moveNode": "a-l5",
+      "toParent": "archived-or-missing",
+      "expected": { "rejected": true, "reason": "target-archived-or-missing" }
+    },
+    {
+      "name": "opposing-concurrent-moves",
+      "description": "Two opposing moves must serialize on deterministic row/root locks and leave a valid acyclic connected tree (STO-02).",
+      "moveA": { "moveNode": "a-l1", "toParent": "warehouse-b" },
+      "moveB": { "moveNode": "b-l1", "toParent": "warehouse-a" },
+      "expected": { "treeRemainsAcyclic": true }
+    }
+  ]
+}

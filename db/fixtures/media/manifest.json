@@ -1,0 +1,41 @@
+{
+  "$schema": "https://inventory-atlas.local/fixtures/media-manifest-1.json",
+  "fixtureVersion": "1.0.0",
+  "description": "Known image capability fixtures for the MED-02 startup decode checks (blueprint section 12.x). Each fixture is a small, deterministic image pinned by SHA-256.",
+  "dimensions": { "width": 16, "height": 16 },
+  "fixtures": [
+    {
+      "format": "png",
+      "file": "capability-16x16.png",
+      "mime": "image/png",
+      "bytes": 100,
+      "sha256": "d4ea7deaa11a8ee0531db8c77ed77a4836e12cf7353382e38a545743aa7954fb",
+      "committed": true
+    },
+    {
+      "format": "jpeg",
+      "file": "capability-16x16.jpg",
+      "mime": "image/jpeg",
+      "bytes": 224,
+      "sha256": "05600e40c61a474fb366b0d6807c09dd2e50fcb2ca2e3c49b98e4b225a13761b",
+      "committed": true
+    },
+    {
+      "format": "webp",
+      "file": "capability-16x16.webp",
+      "mime": "image/webp",
+      "bytes": 58,
+      "sha256": "1c6b5ccc4054696835aa85407da355bf2e51aa8d7f8e18c9d79d637650a26615",
+      "committed": true
+    },
+    {
+      "format": "heic",
+      "file": "capability-16x16.heic",
+      "mime": "image/heic",
+      "bytes": 452,
+      "sha256": "ae3af0705f333a80fbc0db3b64ebb0fbbc4dacad9da4ea24a9568113217be45a",
+      "committed": true,
+      "generator": "Pillow 10.4.0 with pillow-heif 0.18.0 (libheif encoder), quality 90"
+    }
+  ]
+}
