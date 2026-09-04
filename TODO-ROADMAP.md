@@ -105,11 +105,11 @@ The approved total remains 22-30 weeks for one experienced full-time developer.
 
 ### HND-02 Record toolchain and dependency baseline
 
-- [ ] Select and record exact Node.js 24 LTS and Corepack/pnpm versions.
-- [ ] Record exact initial Vue, Vite, PrimeVue, NestJS, Fastify, Prisma, Kysely, PostgreSQL, test, and generation dependencies.
-- [ ] Verify license compatibility and produce the initial dependency/license note.
-- [ ] Record supported desktop and mobile browser targets.
-- [ ] Document the update policy for pinned runtime and package versions.
+- [x] Select and record exact Node.js 24 LTS and Corepack/pnpm versions.
+- [x] Record exact initial Vue, Vite, PrimeVue, NestJS, Fastify, Prisma, Kysely, PostgreSQL, test, and generation dependencies.
+- [x] Verify license compatibility and produce the initial dependency/license note.
+- [x] Record supported desktop and mobile browser targets.
+- [x] Document the update policy for pinned runtime and package versions.
 
 ### HND-03 Build proofs and reference fixtures
 

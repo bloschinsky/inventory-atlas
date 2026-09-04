@@ -19,6 +19,9 @@ This directory contains supporting product, architecture, API, operations, secur
 ## Project policies
 
 - [Versioning and release procedure](project/versioning.md)
+- [Toolchain baseline and update policy](project/toolchain.md)
+- [Initial dependencies and license review](project/dependencies.md)
+- [Browser support baseline](project/browser-support.md)
 
 ## API, operations, and security
 
