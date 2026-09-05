@@ -9,14 +9,15 @@
     prints at actual physical size with browser scaling disabled ("Scale: 100%",
     "Margins: None", "Fit to page" OFF). This is a geometry/layout proof only; the
     real QR/Code 128 symbols are rendered server-side from a versioned template
-    snapshot in LAB-02. The dashed boxes mark the QR area and the Code 128 area so
-    the printed cell size, margins, and gaps can be measured with a ruler.
+    snapshot in LAB-02. Each proof label contains exactly one selected symbology:
+    QR by default, or Code 128 when explicitly selected. The dashed boxes mark
+    the code area so the printed cell size, margins, gaps, and code area can be
+    measured with a ruler.
 
-    Template A: A4 grid of 50x30 mm labels
+    Template A: half-sheet A4 grid of 50x30 mm labels
       - Page: 210 x 297 mm, page margin 10 mm
       - Label: 50 x 30 mm, column gap 5 mm, row gap 5 mm
-      - Result: 3 columns x 8 rows = 24 labels
-    Template B: standalone custom 50 x 30 mm label
+      - Result: 3 columns x 4 rows = 12 labels, leaving the lower half unused
   -->
   <style>
     :root {
@@ -36,7 +37,6 @@
       width: 210mm;
       min-height: 297mm;
       padding: var(--page-margin);
-      page-break-after: always;
     }
     .grid {
       display: grid;
@@ -51,8 +51,10 @@
       border: 0.2mm solid #000;
       padding: 1.5mm;
       display: flex;
-      gap: 1.5mm;
+      flex-direction: column;
+      gap: 1mm;
       align-items: center;
+      justify-content: center;
       overflow: hidden;
     }
     .qr {
@@ -68,18 +70,19 @@
     .meta { flex: 1; min-width: 0; }
     .human {
       font-family: "Courier New", monospace;
-      font-size: 3mm;
+      font-size: 2.5mm;
       letter-spacing: 0.2mm;
     }
     .code128 {
-      margin-top: 1.5mm;
-      height: 8mm;
+      width: 30mm;
+      height: 11mm;
       border: 0.2mm dashed #000;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 2mm;
     }
+    .code-caption { font-size: 2mm; }
     .caption { padding: var(--page-margin); font-size: 3.5mm; }
     @media print { .caption { display: none; } }
   </style>
@@ -87,44 +90,33 @@
 <body>
   <div class="caption">
     Print at 100% scale, no page margins, "fit to page" off. Measure a label:
-    it must be exactly 50 x 30 mm. Template A (A4 grid) is page 1; template B
-    (standalone 50 x 30 mm) is page 2.
+    it must be exactly 50 x 30 mm. The 3 x 4 grid intentionally uses roughly
+    half of one A4 page.
   </div>
 
-  <!-- Template A: A4 grid, 3 x 8 = 24 labels -->
+  <!-- Half-sheet A4 test grid, 3 x 4 = 12 labels -->
   <section class="sheet">
     <div class="grid">
-      <!-- 24 identical proof cells -->
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-      <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
+      <!-- QR is the default: first six proof cells are QR-only. -->
+      <div class="label"><div class="qr">QR<br>22 x 22 mm</div><div class="human">IA-QR-DEMO</div></div>
+      <div class="label"><div class="qr">QR<br>22 x 22 mm</div><div class="human">IA-QR-DEMO</div></div>
+      <div class="label"><div class="qr">QR<br>22 x 22 mm</div><div class="human">IA-QR-DEMO</div></div>
+      <div class="label"><div class="qr">QR<br>22 x 22 mm</div><div class="human">IA-QR-DEMO</div></div>
+      <div class="label"><div class="qr">QR<br>22 x 22 mm</div><div class="human">IA-QR-DEMO</div></div>
+      <div class="label"><div class="qr">QR<br>22 x 22 mm</div><div class="human">IA-QR-DEMO</div></div>
+      <!-- Code 128 is optional: last six proof cells are Code-128-only. -->
+      <div class="label"><div class="code128">Code 128</div><div class="human">IA-128-DEMO</div><div class="code-caption">30 x 11 mm</div></div>
+      <div class="label"><div class="code128">Code 128</div><div class="human">IA-128-DEMO</div><div class="code-caption">30 x 11 mm</div></div>
+      <div class="label"><div class="code128">Code 128</div><div class="human">IA-128-DEMO</div><div class="code-caption">30 x 11 mm</div></div>
+      <div class="label"><div class="code128">Code 128</div><div class="human">IA-128-DEMO</div><div class="code-caption">30 x 11 mm</div></div>
+      <div class="label"><div class="code128">Code 128</div><div class="human">IA-128-DEMO</div><div class="code-caption">30 x 11 mm</div></div>
+      <div class="label"><div class="code128">Code 128</div><div class="human">IA-128-DEMO</div><div class="code-caption">30 x 11 mm</div></div>
     </div>
   </section>
-
-  <!-- Template B: standalone custom 50 x 30 mm label -->
-  <section class="sheet">
-    <div class="label"><div class="qr">QR</div><div class="meta"><div class="human">IA-000-DEMO</div><div class="code128">Code 128</div></div></div>
-  </section>
+  <script>
+    if (new URLSearchParams(window.location.search).has('print')) {
+      window.addEventListener('load', () => window.print(), { once: true });
+    }
+  </script>
 </body>
 </html>

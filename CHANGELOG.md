@@ -13,6 +13,7 @@ The project follows the version policy in `docs/project/versioning.md`.
 - Executable TODO roadmap.
 - Initial repository documentation and agent working rules.
 - Stage 0 reference fixtures, hardware and physical-label records, deferred-choice review, and ordered Stage 1 handoff.
+- Completed the Stage 0 exit gate with a calibrated half-sheet A4 label proof and recorded physical test devices.
 
 ## Planned
 

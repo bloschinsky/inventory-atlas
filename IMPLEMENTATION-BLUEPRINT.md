@@ -1021,6 +1021,8 @@ Contrast, focus visibility, keyboard operation, touch targets, reduced motion, a
 
 - QR is default and encodes a short HTTPS URL with an opaque token.
 - Code 128 is optional on the same template and encodes a compact human code.
+- Each rendered label contains exactly one selected code type. QR and Code 128
+  are never rendered together on the same label.
 - Entity titles and database IDs are not embedded as authorization data.
 - QR tokens are deterministically derived with the versioned HMAC scheme in section 8.9, then resolved through prefix lookup plus constant-time hash verification.
 - Reprinting an existing code derives the identical active token; it does not revoke working labels.

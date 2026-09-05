@@ -118,7 +118,7 @@ The approved total remains 22-30 weeks for one experienced full-time developer.
 - [x] Create tree fixtures including an eight-level subtree and cross-root move cases.
 - [x] Create known JPEG, PNG, WebP, and HEIC capability fixtures.
 - [x] Produce a proof label for A4 grid and 50x30 mm output.
-- [ ] Record printer, iPhone, and Android devices used by the physical label matrix.
+- [x] Record printer, iPhone, and Android devices used by the physical label matrix.
 
 ### HND-04 Confirm deferred choices do not block schema v1
 
@@ -130,7 +130,7 @@ The approved total remains 22-30 weeks for one experienced full-time developer.
 
 ### Stage 0 exit checklist
 
-- [ ] Every task in HND-01 through HND-04 is complete.
+- [x] Every task in HND-01 through HND-04 is complete.
 - [x] No deferred choice blocks migration 0001 or repository bootstrap.
 - [x] Reference fixtures and hardware profile are versioned or documented.
 - [x] Stage 1 pull requests are assigned and ordered.
@@ -853,6 +853,7 @@ Tasks:
 
 - [ ] Add label-template and label-batch schema, versions, archive state, template snapshot, request entities, output relation, and render state.
 - [ ] Define/seed A4 grid and custom 50x30 mm templates.
+- [ ] Render exactly one selected symbology per label: QR by default or Code 128 when explicitly selected.
 - [ ] Validate dimensions, margins, gaps, safe padding, code type, font size, field layout, and page fit.
 - [ ] Capture an immutable template/entity/code-generation snapshot for every batch.
 - [ ] Reserve idempotency before creating a batch and enqueue rendering through outbox.
