@@ -1,0 +1,31 @@
+packages:
+  - apps/*
+  - packages/*
+
+strictPeerDependencies: true
+
+allowBuilds:
+  esbuild: true
+  vue-demi: true
+
+catalog:
+  '@primeuix/themes': 1.2.5
+  '@nestjs/common': 12.0.1
+  '@nestjs/core': 12.0.1
+  '@nestjs/platform-fastify': 12.0.1
+  '@tanstack/vue-query': 5.102.8
+  '@types/node': 24.13.3
+  '@vitejs/plugin-vue': 6.0.8
+  '@vue/compiler-sfc': 3.5.42
+  '@vue/devtools-api': 8.2.1
+  '@vue/test-utils': 2.4.6
+  pinia: 4.0.3
+  primevue: 4.4.1
+  reflect-metadata: 0.2.2
+  rxjs: 7.8.2
+  vite: 8.2.2
+  vue: 3.5.42
+  vue-router: 5.3.1
+
+minimumReleaseAgeExclude:
+  - eslint@10.10.0

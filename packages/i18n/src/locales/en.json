@@ -1,0 +1,41 @@
+{
+  "app": {
+    "name": "Inventory Atlas",
+    "skipToContent": "Skip to content",
+    "navigation": "Primary navigation"
+  },
+  "nav": {
+    "items": "Items",
+    "storage": "Storage",
+    "scan": "Scan",
+    "labels": "Labels",
+    "portability": "Portability",
+    "admin": "Administration"
+  },
+  "routes": {
+    "home": "Home",
+    "items": "Items",
+    "itemNew": "New item",
+    "itemDetail": "Item details",
+    "itemEdit": "Edit item",
+    "storage": "Storage",
+    "storageDetail": "Storage details",
+    "scan": "Scan",
+    "labels": "Labels",
+    "labelBatch": "Label batch",
+    "portability": "Portability",
+    "adminFields": "Fields",
+    "adminCategories": "Categories",
+    "adminStatuses": "Statuses",
+    "adminUsers": "Users",
+    "adminSettings": "Settings",
+    "adminAudit": "Audit",
+    "error": "Something went wrong",
+    "notFound": "Page not found"
+  },
+  "foundation": {
+    "pending": "This route is ready for its feature story.",
+    "error": "The application could not display this page.",
+    "notFound": "The requested page does not exist."
+  }
+}

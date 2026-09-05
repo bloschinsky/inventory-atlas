@@ -25,6 +25,11 @@ This directory contains supporting product, architecture, API, operations, secur
 - [Reference hardware and performance dataset profile](project/reference-hardware.md)
 - [Physical label test matrix](project/physical-label-matrix.md)
 - [Stage 1 implementation handoff](project/stage-1-handoff.md)
+- [Module boundary policy](project/module-boundaries.md)
+- [Development setup](operations/development.md)
+- [Transitive dependency license report](project/third-party-licenses.json)
+- [UI facade contracts](frontend/ui-facade-contracts.md)
+- [UI facade gaps](frontend/ui-facade-gaps.md)
 
 ## Reference and acceptance fixtures
 

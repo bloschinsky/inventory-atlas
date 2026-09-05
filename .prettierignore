@@ -1,0 +1,8 @@
+dist
+coverage
+playwright-report
+pnpm-lock.yaml
+docs/product
+docs/**/*.md
+db/fixtures
+*.md

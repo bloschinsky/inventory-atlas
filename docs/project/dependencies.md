@@ -19,8 +19,8 @@ the install authority.
 | `@vue/devtools-api` | `8.2.1` | MIT | Required Pinia peer |
 | `@tanstack/vue-query` | `5.102.8` | MIT | Server state and mutations |
 | `vue-i18n` | `11.4.10` | MIT | English/Ukrainian localization |
-| `primevue` | `5.0.1` | MIT | UI adapter implementation only |
-| `@primeuix/themes` | `3.0.0` | MIT | PrimeVue theme primitives behind semantic tokens |
+| `primevue` | `4.4.1` | MIT | UI adapter implementation only |
+| `@primeuix/themes` | `1.2.5` | MIT | PrimeVue theme primitives behind semantic tokens |
 | `zod` | `4.5.4` | MIT | Generated runtime contract validation |
 
 ## Backend runtime and data access
@@ -64,6 +64,10 @@ the install authority.
 | `@playwright/test` | `1.62.1` | Apache-2.0 | E2E, visual, and browser contract tests |
 | `testcontainers` | `12.1.0` | MIT | Real PostgreSQL integration tests |
 | `@hey-api/openapi-ts` | `0.99.0` | MIT | Generated operations/types/Zod inputs |
+| `vue-tsc` | `3.3.11` | MIT | Vue SFC-aware JavaScript `checkJs` validation |
+| `@vue/test-utils` | `2.4.6` | MIT | Vue component smoke and interaction tests |
+| `tsx` | `4.21.0` | MIT | Local NestJS TypeScript entrypoint runner |
+| `globals` | `16.5.0` | MIT | ESLint runtime global definitions |
 
 TypeScript 6.0.3 is intentionally selected instead of the newer 7.x line:
 `typescript-eslint` 8.69.0 supports TypeScript below 6.1, while the selected
@@ -85,8 +89,15 @@ newer Prisma prerelease is not part of the baseline.
 The selected direct baseline uses permissive MIT, Apache-2.0, and PostgreSQL
 licenses. These licenses are compatible with private self-hosting and with
 distribution of Inventory Atlas when their copyright, license, and notice
-conditions are retained. PrimeVue and PrimeUIX package metadata points to the
-bundled license file; the upstream license files were verified as MIT.
+conditions are retained. PrimeVue 4.4.1 and PrimeUIX Themes 1.2.5 package
+metadata and bundled license files were verified as MIT. The originally
+recorded 5.0.1/3.0.0 versions were corrected during FND-01 because those
+releases changed to a conditional commercial/community license, contrary to
+this project's dependency policy. Vite's transitive Lightning CSS packages use
+MPL-2.0. They are build tooling; Inventory Atlas does not modify or redistribute
+their source, and their file-level copyleft does not apply to generated
+application bundles. MPL-2.0 is therefore included in the automated allowlist
+with this explicit review.
 
 This is an engineering compatibility review, not legal advice. It does not yet
 approve optional media codecs or providers. In particular, the HEIC/libheif

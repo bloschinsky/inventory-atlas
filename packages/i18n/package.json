@@ -1,0 +1,16 @@
+{
+  "name": "@inventory-atlas/i18n",
+  "version": "0.1.0-dev.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./locales/en.json": "./src/locales/en.json",
+    "./locales/uk.json": "./src/locales/uk.json"
+  },
+  "scripts": {
+    "build": "tsc -p jsconfig.json",
+    "check": "tsc -p jsconfig.json",
+    "test": "vitest run"
+  }
+}

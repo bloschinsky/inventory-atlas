@@ -5,6 +5,7 @@
 > Source of truth: `IMPLEMENTATION-BLUEPRINT.md`, approved blueprint v0.2  
 > Product baseline: `docs/product/inventory-atlas-design-document-v0.3.1.pdf`  
 > Prepared: 2026-08-28  
+> Current development version: `0.1.0-dev.1`
 > Default product locale: English  
 > Required MVP locale: Ukrainian
 
@@ -152,24 +153,24 @@ Suggested pull requests:
 
 Tasks:
 
-- [ ] Create `apps/api`, `apps/worker`, `apps/web`, shared packages, database, infrastructure, scripts, and docs directories from blueprint section 5.
-- [ ] Pin Node and package-manager versions and commit the lockfile.
-- [ ] Configure root workspace scripts with the stable command names from blueprint section 5.2.
-- [ ] Bootstrap Vue 3 JavaScript with `checkJs`, NestJS TypeScript, and the worker application context.
-- [ ] Configure formatting, linting, unit tests, backend type checking, and frontend `checkJs`.
-- [ ] Define module public entry points and forbidden import patterns.
-- [ ] Implement `verify-module-boundaries.mjs` and add positive/negative fixtures.
-- [ ] Complete the frontend infrastructure workstream in section 11, owned by FND-01D, before Stage 1 exits and before CAT-01 begins.
-- [ ] Add minimal build and test smoke cases for every workspace package.
-- [ ] Document prerequisites and verify setup in a clean checkout/container.
+- [x] Create `apps/api`, `apps/worker`, `apps/web`, shared packages, database, infrastructure, scripts, and docs directories from blueprint section 5.
+- [x] Pin Node and package-manager versions and commit the lockfile.
+- [x] Configure root workspace scripts with the stable command names from blueprint section 5.2.
+- [x] Bootstrap Vue 3 JavaScript with `checkJs`, NestJS TypeScript, and the worker application context.
+- [x] Configure formatting, linting, unit tests, backend type checking, and frontend `checkJs`.
+- [x] Define module public entry points and forbidden import patterns.
+- [x] Implement `verify-module-boundaries.mjs` and add positive/negative fixtures.
+- [x] Complete the frontend infrastructure workstream in section 11, owned by FND-01D, before Stage 1 exits and before CAT-01 begins.
+- [x] Add minimal build and test smoke cases for every workspace package.
+- [x] Document prerequisites and verify setup in a clean checkout/container.
 
 Acceptance criteria (verbatim from the approved blueprint):
 
-- [ ] Workspace structure matches section 5.
-- [ ] Node and package-manager versions are pinned.
-- [ ] Frontend JavaScript `checkJs` and backend TypeScript checks pass.
-- [ ] Boundary checks reject forbidden cross-module imports.
-- [ ] Clean checkout requires no undocumented global tools.
+- [x] Workspace structure matches section 5.
+- [x] Node and package-manager versions are pinned.
+- [x] Frontend JavaScript `checkJs` and backend TypeScript checks pass.
+- [x] Boundary checks reject forbidden cross-module imports.
+- [x] Clean checkout requires no undocumented global tools.
 
 ### FND-02 Start the compact environment
 
@@ -310,7 +311,7 @@ Acceptance criteria (verbatim from the approved blueprint):
 - [ ] Owner can sign in and permissions match the approved matrix.
 - [ ] OpenAPI, declarations, and Zod artifacts share one checksum.
 - [ ] English default and Ukrainian selection pass E2E.
-- [ ] FND-01D frontend structure, state ownership, route shell, UI facade, semantic tokens, and boundary checks are complete.
+- [x] FND-01D frontend structure, state ownership, route shell, UI facade, semantic tokens, and boundary checks are complete.
 - [ ] Compact Docker Compose deployment is ready for the first catalog increment.
 
 ## 6. Stage 2 - Core catalog, schema, and media
@@ -1033,18 +1034,18 @@ This workstream MUST finish during Stage 1 before CAT-01 starts. It provides the
 
 Application architecture and state:
 
-- [ ] Create `apps/web/src/app`, `pages`, `features`, `entities`, and `shared/{api,ui,i18n,lib,composables}` with `main.js` exactly as defined in blueprint section 11.1.
-- [ ] Enforce dependency direction: pages orchestrate features; features may depend on entities/shared; entities may depend only on shared; shared cannot import upward.
-- [ ] Add positive and negative frontend dependency fixtures to `verify-module-boundaries.mjs`.
-- [ ] Implement the application shell, Vue Router, providers, app-level error boundary/fallback, public/authenticated layouts, and not-found/error routes.
-- [ ] Register the blueprint section 11.3 route baseline as real routes or explicit inaccessible placeholders that are replaced by their delivery stage.
-- [ ] Use the same page components for public and authenticated routes, driven by server-provided field projections; hidden controls MUST NOT be treated as authorization.
-- [ ] Implement `shared/api` as the single wrapper over generated operations/Zod contracts, including credentials, request/correlation headers, cancellation, and normalized problem/conflict errors.
-- [ ] Configure Vue Query as the sole owner of server state, caching, invalidation, request cancellation, and mutation state.
-- [ ] Restrict Pinia to session summary, preferences, navigation, and local UI state; add a lint/architecture check and negative fixture that rejects API entity collections or response caches in Pinia stores.
-- [ ] Keep form drafts local and map generated Zod/stable field-key errors into the shared form controls.
-- [ ] Implement one conflict handler that requires a known expected version for optimistic mutation and opens compare/reload/abandon handling; it never silently overwrites.
-- [ ] Add architecture tests for query cancellation, cache invalidation, session clearing, unknown-version mutation rejection, and conflict routing.
+- [x] Create `apps/web/src/app`, `pages`, `features`, `entities`, and `shared/{api,ui,i18n,lib,composables}` with `main.js` exactly as defined in blueprint section 11.1.
+- [x] Enforce dependency direction: pages orchestrate features; features may depend on entities/shared; entities may depend only on shared; shared cannot import upward.
+- [x] Add positive and negative frontend dependency fixtures to `verify-module-boundaries.mjs`.
+- [x] Implement the application shell, Vue Router, providers, app-level error boundary/fallback, public/authenticated layouts, and not-found/error routes.
+- [x] Register the blueprint section 11.3 route baseline as real routes or explicit inaccessible placeholders that are replaced by their delivery stage.
+- [x] Use the same page components for public and authenticated routes, driven by server-provided field projections; hidden controls MUST NOT be treated as authorization.
+- [x] Implement `shared/api` as the single wrapper over generated operations/Zod contracts, including credentials, request/correlation headers, cancellation, and normalized problem/conflict errors.
+- [x] Configure Vue Query as the sole owner of server state, caching, invalidation, request cancellation, and mutation state.
+- [x] Restrict Pinia to session summary, preferences, navigation, and local UI state; add a lint/architecture check and negative fixture that rejects API entity collections or response caches in Pinia stores.
+- [x] Keep form drafts local and map generated Zod/stable field-key errors into the shared form controls.
+- [x] Implement one conflict handler that requires a known expected version for optimistic mutation and opens compare/reload/abandon handling; it never silently overwrites.
+- [x] Add architecture tests for query cancellation, cache invalidation, session clearing, unknown-version mutation rejection, and conflict routing.
 
 Route baseline:
 
@@ -1070,15 +1071,15 @@ Route baseline:
 
 UI facade and tokens:
 
-- [ ] Implement and export all 18 required semantic components from `packages/ui`: `AppButton`, `AppInput`, `AppTextarea`, `AppSelect`, `AppMultiSelect`, `AppDateField`, `AppMoneyField`, `AppField`, `AppFormSection`, `AppTable`, `AppDataView`, `AppDialog`, `AppDrawer`, `AppMenu`, `AppToast`, `AppBreadcrumb`, `AppFileUpload`, and `AppPagination`.
-- [ ] Define stable framework-neutral props/events/slots for each facade component and contract-test default, loading, empty, error, validation, disabled, and relevant responsive states.
-- [ ] Implement keyboard behavior, focus visibility/return, labels/descriptions/errors, touch targets, reduced motion, and 200% zoom behavior required by each component.
-- [ ] Re-export facade components only through `apps/web/src/shared/ui`; domain pages/features/entities import the semantic facade rather than vendor components.
-- [ ] Implement the complete stable semantic token set from blueprint section 11.6; values may be tuned, but names cannot change without an ADR-compatible migration.
-- [ ] Add a boundary rule forbidding direct `primevue` imports anywhere under `apps/web/src`; only the `packages/ui` adapter implementation may import PrimeVue.
-- [ ] Add positive/negative import fixtures proving the PrimeVue rule fails CI when violated.
-- [ ] Create `docs/frontend/ui-facade-gaps.md` with owner, reason, affected route, replacement target, and due stage for every temporary gap.
-- [ ] Fail the MVP release checklist while any facade-gap entry remains open.
+- [x] Implement and export all 18 required semantic components from `packages/ui`: `AppButton`, `AppInput`, `AppTextarea`, `AppSelect`, `AppMultiSelect`, `AppDateField`, `AppMoneyField`, `AppField`, `AppFormSection`, `AppTable`, `AppDataView`, `AppDialog`, `AppDrawer`, `AppMenu`, `AppToast`, `AppBreadcrumb`, `AppFileUpload`, and `AppPagination`.
+- [x] Define stable framework-neutral props/events/slots for each facade component and contract-test default, loading, empty, error, validation, disabled, and relevant responsive states.
+- [x] Implement keyboard behavior, focus visibility/return, labels/descriptions/errors, touch targets, reduced motion, and 200% zoom behavior required by each component.
+- [x] Re-export facade components only through `apps/web/src/shared/ui`; domain pages/features/entities import the semantic facade rather than vendor components.
+- [x] Implement the complete stable semantic token set from blueprint section 11.6; values may be tuned, but names cannot change without an ADR-compatible migration.
+- [x] Add a boundary rule forbidding direct `primevue` imports anywhere under `apps/web/src`; only the `packages/ui` adapter implementation may import PrimeVue.
+- [x] Add positive/negative import fixtures proving the PrimeVue rule fails CI when violated.
+- [x] Create `docs/frontend/ui-facade-gaps.md` with owner, reason, affected route, replacement target, and due stage for every temporary gap.
+- [x] Fail the MVP release checklist while any facade-gap entry remains open.
 
 Stable token names:
 

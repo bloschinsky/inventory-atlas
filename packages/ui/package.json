@@ -1,0 +1,29 @@
+{
+  "name": "@inventory-atlas/ui",
+  "version": "0.1.0-dev.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./tokens.css": "./src/tokens.css"
+  },
+  "scripts": {
+    "build": "vite build",
+    "check": "vue-tsc -p jsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "vue": "3.5.42"
+  },
+  "dependencies": {
+    "@primeuix/themes": "catalog:",
+    "primevue": "catalog:"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "catalog:",
+    "@vue/compiler-sfc": "catalog:",
+    "@vue/test-utils": "catalog:",
+    "vite": "catalog:",
+    "vue": "catalog:"
+  }
+}

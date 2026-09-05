@@ -37,7 +37,9 @@ The MVP has no mandatory Redis, external search engine, message broker, or S3 se
 
 ## Status
 
-The project is implementation-ready. The design document, implementation blueprint, and task roadmap are approved.
+Implementation is in progress. FND-01 provides the pinned monorepo, stable root commands, application composition roots, frontend shell, and UI facade.
+
+Current development version: **`0.1.0-dev.1`**.
 
 First release target: **`0.1.0` Technical Demo**.
 
@@ -64,7 +66,7 @@ See the [versioning policy](docs/project/versioning.md) for the full policy.
 - [Security policy](SECURITY.md)
 - [Changelog](CHANGELOG.md)
 
-## Planned root commands
+## Root commands
 
 ```bash
 pnpm dev
@@ -75,7 +77,11 @@ pnpm test
 pnpm test:integration
 pnpm test:e2e
 pnpm db:migrate
+pnpm db:seed
+pnpm db:verify
+pnpm api:spec
+pnpm contracts:generate
+pnpm contracts:check
+pnpm i18n:check
 pnpm compose:validate
 ```
-
-Commands become authoritative as their Foundation tasks are completed.

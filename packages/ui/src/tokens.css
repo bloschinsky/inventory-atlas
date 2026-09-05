@@ -1,0 +1,57 @@
+:root {
+  --ia-color-brand-700: #0b5f62;
+  --ia-color-brand-600: #0e777a;
+  --ia-color-brand-100: #dceff0;
+  --ia-color-accent-600: #b56a2a;
+  --ia-color-surface-0: #ffffff;
+  --ia-color-surface-50: #f7f8f9;
+  --ia-color-surface-100: #eceff1;
+  --ia-color-text: #17212b;
+  --ia-color-text-muted: #5d6872;
+  --ia-color-border: #c9d0d6;
+  --ia-color-danger: #a83232;
+  --ia-radius-sm: 4px;
+  --ia-radius-md: 8px;
+  --ia-radius-lg: 12px;
+  --ia-space-1: 4px;
+  --ia-space-2: 8px;
+  --ia-space-3: 12px;
+  --ia-space-4: 16px;
+  --ia-space-6: 24px;
+  --ia-control-min-height: 44px;
+  --ia-content-max-width: 1440px;
+  color-scheme: light;
+  font-family: Inter, system-ui, sans-serif;
+  color: var(--ia-color-text);
+  background: var(--ia-color-surface-50);
+}
+
+*:focus-visible {
+  outline: 3px solid var(--ia-color-accent-600);
+  outline-offset: 2px;
+}
+
+button,
+input,
+select,
+textarea,
+[role='button'] {
+  min-height: var(--ia-control-min-height);
+}
+
+@media (max-width: 720px) {
+  .p-dialog,
+  .p-drawer {
+    max-width: calc(100vw - 2 * var(--ia-space-3));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

@@ -14,6 +14,9 @@ The project follows the version policy in `docs/project/versioning.md`.
 - Initial repository documentation and agent working rules.
 - Stage 0 reference fixtures, hardware and physical-label records, deferred-choice review, and ordered Stage 1 handoff.
 - Completed the Stage 0 exit gate with a calibrated half-sheet A4 label proof and recorded physical test devices.
+- Bootstrapped the pinned pnpm monorepo with API, worker, web, and shared package composition roots.
+- Added stable root commands, JavaScript/TypeScript checks, unit and E2E smoke tests, module-boundary enforcement, and clean-checkout CI.
+- Added the Vue application shell, approved route baseline, Vue Query/Pinia state boundaries, semantic tokens, and all 18 approved UI facade components.
 
 ## Planned
 

@@ -1,0 +1,13 @@
+{
+  "extends": "../../jsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": [],
+    "maxNodeModuleJsDepth": 0
+  },
+  "include": ["src/**/*.js", "src/**/*.vue", "src/**/*.d.ts", "vite.config.js"],
+  "exclude": ["node_modules", "../../node_modules"]
+}

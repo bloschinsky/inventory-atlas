@@ -1,0 +1,5 @@
+name: inventory-atlas
+
+# FND-02 adds the deployable service graph. Keeping an explicit empty map makes
+# the repository layout stable without implying an incomplete deployment.
+services: {}

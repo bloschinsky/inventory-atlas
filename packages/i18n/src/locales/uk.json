@@ -1,0 +1,41 @@
+{
+  "app": {
+    "name": "Inventory Atlas",
+    "skipToContent": "Перейти до вмісту",
+    "navigation": "Основна навігація"
+  },
+  "nav": {
+    "items": "Речі",
+    "storage": "Сховище",
+    "scan": "Сканування",
+    "labels": "Етикетки",
+    "portability": "Перенесення",
+    "admin": "Адміністрування"
+  },
+  "routes": {
+    "home": "Головна",
+    "items": "Речі",
+    "itemNew": "Нова річ",
+    "itemDetail": "Деталі речі",
+    "itemEdit": "Редагування речі",
+    "storage": "Сховище",
+    "storageDetail": "Деталі сховища",
+    "scan": "Сканування",
+    "labels": "Етикетки",
+    "labelBatch": "Пакет етикеток",
+    "portability": "Перенесення",
+    "adminFields": "Поля",
+    "adminCategories": "Категорії",
+    "adminStatuses": "Статуси",
+    "adminUsers": "Користувачі",
+    "adminSettings": "Налаштування",
+    "adminAudit": "Аудит",
+    "error": "Сталася помилка",
+    "notFound": "Сторінку не знайдено"
+  },
+  "foundation": {
+    "pending": "Цей маршрут готовий до своєї функціональної задачі.",
+    "error": "Застосунок не зміг показати цю сторінку.",
+    "notFound": "Запитаної сторінки не існує."
+  }
+}
