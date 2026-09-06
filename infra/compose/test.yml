@@ -1,0 +1,14 @@
+services:
+  db:
+    environment:
+      POSTGRES_DB: inventory_atlas_test
+  migrate:
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://${POSTGRES_USER:-inventory_atlas}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/inventory_atlas_test
+      KYSELY_DATABASE_URL: postgresql://${POSTGRES_USER:-inventory_atlas}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/inventory_atlas_test
+  api:
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://${POSTGRES_USER:-inventory_atlas}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/inventory_atlas_test
+      KYSELY_DATABASE_URL: postgresql://${POSTGRES_USER:-inventory_atlas}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/inventory_atlas_test

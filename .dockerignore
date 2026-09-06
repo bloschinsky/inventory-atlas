@@ -1,0 +1,13 @@
+**/dist
+**/node_modules
+.pnpm-store
+.git
+.github
+.idea
+.env
+.env.*
+!.env.example
+coverage
+playwright-report
+test-results
+*.tsbuildinfo

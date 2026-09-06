@@ -1,0 +1,118 @@
+name: inventory-atlas-dev
+
+x-workspace: &workspace
+  image: inventory-atlas-dev-workspace
+  build:
+    context: .
+    dockerfile: infra/docker/development.Dockerfile
+  working_dir: /workspace
+  init: true
+  env_file: .env.example
+  environment:
+    NODE_ENV: development
+    APP_BASE_URL: http://localhost:5173
+    DATABASE_URL: postgresql://inventory_atlas:local-development-only@db:5432/inventory_atlas
+    KYSELY_DATABASE_URL: postgresql://inventory_atlas:local-development-only@db:5432/inventory_atlas
+    INTEGRATION_DATABASE_URL: postgresql://inventory_atlas:local-development-only@test-db:5432/inventory_atlas_test
+    MEDIA_LOCAL_PATH: /media
+    COOKIE_SECURE: 'false'
+    TRUST_PROXY: 'false'
+    CHOKIDAR_USEPOLLING: 'true'
+    DEV_USE_POLLING: 'true'
+    PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+  volumes:
+    - .:/workspace
+    - root_modules:/workspace/node_modules
+    - api_modules:/workspace/apps/api/node_modules
+    - worker_modules:/workspace/apps/worker/node_modules
+    - web_modules:/workspace/apps/web/node_modules
+    - backend_modules:/workspace/packages/backend/node_modules
+    - config_modules:/workspace/packages/config/node_modules
+    - contracts_modules:/workspace/packages/contracts/node_modules
+    - i18n_modules:/workspace/packages/i18n/node_modules
+    - testkit_modules:/workspace/packages/testkit/node_modules
+    - ui_modules:/workspace/packages/ui/node_modules
+    - dev_media:/media
+  depends_on:
+    install:
+      condition: service_completed_successfully
+    db:
+      condition: service_healthy
+    test-db:
+      condition: service_healthy
+
+x-database: &database
+  image: postgres:18.6-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af
+  environment:
+    POSTGRES_USER: inventory_atlas
+    POSTGRES_PASSWORD: local-development-only
+    POSTGRES_DB: inventory_atlas
+  healthcheck:
+    test: [CMD-SHELL, 'pg_isready -U inventory_atlas -d "$${POSTGRES_DB}"']
+    interval: 2s
+    timeout: 5s
+    retries: 30
+
+services:
+  db:
+    <<: *database
+    volumes:
+      - dev_postgres:/var/lib/postgresql
+  test-db:
+    <<: *database
+    environment:
+      POSTGRES_USER: inventory_atlas
+      POSTGRES_PASSWORD: local-development-only
+      POSTGRES_DB: inventory_atlas_test
+    volumes:
+      - test_postgres:/var/lib/postgresql
+  install:
+    <<: *workspace
+    depends_on: {}
+    command: [pnpm, install, --frozen-lockfile]
+  dev:
+    <<: *workspace
+    command: [sh, -ec, 'pnpm db:migrate && pnpm dev']
+    ports:
+      - '127.0.0.1:5173:5173'
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3000/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+  tools:
+    <<: *workspace
+    profiles: [tools]
+    command: [pnpm, check]
+    shm_size: 1gb
+  docker-tools:
+    <<: *workspace
+    profiles: [docker-tools]
+    user: root
+    environment: {}
+    volumes:
+      - .:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on: {}
+    command: [node, scripts/validate-compose.mjs]
+
+volumes:
+  root_modules: {}
+  api_modules: {}
+  worker_modules: {}
+  web_modules: {}
+  backend_modules: {}
+  config_modules: {}
+  contracts_modules: {}
+  i18n_modules: {}
+  testkit_modules: {}
+  ui_modules: {}
+  dev_media: {}
+  dev_postgres: {}
+  test_postgres: {}

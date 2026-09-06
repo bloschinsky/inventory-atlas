@@ -1,5 +1,222 @@
 name: inventory-atlas
 
-# FND-02 adds the deployable service graph. Keeping an explicit empty map makes
-# the repository layout stable without implying an incomplete deployment.
-services: {}
+x-backend-build: &backend-build
+  context: .
+  dockerfile: infra/docker/backend.Dockerfile
+  args:
+    APP_VERSION: ${APP_VERSION:-0.1.0-dev.1}
+    VCS_REF: ${VCS_REF:-unknown}
+
+x-backend-environment: &backend-environment
+  APP_VERSION: ${APP_VERSION:-0.1.0-dev.1}
+  VCS_REF: ${VCS_REF:-unknown}
+  NODE_ENV: ${NODE_ENV:-production}
+  APP_BASE_URL: ${APP_BASE_URL:-http://localhost}
+  DATABASE_URL: postgresql://${POSTGRES_USER:-inventory_atlas}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-inventory_atlas}
+  KYSELY_DATABASE_URL: postgresql://${POSTGRES_USER:-inventory_atlas}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-inventory_atlas}
+  SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
+  COOKIE_SECURE: ${COOKIE_SECURE:-false}
+  DEFAULT_LOCALE: ${DEFAULT_LOCALE:-en}
+  PUBLIC_CATALOG_MODE: ${PUBLIC_CATALOG_MODE:-authenticated}
+  MEDIA_DRIVER: ${MEDIA_DRIVER:-local}
+  MEDIA_LOCAL_PATH: ${MEDIA_LOCAL_PATH:-/var/lib/inventory-atlas/media}
+  MEDIA_MAX_UPLOAD_BYTES: ${MEDIA_MAX_UPLOAD_BYTES:-26214400}
+  MEDIA_MAX_PIXELS: ${MEDIA_MAX_PIXELS:-40000000}
+  MEDIA_CHILD_RSS_MB: ${MEDIA_CHILD_RSS_MB:-512}
+  MEDIA_CHILD_TIMEOUT_MS: ${MEDIA_CHILD_TIMEOUT_MS:-30000}
+  JOB_RUNNER_MODE: ${JOB_RUNNER_MODE:-compact}
+  PRISMA_POOL_MAX: ${PRISMA_POOL_MAX:-6}
+  KYSELY_POOL_MAX: ${KYSELY_POOL_MAX:-6}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  TRUST_PROXY: ${TRUST_PROXY:-true}
+  S3_ENDPOINT: ${S3_ENDPOINT:-}
+  S3_BUCKET: ${S3_BUCKET:-}
+  S3_REGION: ${S3_REGION:-}
+  S3_ACCESS_KEY_ID_FILE: ${S3_ACCESS_KEY_ID_FILE:-}
+  S3_SECRET_ACCESS_KEY_FILE: ${S3_SECRET_ACCESS_KEY_FILE:-}
+
+services:
+  db:
+    image: postgres:18.6-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-inventory_atlas}
+      POSTGRES_USER: ${POSTGRES_USER:-inventory_atlas}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    networks:
+      - backend
+
+  migrate:
+    build:
+      <<: *backend-build
+      target: migrate
+    environment: *backend-environment
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: 'no'
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      - backend
+
+  api:
+    build:
+      <<: *backend-build
+      target: api
+    restart: unless-stopped
+    environment: *backend-environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - media_data:/var/lib/inventory-atlas/media
+    networks:
+      - backend
+
+  worker:
+    profiles: [expanded]
+    build:
+      <<: *backend-build
+      target: worker
+    restart: unless-stopped
+    environment:
+      <<: *backend-environment
+      JOB_RUNNER_MODE: worker
+    depends_on:
+      api:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - media_data:/var/lib/inventory-atlas/media
+    networks:
+      - backend
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/web.Dockerfile
+      target: web
+      args:
+        APP_VERSION: ${APP_VERSION:-0.1.0-dev.1}
+        VCS_REF: ${VCS_REF:-unknown}
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, wget, --quiet, --tries=1, --spider, http://127.0.0.1:8080/]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    read_only: true
+    tmpfs:
+      - /config
+      - /data
+      - /tmp
+    networks:
+      - backend
+
+  caddy:
+    build:
+      context: .
+      dockerfile: infra/docker/caddy.Dockerfile
+    restart: unless-stopped
+    user: 10001:10001
+    environment:
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost}
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    ports:
+      - '${HTTP_PORT:-80}:80'
+      - '${HTTPS_PORT:-443}:443'
+    volumes:
+      - caddy_data:/data
+    read_only: true
+    tmpfs:
+      - /config
+      - /tmp
+    networks:
+      - frontend
+      - backend
+
+  backup:
+    profiles: [backup]
+    image: postgres:18.6-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af
+    user: 999:999
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - >-
+        pg_dump --host=db --username="$${POSTGRES_USER}" --dbname="$${POSTGRES_DB}"
+        --format=custom --file="/var/lib/postgresql/backup/inventory-atlas-$$(date -u +%Y%m%dT%H%M%SZ).dump"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-inventory_atlas}
+      POSTGRES_USER: ${POSTGRES_USER:-inventory_atlas}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - backup_data:/var/lib/postgresql
+    networks:
+      - backend
+
+  restore:
+    profiles: [restore]
+    image: postgres:18.6-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af
+    user: 999:999
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - >-
+        test "$${ALLOW_RESTORE:-no}" = yes || { echo 'Set ALLOW_RESTORE=yes to run restore.' >&2; exit 64; };
+        test -n "$${RESTORE_FILE:-}" || { echo 'Set RESTORE_FILE to a file under /var/lib/postgresql/backup.' >&2; exit 64; };
+        pg_restore --exit-on-error --clean --if-exists --host=db --username="$${POSTGRES_USER}"
+        --dbname="$${POSTGRES_DB}" "/var/lib/postgresql/backup/$${RESTORE_FILE}"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-inventory_atlas}
+      POSTGRES_USER: ${POSTGRES_USER:-inventory_atlas}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      ALLOW_RESTORE: ${ALLOW_RESTORE:-no}
+      RESTORE_FILE: ${RESTORE_FILE:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - backup_data:/var/lib/postgresql:ro
+    networks:
+      - backend
+
+networks:
+  frontend: {}
+  backend:
+    internal: true
+
+volumes:
+  postgres_data: {}
+  media_data: {}
+  caddy_data: {}
+  backup_data: {}

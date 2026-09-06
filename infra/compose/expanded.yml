@@ -1,0 +1,4 @@
+services:
+  api:
+    environment:
+      JOB_RUNNER_MODE: disabled

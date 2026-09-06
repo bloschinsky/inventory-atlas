@@ -37,7 +37,7 @@ The MVP has no mandatory Redis, external search engine, message broker, or S3 se
 
 ## Status
 
-Implementation is in progress. FND-01 provides the pinned monorepo, stable root commands, application composition roots, frontend shell, and UI facade.
+Implementation is in progress. FND-01 provides the pinned monorepo, stable root commands, application composition roots, frontend shell, and UI facade. FND-02 provides the verified compact deployment, Docker-only development workflow, configuration bootstrap, and operational health checks.
 
 Current development version: **`0.1.0-dev.1`**.
 
@@ -67,6 +67,13 @@ See the [versioning policy](docs/project/versioning.md) for the full policy.
 - [Changelog](CHANGELOG.md)
 
 ## Root commands
+
+The supported development workflow requires Docker, with no host Node or pnpm.
+Start it with `docker compose -f compose.dev.yml up --build dev` and open
+`http://localhost:5173`. Run the commands below inside the tools container, for
+example `docker compose -f compose.dev.yml run --rm tools pnpm check`.
+See [development setup](docs/operations/development.md) for database, E2E,
+dependency management and Docker-driven checks.
 
 ```bash
 pnpm dev

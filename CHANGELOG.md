@@ -8,6 +8,8 @@ The project follows the version policy in `docs/project/versioning.md`.
 
 ### Added
 
+- Added and validated a Docker-only developer workflow with pinned Node/pnpm, API/Vue watchers, isolated dependency volumes, separate development/test PostgreSQL, Chromium and opt-in Docker tooling.
+
 - Approved product design document.
 - Approved implementation blueprint.
 - Executable TODO roadmap.
@@ -17,6 +19,7 @@ The project follows the version policy in `docs/project/versioning.md`.
 - Bootstrapped the pinned pnpm monorepo with API, worker, web, and shared package composition roots.
 - Added stable root commands, JavaScript/TypeScript checks, unit and E2E smoke tests, module-boundary enforcement, and clean-checkout CI.
 - Added the Vue application shell, approved route baseline, Vue Query/Pinia state boundaries, semantic tokens, and all 18 approved UI facade components.
+- Added the FND-02 compact-deployment foundation with pinned multi-stage backend/web images, private PostgreSQL networking, ordered migration/API/Caddy startup, typed configuration, database-authoritative bootstrap settings, health/meta endpoints, operational profiles, and persistence drills.
 
 ## Planned
 

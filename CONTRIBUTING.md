@@ -37,6 +37,11 @@ Acceptance criteria copied from the blueprint are immutable. Propose requirement
 
 ## Checks
 
+Use the Docker development environment described in
+`docs/operations/development.md`; host Node/pnpm installation is not required.
+Run root commands through `docker compose -f compose.dev.yml run --rm tools`,
+with the separate `docker-tools` service for scripts that invoke Docker.
+
 Run the checks relevant to the change, then the required root checks available for the current stage:
 
 ```bash

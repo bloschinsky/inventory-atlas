@@ -27,22 +27,23 @@
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.js --passWithNoTests",
     "test:e2e": "playwright test",
-    "db:migrate": "node scripts/foundation-command.mjs db:migrate db/migrations",
+    "db:migrate": "pnpm --filter @inventory-atlas/backend build && node packages/backend/dist/migrate.js",
     "db:seed": "node scripts/foundation-command.mjs db:seed db/seeds",
-    "db:verify": "node scripts/foundation-command.mjs db:verify db/migrations",
+    "db:verify": "pnpm --filter @inventory-atlas/backend build && node packages/backend/dist/verify-schema.js",
     "api:spec": "node scripts/generate-openapi.mjs",
     "contracts:generate": "node scripts/generate-contracts.mjs",
     "contracts:check": "node scripts/check-contract-drift.mjs",
     "i18n:check": "node scripts/check-i18n-coverage.mjs",
-    "compose:validate": "node scripts/foundation-command.mjs compose:validate infra/compose"
+    "compose:validate": "node scripts/validate-compose.mjs",
+    "test:compose:persistence": "node scripts/test-compose-persistence.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.62.1",
     "@types/node": "24.13.3",
     "@vitejs/plugin-vue": "6.0.8",
-    "@vue/compiler-sfc": "3.5.42",
     "@vitest/coverage-v8": "5.0.0",
+    "@vue/compiler-sfc": "3.5.42",
     "eslint": "10.10.0",
     "eslint-plugin-vue": "10.10.0",
     "globals": "16.5.0",
@@ -51,6 +52,7 @@
     "typescript": "6.0.3",
     "typescript-eslint": "8.69.0",
     "vitest": "5.0.0",
+    "vue-eslint-parser": "10.4.1",
     "vue-tsc": "3.3.11"
   }
 }

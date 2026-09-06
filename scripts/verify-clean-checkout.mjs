@@ -21,6 +21,16 @@ const required = [
   'docs/operations',
   'docs/security',
   'pnpm-lock.yaml',
+  'docker-compose.yml',
+  'compose.dev.yml',
+  'infra/docker/development.Dockerfile',
+  'infra/docker/caddy.Dockerfile',
+  '.env.example',
+  'infra/docker/backend.Dockerfile',
+  'infra/docker/web.Dockerfile',
+  'infra/caddy/Caddyfile',
+  'db/prisma/schema.prisma',
+  'packages/backend/src/generated/prisma/client.ts',
 ];
 
 await Promise.all(required.map((entry) => access(new URL(`../${entry}`, import.meta.url))));

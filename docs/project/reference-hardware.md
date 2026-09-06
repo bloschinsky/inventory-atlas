@@ -45,14 +45,15 @@ it used this machine or attaches a replacement profile before comparing results.
 | Storage | Kingston SNVS1000G, 1 TB NVMe SSD, NTFS |
 | Storage profile | Local media on the same volume by default; S3/MinIO optional |
 | OS/kernel | Windows 10 Pro 64-bit, 10.0.19045 (build 19045) |
-| Container runtime | Docker + Compose (deployment baseline) |
+| Container runtime | Docker Desktop 4.89.0; Engine 29.7.2; Compose 5.5.0 |
 | PostgreSQL | Version pinned in `docs/project/dependencies.md`; default compact profile |
 | Deployment profile | Compact (API + lightweight job runner in one container) |
 | Network | Local/LAN; no external search engine |
 
-Docker was not installed on this machine when the profile was recorded. FND-02
-must capture the exact Docker Engine and Compose versions before this host can
-produce valid container performance results.
+Docker was installed and FND-02 was validated on this machine on 2026-09-06.
+The Docker-only development and compact deployment workflows passed startup,
+health, real-PostgreSQL integration, Playwright, isolation, and persistence
+checks. The containerized Docker tooling used CLI 29.8.0 and Compose 5.5.1.
 
 ## Recorded procedure
 

@@ -5,4 +5,5 @@ pnpm-lock.yaml
 docs/product
 docs/**/*.md
 db/fixtures
+packages/backend/src/generated
 *.md

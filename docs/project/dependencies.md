@@ -35,6 +35,7 @@ the install authority.
 | `fastify` | `5.12.3` | MIT | HTTP server |
 | `@fastify/static` | `10.1.3` | MIT | Swagger/static support required by the adapter stack |
 | `@prisma/client` | `7.10.0` | Apache-2.0 | Approved CRUD client |
+| `@prisma/adapter-pg` | `7.10.0` | Apache-2.0 | PostgreSQL driver adapter for Prisma 7 |
 | `kysely` | `0.29.5` | MIT | Migrations and specialized SQL paths |
 | `pg` | `8.23.0` | MIT | PostgreSQL driver |
 | `argon2` | `0.45.1` | MIT | Argon2id password hashing |
@@ -52,10 +53,12 @@ the install authority.
 | `@vue/compiler-sfc` | `3.5.42` | MIT | Vue SFC compiler matched to Vue |
 | `typescript` | `6.0.3` | Apache-2.0 | Backend types and frontend `checkJs` |
 | `@types/node` | `24.13.3` | MIT | Node.js 24 declarations |
+| `@types/pg` | `8.15.6` | MIT | PostgreSQL driver declarations |
 | `eslint` | `10.10.0` | MIT | Lint runner |
 | `@eslint/js` | `10.0.1` | MIT | ESLint JavaScript rules |
 | `typescript-eslint` | `8.69.0` | MIT | TypeScript-aware linting |
 | `eslint-plugin-vue` | `10.10.0` | MIT | Vue SFC linting |
+| `vue-eslint-parser` | `10.4.1` | MIT | Explicit Vue lint parser peer |
 | `prettier` | `3.9.6` | MIT | Formatting |
 | `vitest` | `5.0.0` | MIT | Unit and component tests |
 | `@vitest/coverage-v8` | `5.0.0` | MIT | Unit-test coverage |
@@ -74,6 +77,12 @@ TypeScript 6.0.3 is intentionally selected instead of the newer 7.x line:
 contract generator supports TypeScript 6. This is a verified common range.
 Prisma CLI and client must remain on the same stable version, `7.10.0`; the
 newer Prisma prerelease is not part of the baseline.
+
+The runtime uses `@prisma/client` and `@prisma/adapter-pg` 7.10.0. The Prisma
+CLI is temporarily absent from the installed workspace because its current
+transitive Studio dependency includes EPL-2.0 and fails the repository license
+gate. The generated 7.10.0 client is committed, so clean builds remain
+reproducible; regenerating it is blocked pending the required license review.
 
 ## Infrastructure license
 

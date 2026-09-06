@@ -1,0 +1,19 @@
+{
+	admin off
+}
+
+{$APP_BASE_URL:http://localhost} {
+	encode zstd gzip
+
+	handle /api/* {
+		reverse_proxy api:3000
+	}
+
+	handle /health/* {
+		reverse_proxy api:3000
+	}
+
+	handle {
+		reverse_proxy web:8080
+	}
+}

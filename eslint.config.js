@@ -8,6 +8,7 @@ export default [
     ignores: [
       '**/dist/**',
       '**/coverage/**',
+      'packages/backend/src/generated/**',
       'docs/product/**',
       'scripts/fixtures/module-boundaries/negative/**',
     ],

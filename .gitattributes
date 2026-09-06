@@ -5,3 +5,6 @@
 *.webp binary
 *.heic binary
 *.pdf binary
+
+# Prisma owns this generated source and currently emits trailing spaces.
+packages/backend/src/generated/** -whitespace

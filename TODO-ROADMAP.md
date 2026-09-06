@@ -186,27 +186,28 @@ Suggested pull requests:
 
 Tasks:
 
-- [ ] Create multi-stage API/worker and web images with non-root runtime users.
-- [ ] Define PostgreSQL, migration, API, static web, Caddy, and optional worker services.
-- [ ] Add service dependencies and readiness-based startup ordering.
-- [ ] Keep PostgreSQL on the internal network without a public port by default.
-- [ ] Create named volumes/bind mounts for database and local media persistence.
-- [ ] Implement typed environment parsing and reject unsafe production configuration.
-- [ ] Implement first-initialization setting bootstrap and `settings_initialized_at` behavior from ADR-026.
-- [ ] Test bootstrap/database precedence and fail production startup on conflicts for `APP_BASE_URL` or `PUBLIC_CATALOG_MODE`; verify that a `DEFAULT_LOCALE` mismatch warns and the database wins.
-- [ ] Implement liveness and readiness endpoints with actionable component states.
-- [ ] Implement `/api/v1/meta` returning API/build/schema versions and supported locales without secrets.
-- [ ] Add compact, expanded, development, backup, and test Compose profiles/overrides.
-- [ ] Create `.env.example` with every approved variable and authority note.
-- [ ] Add `pnpm compose:validate` and container recreation persistence tests.
+- [x] Create multi-stage API/worker and web images with non-root runtime users.
+- [x] Define PostgreSQL, migration, API, static web, Caddy, and optional worker services.
+- [x] Add service dependencies and readiness-based startup ordering.
+- [x] Keep PostgreSQL on the internal network without a public port by default.
+- [x] Create named volumes/bind mounts for database and local media persistence.
+- [x] Implement typed environment parsing and reject unsafe production configuration.
+- [x] Implement first-initialization setting bootstrap and `settings_initialized_at` behavior from ADR-026.
+- [x] Test bootstrap/database precedence and fail production startup on conflicts for `APP_BASE_URL` or `PUBLIC_CATALOG_MODE`; verify that a `DEFAULT_LOCALE` mismatch warns and the database wins.
+- [x] Implement liveness and readiness endpoints with actionable component states.
+- [x] Implement `/api/v1/meta` returning API/build/schema versions and supported locales without secrets.
+- [x] Add compact, expanded, development, backup, and test Compose profiles/overrides.
+- [x] Create `.env.example` with every approved variable and authority note.
+- [x] Add `pnpm compose:validate` and container recreation persistence tests.
+- [x] Verify the Docker-only developer workflow (`compose.dev.yml`): clean install without host Node/pnpm, API/Vue hot reload, isolated dependency volumes, real-PostgreSQL integration tests, Playwright and container-driven Compose checks. This supports FND-02 without changing its verbatim acceptance criteria.
 
 Acceptance criteria (verbatim from the approved blueprint):
 
-- [ ] PostgreSQL, migration, API, static web, and Caddy start in the required order.
-- [ ] Database is not published publicly by default.
-- [ ] Liveness/readiness checks report useful states.
-- [ ] Persistent data survives container recreation.
-- [ ] `.env.example` documents every setting.
+- [x] PostgreSQL, migration, API, static web, and Caddy start in the required order.
+- [x] Database is not published publicly by default.
+- [x] Liveness/readiness checks report useful states.
+- [x] Persistent data survives container recreation.
+- [x] `.env.example` documents every setting.
 
 ### FND-03 Generate one API contract
 
@@ -312,7 +313,7 @@ Acceptance criteria (verbatim from the approved blueprint):
 - [ ] OpenAPI, declarations, and Zod artifacts share one checksum.
 - [ ] English default and Ukrainian selection pass E2E.
 - [x] FND-01D frontend structure, state ownership, route shell, UI facade, semantic tokens, and boundary checks are complete.
-- [ ] Compact Docker Compose deployment is ready for the first catalog increment.
+- [x] Compact Docker Compose deployment is ready for the first catalog increment.
 
 ## 6. Stage 2 - Core catalog, schema, and media
 
@@ -1164,7 +1165,7 @@ Every mandatory test from blueprint section 20.2 has an explicit delivery owner.
 | [ ] | Replace StorageNode attributes through the Kysely `AttributeValuePort`; required-field failure rolls back node, values, version, projection, audit, and outbox together. | STO-01 |
 | [ ] | Persist multiselect as ordered scalar option rows only; reject wrong-field options, duplicates, gaps, and any array-shaped persistence representation. | CAT-02 |
 | [ ] | Reprint the same active scan token, invalidate its prior generation on revoke/reissue, and resolve retained key versions during rotation. | LAB-01 |
-| [ ] | Apply bootstrap/database configuration precedence and fail startup on production conflicts for canonical base URL or public catalog mode. | FND-02 |
+| [x] | Apply bootstrap/database configuration precedence and fail startup on production conflicts for canonical base URL or public catalog mode. | FND-02 |
 | [ ] | Remove a field value from public projections after `public_visibility` changes. | SRCH-03 |
 | [ ] | Prevent Viewer inference of a private value through text search, typed filter, or result count. | SRCH-03 |
 | [ ] | Exclude unlisted entities from Public/Viewer/Editor lists while permitted direct URLs/tokens work. | SRCH-03 |

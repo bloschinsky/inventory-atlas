@@ -1,0 +1,25 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../../packages/backend/src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model AppSetting {
+  settingKey String   @id @map("setting_key") @db.VarChar(64)
+  valueText  String   @map("value_text")
+  updatedAt  DateTime @map("updated_at") @db.Timestamptz(6)
+
+  @@map("app_settings")
+}
+
+model InstallationMetadata {
+  singleton             Boolean  @id
+  settingsInitializedAt DateTime @map("settings_initialized_at") @db.Timestamptz(6)
+
+  @@map("installation_metadata")
+}
