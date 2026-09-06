@@ -223,22 +223,22 @@ Suggested pull requests:
 
 Tasks:
 
-- [ ] Define the normalized `/api/v1` OpenAPI generation pipeline.
-- [ ] Add stable sorting/normalization so equivalent specs have identical output.
-- [ ] Generate JavaScript-friendly JSDoc declarations and TypeScript declarations from the same spec.
-- [ ] Generate runtime Zod schemas from the same normalized spec.
-- [ ] Embed the common spec checksum in every generated artifact.
-- [ ] Add representative request, response, cursor, problem-details, and optimistic-concurrency contracts.
-- [ ] Implement contract drift detection for CI and `pnpm check`.
-- [ ] Add lint/review policy preventing handwritten duplicate API payload schemas.
-- [ ] Add a runtime negative test for an invalid generated-client payload.
+- [x] Define the normalized `/api/v1` OpenAPI generation pipeline.
+- [x] Add stable sorting/normalization so equivalent specs have identical output.
+- [x] Generate JavaScript-friendly JSDoc declarations and TypeScript declarations from the same spec.
+- [x] Generate runtime Zod schemas from the same normalized spec.
+- [x] Embed the common spec checksum in every generated artifact.
+- [x] Add representative request, response, cursor, problem-details, and optimistic-concurrency contracts.
+- [x] Implement contract drift detection for CI and `pnpm check`.
+- [x] Add lint/review policy preventing handwritten duplicate API payload schemas.
+- [x] Add a runtime negative test for an invalid generated-client payload.
 
 Acceptance criteria (verbatim from the approved blueprint):
 
-- [ ] One command emits normalized OpenAPI and all client artifacts.
-- [ ] Generated artifacts carry the same spec checksum.
-- [ ] CI fails on contract drift.
-- [ ] A handwritten duplicate payload schema is rejected by review/lint policy.
+- [x] One command emits normalized OpenAPI and all client artifacts.
+- [x] Generated artifacts carry the same spec checksum.
+- [x] CI fails on contract drift.
+- [x] A handwritten duplicate payload schema is rejected by review/lint policy.
 
 ### FND-04 Authenticate and authorize users
 

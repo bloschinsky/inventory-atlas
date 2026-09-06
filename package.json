@@ -16,7 +16,7 @@
     "build": "pnpm -r --if-present build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "eslint . --max-warnings 0",
+    "lint": "eslint . --max-warnings 0 && node scripts/check-api-schema-duplicates.mjs",
     "license:check": "node scripts/check-licenses.mjs",
     "license:report": "node scripts/check-licenses.mjs --write",
     "check": "pnpm check:types && pnpm boundaries:check && pnpm contracts:check && pnpm ui:facade-gaps && pnpm clean-checkout:check",
@@ -38,6 +38,7 @@
     "test:compose:persistence": "node scripts/test-compose-persistence.mjs"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "0.99.0",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.62.1",
     "@types/node": "24.13.3",

@@ -1,0 +1,234 @@
+{
+  "components": {
+    "schemas": {
+      "CursorPageDto": {
+        "properties": {
+          "limit": { "example": 25, "maximum": 100, "minimum": 1, "type": "number" },
+          "nextCursor": {
+            "description": "Opaque cursor for the next page.",
+            "example": "eyJpZCI6Ii4uLiJ9",
+            "type": "string"
+          }
+        },
+        "required": ["limit"],
+        "type": "object"
+      },
+      "ItemMutationRequestDto": {
+        "properties": {
+          "categoryId": {
+            "example": "01JBM4V6M9Q5Q2HTY0FQVN3M2D",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "type": "string"
+          },
+          "displayName": {
+            "example": "Cordless drill",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "expectedVersion": {
+            "description": "Known aggregate version used for optimistic concurrency.",
+            "example": 7,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": ["displayName", "expectedVersion"],
+        "type": "object"
+      },
+      "ItemPageResponseDto": {
+        "properties": {
+          "items": { "items": { "$ref": "#/components/schemas/ItemSummaryDto" }, "type": "array" },
+          "page": { "$ref": "#/components/schemas/CursorPageDto" }
+        },
+        "required": ["items", "page"],
+        "type": "object"
+      },
+      "ItemSummaryDto": {
+        "properties": {
+          "displayName": { "example": "Cordless drill", "type": "string" },
+          "publicId": { "example": "itm_01JBM4V6M9Q5Q2HTY0FQVN3M2D", "type": "string" },
+          "version": { "example": 8, "minimum": 1, "type": "number" }
+        },
+        "required": ["displayName", "publicId", "version"],
+        "type": "object"
+      },
+      "ProblemDetailsDto": {
+        "properties": {
+          "code": { "example": "VALIDATION_FAILED", "type": "string" },
+          "detail": { "example": "One or more fields are invalid.", "type": "string" },
+          "fieldErrors": {
+            "items": { "$ref": "#/components/schemas/ProblemFieldErrorDto" },
+            "type": "array"
+          },
+          "requestId": {
+            "example": "0198f40c-92f3-7a12-bc9a-653f97786c2b",
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": { "example": 400, "maximum": 599, "minimum": 400, "type": "number" },
+          "title": { "example": "Request validation failed", "type": "string" },
+          "type": {
+            "example": "https://inventory-atlas.local/problems/validation-failed",
+            "type": "string"
+          }
+        },
+        "required": ["code", "detail", "requestId", "status", "title", "type"],
+        "type": "object"
+      },
+      "ProblemFieldErrorDto": {
+        "properties": {
+          "field": { "example": "displayName", "type": "string" },
+          "messages": {
+            "example": ["must contain at least 1 character"],
+            "items": { "type": "string" },
+            "type": "array"
+          }
+        },
+        "required": ["field", "messages"],
+        "type": "object"
+      },
+      "VersionConflictProblemDto": {
+        "properties": {
+          "code": { "example": "VALIDATION_FAILED", "type": "string" },
+          "currentVersion": { "example": 8, "minimum": 1, "type": "number" },
+          "detail": { "example": "One or more fields are invalid.", "type": "string" },
+          "fieldErrors": {
+            "items": { "$ref": "#/components/schemas/ProblemFieldErrorDto" },
+            "type": "array"
+          },
+          "requestId": {
+            "example": "0198f40c-92f3-7a12-bc9a-653f97786c2b",
+            "format": "uuid",
+            "type": "string"
+          },
+          "safeDiff": {
+            "additionalProperties": true,
+            "description": "Visibility-safe fields that changed since the submitted version.",
+            "example": { "displayName": "Cordless drill (workshop)" },
+            "type": "object"
+          },
+          "status": { "example": 400, "maximum": 599, "minimum": 400, "type": "number" },
+          "title": { "example": "Request validation failed", "type": "string" },
+          "type": {
+            "example": "https://inventory-atlas.local/problems/validation-failed",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "currentVersion",
+          "detail",
+          "requestId",
+          "safeDiff",
+          "status",
+          "title",
+          "type"
+        ],
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "contact": {},
+    "description": "The REST contract consumed by Inventory Atlas clients.",
+    "title": "Inventory Atlas API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1": {
+      "get": {
+        "operationId": "getFoundationStatus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": { "status": { "example": "ready", "type": "string" } },
+                  "required": ["status"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "",
+        "tags": ["foundation"]
+      }
+    },
+    "/api/v1/meta": {
+      "get": {
+        "operationId": "getMetadata",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "apiVersion": { "enum": ["v1"], "type": "string" },
+                    "buildRevision": { "type": "string" },
+                    "buildVersion": { "type": "string" },
+                    "schemaVersion": { "nullable": true, "type": "string" },
+                    "supportedLocales": {
+                      "items": { "enum": ["en", "uk"], "type": "string" },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "apiVersion",
+                    "buildRevision",
+                    "buildVersion",
+                    "schemaVersion",
+                    "supportedLocales"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "",
+        "tags": ["system"]
+      }
+    },
+    "/health/live": {
+      "get": {
+        "operationId": "getLiveness",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": { "status": { "enum": ["live"], "type": "string" } },
+                  "required": ["status"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "",
+        "tags": ["health"]
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "getReadiness",
+        "parameters": [],
+        "responses": { "200": { "description": "Every required component is ready." } },
+        "summary": "",
+        "tags": ["health"]
+      }
+    }
+  },
+  "servers": [],
+  "tags": [],
+  "x-spec-checksum": "a3988c0997451247ecd31b290b63f43075b10bede3cf6f84b8a55f846823f2d2"
+}

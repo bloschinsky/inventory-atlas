@@ -9,6 +9,7 @@ export default [
       '**/dist/**',
       '**/coverage/**',
       'packages/backend/src/generated/**',
+      'packages/contracts/src/generated/**',
       'docs/product/**',
       'scripts/fixtures/module-boundaries/negative/**',
     ],

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { FoundationRuntimePort } from './foundation.runtime.js';
 import { createApiApplication } from './main.js';
+import { createOpenApiDocument } from './openapi-document.js';
 
 const runtime: FoundationRuntimePort = {
   async readiness() {
@@ -29,6 +30,34 @@ const runtime: FoundationRuntimePort = {
 };
 
 describe('API composition root', () => {
+  it('builds a stable OpenAPI document with representative shared contracts', async () => {
+    const app = await createApiApplication(runtime);
+    const document = createOpenApiDocument(app);
+    const operationIds = Object.values(document.paths).flatMap((pathItem) =>
+      Object.values(pathItem ?? {})
+        .filter(
+          (operation) => operation && typeof operation === 'object' && 'operationId' in operation,
+        )
+        .map((operation) => operation.operationId),
+    );
+
+    expect(operationIds.toSorted()).toEqual([
+      'getFoundationStatus',
+      'getLiveness',
+      'getMetadata',
+      'getReadiness',
+    ]);
+    expect(new Set(operationIds).size).toBe(operationIds.length);
+    expect(document.components?.schemas).toMatchObject({
+      CursorPageDto: expect.any(Object),
+      ItemMutationRequestDto: expect.any(Object),
+      ItemPageResponseDto: expect.any(Object),
+      ProblemDetailsDto: expect.any(Object),
+      VersionConflictProblemDto: expect.any(Object),
+    });
+    await app.close();
+  });
+
   it('initializes and closes the Fastify application', async () => {
     const app = await createApiApplication(runtime);
     await app.init();

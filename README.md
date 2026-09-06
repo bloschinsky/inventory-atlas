@@ -37,7 +37,7 @@ The MVP has no mandatory Redis, external search engine, message broker, or S3 se
 
 ## Status
 
-Implementation is in progress. FND-01 provides the pinned monorepo, stable root commands, application composition roots, frontend shell, and UI facade. FND-02 provides the verified compact deployment, Docker-only development workflow, configuration bootstrap, and operational health checks.
+Implementation is in progress. FND-01 provides the pinned monorepo, stable root commands, application composition roots, frontend shell, and UI facade. FND-02 provides the verified compact deployment, Docker-only development workflow, configuration bootstrap, and operational health checks. FND-03 provides one normalized OpenAPI source with generated TypeScript, JSDoc, Fetch client, and Zod artifacts plus contract drift enforcement.
 
 Current development version: **`0.1.0-dev.1`**.
 

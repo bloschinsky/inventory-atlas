@@ -1,2 +1,4 @@
-/** Marker exported until FND-03 replaces this package with generated artifacts. */
-export const contractSource = 'openapi-pending' as const;
+export * from './generated/index.js';
+export * from './generated/zod.gen.js';
+
+export const contractSource = 'normalized-openapi' as const;

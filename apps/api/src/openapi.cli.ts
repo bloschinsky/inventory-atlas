@@ -1,0 +1,36 @@
+import 'reflect-metadata';
+import { Logger } from '@nestjs/common';
+import { writeFile } from 'node:fs/promises';
+import { createApiApplication } from './main.js';
+import { createOpenApiDocument } from './openapi-document.js';
+import type { FoundationRuntimePort } from './foundation.runtime.js';
+
+const output = process.argv[2];
+if (!output) throw new Error('An output path is required.');
+Logger.overrideLogger(false);
+
+const documentationRuntime: FoundationRuntimePort = {
+  async readiness() {
+    throw new Error('The documentation runtime does not serve requests.');
+  },
+  metadata() {
+    return {
+      apiVersion: 'v1',
+      buildVersion: 'contract-generation',
+      buildRevision: 'contract-generation',
+      schemaVersion: null,
+      supportedLocales: ['en', 'uk'],
+    };
+  },
+  trustProxy() {
+    return false;
+  },
+};
+
+const app = await createApiApplication(documentationRuntime);
+try {
+  const document = createOpenApiDocument(app);
+  await writeFile(output, JSON.stringify(document), 'utf8');
+} finally {
+  await app.close();
+}
