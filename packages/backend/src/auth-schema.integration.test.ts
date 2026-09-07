@@ -6,6 +6,7 @@ import { FileMigrationProvider, Migrator } from 'kysely/migration';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createDatabase, currentSchemaVersion, expectedSchemaVersion } from './database.js';
+import { PasswordHasher } from './auth/index.js';
 
 const suite = process.env.INTEGRATION_DATABASE_URL ? describe : describe.skip;
 const schema = `auth_${randomUUID().replaceAll('-', '')}`;
@@ -74,6 +75,17 @@ function invitation(overrides: Record<string, unknown> = {}) {
 }
 
 suite('FND-04 authentication schema on PostgreSQL', () => {
+  it('round-trips a real encoded Argon2id credential through the migrated password column', async () => {
+    const hasher = new PasswordHasher();
+    const password = 'Synthetic integration пароль';
+    const encoded = await hasher.hash(password);
+    const { rows } = await insert('users', user({ password_hash: encoded }));
+    const stored = await pool.query('select password_hash from users where id = $1', [rows[0].id]);
+    expect(stored.rows[0].password_hash).toBe(encoded);
+    expect(await hasher.verify(stored.rows[0].password_hash, password)).toBe(true);
+    expect(await hasher.verify(stored.rows[0].password_hash, 'incorrect')).toBe(false);
+  });
+
   beforeAll(async () => {
     const url = new URL(process.env.INTEGRATION_DATABASE_URL!);
     admin = new Pool({ connectionString: url.toString(), max: 1 });

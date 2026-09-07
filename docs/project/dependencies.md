@@ -84,6 +84,10 @@ transitive Studio dependency includes EPL-2.0 and fails the repository license
 gate. The generated 7.10.0 client is committed, so clean builds remain
 reproducible; regenerating it is blocked pending the required license review.
 
+FND-04 installs the approved `argon2` 0.45.1 runtime dependency and explicitly
+allows its native-binding install script. The credential adapter and validation
+scope are documented in [authentication.md](authentication.md).
+
 ## Infrastructure license
 
 | Component | Version | License |

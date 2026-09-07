@@ -257,7 +257,7 @@ Tasks:
 - [x] Add Kysely migrations for users, sessions, invitations, audit events, app settings, and required indexes/checks.
 - [ ] Generate Prisma client models from the migrated schema and add drift verification.
 - [ ] Implement one-time first-Owner bootstrap with safe concurrency behavior.
-- [ ] Implement Argon2id password hashing with parameters encoded in the stored hash.
+- [x] Implement Argon2id password hashing with parameters encoded in the stored hash.
 - [ ] Generate opaque session tokens and store only their hashes.
 - [ ] Implement secure cookie, CSRF, idle expiry, absolute expiry, last-seen, and revocation behavior.
 - [ ] Implement invite issue, hash, expiry, revoke, and accept flows.
@@ -266,6 +266,10 @@ Tasks:
 - [ ] Add rate limiting to authentication and token workflows.
 - [ ] Record safe authentication/authorization audit events without secrets.
 - [ ] Add API and UI flows for sign-in, sign-out, invitation acceptance, session management, users, and roles.
+
+Implementation evidence: [Auth credential adapter and checks](docs/project/authentication.md).
+Prisma model generation remains blocked by the CLI dependency license review
+recorded in [the dependency baseline](docs/project/dependencies.md).
 
 Acceptance criteria (verbatim from the approved blueprint):
 

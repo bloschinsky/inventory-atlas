@@ -41,6 +41,10 @@ Implementation is in progress. FND-01 provides the pinned monorepo, stable root 
 
 Current development version: **`0.1.0-dev.1`**.
 
+FND-04 now includes Auth/Audit migrations and the tested Argon2id credential adapter.
+See [authentication implementation status](docs/project/authentication.md) for
+completed behavior, checks and remaining dependencies.
+
 First release target: **`0.1.0` Technical Demo**.
 
 ## Versioning

@@ -10,3 +10,4 @@ export {
   migrateToLatest,
 } from './database.js';
 export { createSettingsClient, initializeInstallationSettings } from './settings.repository.js';
+export { PasswordHasher } from './auth/index.js';
