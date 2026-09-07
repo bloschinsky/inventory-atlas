@@ -5,6 +5,7 @@ import {
   currentSchemaVersion,
   expectedSchemaVersion,
   initializeInstallationSettings,
+  SessionService,
 } from '@inventory-atlas/backend';
 import {
   parseEnvironment,
@@ -14,6 +15,7 @@ import {
 import { access, mkdir } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import type { AuthRuntimePort } from './auth.runtime.js';
 
 export const FOUNDATION_RUNTIME = Symbol('FOUNDATION_RUNTIME');
 
@@ -39,14 +41,19 @@ export interface FoundationRuntimePort {
   trustProxy(): boolean | string | string[];
 }
 
-export class FoundationRuntime implements FoundationRuntimePort, OnApplicationShutdown {
+export class FoundationRuntime
+  implements FoundationRuntimePort, AuthRuntimePort, OnApplicationShutdown
+{
   private schemaVersion: string | null = null;
+  private readonly sessions: SessionService;
 
   private constructor(
     private readonly configuration: RuntimeConfiguration,
     private readonly database: ReturnType<typeof createDatabase>,
     private readonly settingsClient: ReturnType<typeof createSettingsClient>,
-  ) {}
+  ) {
+    this.sessions = new SessionService(settingsClient, configuration.sessionSecret);
+  }
 
   static async create(
     environment: Readonly<Record<string, string | undefined>>,
@@ -126,6 +133,14 @@ export class FoundationRuntime implements FoundationRuntimePort, OnApplicationSh
 
   trustProxy(): boolean | string | string[] {
     return this.configuration.trustProxy;
+  }
+
+  authSessions(): SessionService {
+    return this.sessions;
+  }
+
+  secureSessionCookies(): boolean {
+    return this.configuration.cookieSecure;
   }
 
   async onApplicationShutdown(): Promise<void> {

@@ -258,8 +258,8 @@ Tasks:
 - [x] Generate Prisma client models from the migrated schema and add drift verification.
 - [x] Implement one-time first-Owner bootstrap with safe concurrency behavior.
 - [x] Implement Argon2id password hashing with parameters encoded in the stored hash.
-- [ ] Generate opaque session tokens and store only their hashes.
-- [ ] Implement secure cookie, CSRF, idle expiry, absolute expiry, last-seen, and revocation behavior.
+- [x] Generate opaque session tokens and store only their hashes.
+- [x] Implement secure cookie, CSRF, idle expiry, absolute expiry, last-seen, and revocation behavior.
 - [ ] Implement invite issue, hash, expiry, revoke, and accept flows.
 - [ ] Encode the Public, Viewer, Editor, Owner, and Admin capability matrix from blueprint section 16.1.
 - [ ] Prevent deletion/demotion of the last Owner and enforce explicit Owner confirmation where required.
@@ -275,8 +275,8 @@ Kysely-migrated PostgreSQL schema in the integration pipeline.
 
 Acceptance criteria (verbatim from the approved blueprint):
 
-- [ ] Argon2id and hashed opaque sessions are implemented.
-- [ ] Cookie, CSRF, expiry, and revocation tests pass.
+- [x] Argon2id and hashed opaque sessions are implemented.
+- [x] Cookie, CSRF, expiry, and revocation tests pass.
 - [ ] Public, Viewer, Editor, Owner, and Admin permissions match section 16.
 - [ ] Security events appear in audit without secrets.
 

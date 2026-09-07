@@ -7,6 +7,7 @@ export function createOpenApiDocument(app: INestApplication): OpenAPIObject {
     .setTitle('Inventory Atlas API')
     .setDescription('The REST contract consumed by Inventory Atlas clients.')
     .setVersion('1.0.0')
+    .addCookieAuth('inventory_atlas_session')
     .build();
 
   return SwaggerModule.createDocument(app, configuration, {

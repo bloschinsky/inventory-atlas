@@ -14,6 +14,13 @@ export {
   bootstrapFirstOwner,
   FirstOwnerBootstrapError,
   PasswordHasher,
+  SessionError,
+  SessionService,
+  sessionPolicy,
   type BootstrappedOwner,
   type FirstOwnerBootstrapInput,
+  type AuthenticatedSession,
+  type IssuedSession,
+  type SessionActor,
+  type SessionRequestMetadata,
 } from './auth/index.js';

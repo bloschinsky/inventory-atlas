@@ -1,9 +1,10 @@
 # Authentication implementation status
 
 FND-04 currently provides the Auth/Audit migrations, generated Prisma models,
-migrated-schema drift verification and the Auth credential adapter exported as
-`PasswordHasher` from `@inventory-atlas/backend`, plus one-time first-Owner
-bootstrap. Sign-in, sessions, invitations and authorization remain roadmap tasks.
+migrated-schema drift verification, the Auth credential adapter, one-time
+first-Owner bootstrap, and the FND-04B opaque session lifecycle. Invitations,
+the complete role policy, authentication rate limits, security audit events and
+the browser UI remain roadmap tasks.
 
 ## First Owner bootstrap
 
@@ -31,6 +32,32 @@ request size limits, login throttling and hash-upgrade orchestration belong to
 the forthcoming Auth application flows. Stored hashes must come from the trusted
 credential store, never directly from request input.
 
+## Opaque sessions and CSRF
+
+`SessionService` issues a fresh 256-bit base64url session token after verifying
+an active account with Argon2id. The token, its session-bound CSRF secret and the
+normalized client IP are domain-separated with HMAC-SHA-256 under
+`SESSION_SECRET`; only their 64-character lowercase hexadecimal digests enter
+PostgreSQL. Unknown email addresses traverse a fixed synthetic Argon2id hash so
+credential failures use the same verification path without storing or logging
+request secrets.
+
+Sessions have a 30-minute sliding idle lifetime and a fixed 30-day absolute
+lifetime. A successful lookup advances `last_seen_at` and `idle_expires_at` up to
+the absolute boundary. Expired, archived-user and disabled-user sessions fail
+closed and are marked revoked. Sign-out revokes the current row; targeted
+revocation can affect only another session owned by the current actor.
+
+The API exposes `POST /api/v1/auth/session`, `GET /api/v1/auth/me`,
+`DELETE /api/v1/auth/session`, and `DELETE /api/v1/auth/sessions/{id}`. The raw
+session token is sent only in the `inventory_atlas_session` cookie with
+`HttpOnly`, `SameSite=Lax`, `Path=/`, a bounded `Max-Age`, and `Secure` whenever
+`COOKIE_SECURE=true`. The separate CSRF token is returned by sign-in and
+`/auth/me`; every authenticated mutation requires the exact value in
+`X-CSRF-Token`. Responses containing session material use
+`Cache-Control: no-store`, and sign-out or a failed current-session lookup
+expires the browser cookie.
+
 The native `argon2` dependency is pinned to the approved `0.45.1` baseline, with
 its installation script explicitly enabled in `pnpm-workspace.yaml`. The wrapper
 uses the [node-argon2 API](https://github.com/ranisalt/node-argon2). Docker builds
@@ -43,13 +70,20 @@ install the same pinned package and native binding as the development workspace.
   factors and corrupt/unsupported hashes.
 - Real-PostgreSQL integration tests round-trip an encoded credential through the
   migrated `users.password_hash` column and verify it after reading it back.
+- Real-PostgreSQL session tests cover opaque token/CSRF/IP hashing, independent
+  credentials, idle refresh, absolute expiry, fail-closed revocation and current
+  or other-owned session revocation.
+- API tests cover cookie parsing ambiguity, fixed cookie attributes, CSRF on
+  mutations, cookie clearing, current-session recovery and non-disclosing
+  targeted revocation errors. The generated OpenAPI, declarations, JavaScript
+  JSDoc and Zod artifacts include the four session endpoints under one checksum.
 - Run `pnpm test`, `pnpm test:integration`, `pnpm lint`, `pnpm check`, `pnpm build`
   and `pnpm license:check` through the documented Docker developer workflow.
 
-Verified for this increment: all 51 unit tests and 37 PostgreSQL integration
-tests passed, along with Prisma validation/generation, lint,
-types/boundaries/contracts, build and formatting checks. The earlier credential
-increment also verified the production API image and dependency-license policy.
+Verified for this increment: all 57 unit tests and 42 PostgreSQL integration
+tests passed, along with lint, types/boundaries/contracts, build, schema,
+localization and formatting checks. The earlier credential increment also
+verified the production API image and dependency-license policy.
 
 The subsequent [dependency remediation](dependency-remediation.md) resolves the
 owner-approved Prisma CLI license exception and the dependency audit findings.

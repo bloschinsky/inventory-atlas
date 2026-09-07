@@ -1,9 +1,46 @@
-import { describe, expect, it } from 'vitest';
+import { SessionError } from '@inventory-atlas/backend';
+import { describe, expect, it, vi } from 'vitest';
+import type { AuthRuntimePort } from './auth.runtime.js';
 import type { FoundationRuntimePort } from './foundation.runtime.js';
 import { createApiApplication } from './main.js';
 import { createOpenApiDocument } from './openapi-document.js';
 
-const runtime: FoundationRuntimePort = {
+const issuedAt = new Date('2026-09-07T10:00:00.000Z');
+const sessionId = '0198f40c-92f3-7a12-bc9a-653f97786c2b';
+const sessionToken = 's'.repeat(43);
+const csrfToken = 'c'.repeat(43);
+const actor = {
+  id: '0198f40c-92f3-7a12-bc9a-653f97786c2c',
+  email: 'owner@example.test',
+  displayName: 'Synthetic Owner',
+  locale: 'en' as const,
+  role: 'owner' as const,
+};
+
+function createAuthRuntime() {
+  return {
+    signIn: vi.fn(async () => ({
+      id: sessionId,
+      token: sessionToken,
+      csrfToken,
+      idleExpiresAt: new Date(issuedAt.getTime() + 30 * 60 * 1_000),
+      absoluteExpiresAt: new Date(issuedAt.getTime() + 30 * 24 * 60 * 60 * 1_000),
+      actor,
+    })),
+    authenticate: vi.fn(async () => ({
+      id: sessionId,
+      csrfToken,
+      idleExpiresAt: new Date(issuedAt.getTime() + 30 * 60 * 1_000),
+      absoluteExpiresAt: new Date(issuedAt.getTime() + 30 * 24 * 60 * 60 * 1_000),
+      actor,
+    })),
+    revokeCurrent: vi.fn(async () => undefined),
+    revokeOwned: vi.fn(async () => undefined),
+  };
+}
+
+const authSessions = createAuthRuntime();
+const runtime: FoundationRuntimePort & AuthRuntimePort = {
   async readiness() {
     return {
       status: 'ready',
@@ -27,6 +64,12 @@ const runtime: FoundationRuntimePort = {
   trustProxy() {
     return false;
   },
+  authSessions() {
+    return authSessions;
+  },
+  secureSessionCookies() {
+    return true;
+  },
 };
 
 describe('API composition root', () => {
@@ -42,10 +85,14 @@ describe('API composition root', () => {
     );
 
     expect(operationIds.toSorted()).toEqual([
+      'createAuthSession',
+      'deleteAuthSession',
+      'getCurrentActor',
       'getFoundationStatus',
       'getLiveness',
       'getMetadata',
       'getReadiness',
+      'revokeAuthSession',
     ]);
     expect(new Set(operationIds).size).toBe(operationIds.length);
     expect(document.components?.schemas).toMatchObject({
@@ -55,6 +102,112 @@ describe('API composition root', () => {
       ProblemDetailsDto: expect.any(Object),
       VersionConflictProblemDto: expect.any(Object),
     });
+    await app.close();
+  });
+
+  it('sets a hardened opaque cookie and returns the separate CSRF token on sign-in', async () => {
+    const sessions = createAuthRuntime();
+    const app = await createApiApplication({
+      ...runtime,
+      authSessions: () => sessions,
+    });
+    await app.init();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/session',
+      payload: { email: 'owner@example.test', password: 'synthetic password' },
+      headers: { 'user-agent': 'Synthetic Browser' },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['set-cookie']).toContain(
+      `inventory_atlas_session=${sessionToken}; Path=/; HttpOnly; SameSite=Lax;`,
+    );
+    expect(response.headers['set-cookie']).toContain('Secure');
+    expect(response.headers['cache-control']).toBe('no-store');
+    expect(response.json()).toMatchObject({ sessionId, csrfToken, actor });
+    expect(response.body).not.toContain(sessionToken);
+    expect(sessions.signIn).toHaveBeenCalledWith(
+      'owner@example.test',
+      'synthetic password',
+      expect.objectContaining({ userAgent: 'Synthetic Browser' }),
+    );
+    await app.close();
+  });
+
+  it('authenticates from the cookie and requires CSRF for every session mutation', async () => {
+    const sessions = createAuthRuntime();
+    const app = await createApiApplication({
+      ...runtime,
+      authSessions: () => sessions,
+      secureSessionCookies: () => false,
+    });
+    await app.init();
+    const cookie = `inventory_atlas_session=${sessionToken}`;
+
+    const me = await app.inject({ method: 'GET', url: '/api/v1/auth/me', headers: { cookie } });
+    expect(me.statusCode).toBe(200);
+    expect(me.headers['cache-control']).toBe('no-store');
+    expect(sessions.authenticate).toHaveBeenCalledWith(sessionToken);
+
+    const missingCsrf = await app.inject({
+      method: 'DELETE',
+      url: '/api/v1/auth/session',
+      headers: { cookie },
+    });
+    expect(missingCsrf.statusCode).toBe(401);
+    expect(sessions.revokeCurrent).not.toHaveBeenCalled();
+
+    const signOut = await app.inject({
+      method: 'DELETE',
+      url: '/api/v1/auth/session',
+      headers: { cookie, 'x-csrf-token': csrfToken },
+    });
+    expect(signOut.statusCode).toBe(204);
+    expect(sessions.revokeCurrent).toHaveBeenCalledWith(sessionToken, csrfToken);
+    expect(signOut.headers['set-cookie']).toContain('Max-Age=0');
+    expect(signOut.headers['set-cookie']).not.toContain('Secure');
+    await app.close();
+  });
+
+  it('does not reveal whether an unowned session exists', async () => {
+    const sessions = createAuthRuntime();
+    sessions.revokeOwned.mockRejectedValueOnce(
+      new SessionError('AUTH_SESSION_NOT_FOUND', 'Session was not found.'),
+    );
+    const app = await createApiApplication({ ...runtime, authSessions: () => sessions });
+    await app.init();
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: `/api/v1/auth/sessions/${sessionId}`,
+      headers: {
+        cookie: `inventory_atlas_session=${sessionToken}`,
+        'x-csrf-token': csrfToken,
+      },
+    });
+    expect(response.statusCode).toBe(404);
+    expect(response.body).not.toContain('owner');
+    await app.close();
+  });
+
+  it('clears an invalid session cookie during current-actor recovery', async () => {
+    const sessions = createAuthRuntime();
+    sessions.authenticate.mockRejectedValueOnce(
+      new SessionError('AUTH_SESSION_INVALID', 'Session is invalid or expired.'),
+    );
+    const app = await createApiApplication({ ...runtime, authSessions: () => sessions });
+    await app.init();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/auth/me',
+      headers: { cookie: `inventory_atlas_session=${sessionToken}` },
+    });
+    expect(response.statusCode).toBe(401);
+    expect(response.headers['cache-control']).toBe('no-store');
+    expect(response.headers['set-cookie']).toContain('Max-Age=0');
     await app.close();
   });
 
@@ -93,7 +246,7 @@ describe('API composition root', () => {
   });
 
   it('returns actionable component states when readiness fails', async () => {
-    const unreadyRuntime: FoundationRuntimePort = {
+    const unreadyRuntime: FoundationRuntimePort & AuthRuntimePort = {
       ...runtime,
       async readiness() {
         return {

@@ -4,12 +4,13 @@ import { writeFile } from 'node:fs/promises';
 import { createApiApplication } from './main.js';
 import { createOpenApiDocument } from './openapi-document.js';
 import type { FoundationRuntimePort } from './foundation.runtime.js';
+import type { AuthRuntimePort } from './auth.runtime.js';
 
 const output = process.argv[2];
 if (!output) throw new Error('An output path is required.');
 Logger.overrideLogger(false);
 
-const documentationRuntime: FoundationRuntimePort = {
+const documentationRuntime: FoundationRuntimePort & AuthRuntimePort = {
   async readiness() {
     throw new Error('The documentation runtime does not serve requests.');
   },
@@ -24,6 +25,12 @@ const documentationRuntime: FoundationRuntimePort = {
   },
   trustProxy() {
     return false;
+  },
+  authSessions() {
+    throw new Error('The documentation runtime does not serve auth requests.');
+  },
+  secureSessionCookies() {
+    return true;
   },
 };
 
