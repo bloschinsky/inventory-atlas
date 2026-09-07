@@ -1,4 +1,4 @@
-import { Kysely, PostgresDialect } from 'kysely';
+import { Kysely, PostgresDialect, sql } from 'kysely';
 import { FileMigrationProvider, Migrator, type MigrationResultSet } from 'kysely/migration';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
@@ -11,7 +11,7 @@ interface FoundationDatabase {
   };
 }
 
-export const expectedSchemaVersion = '0001_foundation';
+export const expectedSchemaVersion = '0002_auth';
 
 export function createDatabase(
   connectionString: string,
@@ -30,8 +30,15 @@ export async function migrateToLatest(
 ): Promise<MigrationResultSet> {
   const database = createDatabase(connectionString, 1);
   try {
+    // Introspection otherwise matches migration tables in unrelated schemas.
+    const { rows } = await sql<{
+      schema: string | null;
+    }>`select current_schema() as schema`.execute(database);
+    const migrationTableSchema = rows[0]?.schema;
+    if (!migrationTableSchema) throw new Error('Database search path has no current schema.');
     const migrator = new Migrator({
       db: database,
+      migrationTableSchema,
       provider: new FileMigrationProvider({ fs, path, migrationFolder }),
     });
     const result = await migrator.migrateToLatest();

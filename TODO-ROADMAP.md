@@ -254,7 +254,7 @@ Suggested pull requests:
 
 Tasks:
 
-- [ ] Add Kysely migrations for users, sessions, invitations, audit events, app settings, and required indexes/checks.
+- [x] Add Kysely migrations for users, sessions, invitations, audit events, app settings, and required indexes/checks.
 - [ ] Generate Prisma client models from the migrated schema and add drift verification.
 - [ ] Implement one-time first-Owner bootstrap with safe concurrency behavior.
 - [ ] Implement Argon2id password hashing with parameters encoded in the stored hash.

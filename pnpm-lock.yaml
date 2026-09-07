@@ -67,6 +67,10 @@ catalogs:
 importers:
 
   .:
+    dependencies:
+      kysely:
+        specifier: 0.29.5
+        version: 0.29.5
     devDependencies:
       '@eslint/js':
         specifier: 10.0.1
