@@ -3,6 +3,7 @@ generator client {
   output              = "../../packages/backend/src/generated/prisma"
   moduleFormat        = "esm"
   importFileExtension = "js"
+  previewFeatures     = ["partialIndexes"]
 }
 
 datasource db {
@@ -22,4 +23,97 @@ model InstallationMetadata {
   settingsInitializedAt DateTime @map("settings_initialized_at") @db.Timestamptz(6)
 
   @@map("installation_metadata")
+}
+
+/// Database check constraints defined by the Kysely migration remain authoritative.
+model User {
+  id                  String       @id @db.Uuid
+  emailNormalized     String       @unique @map("email_normalized")
+  displayName         String       @map("display_name")
+  passwordHash        String       @map("password_hash")
+  role                String
+  locale              String       @default("en")
+  status              String       @default("active")
+  lastLoginAt         DateTime?    @map("last_login_at") @db.Timestamptz(6)
+  createdAt           DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  archivedAt          DateTime?    @map("archived_at") @db.Timestamptz(6)
+  version             BigInt       @default(1)
+  auditEvents         AuditEvent[]
+  invitationsAccepted Invitation[] @relation("InvitationAcceptor")
+  invitationsIssued   Invitation[] @relation("InvitationInviter")
+  sessions            Session[]
+
+  @@index([role], map: "users_active_role_idx", where: raw("((status = 'active'::text) AND (archived_at IS NULL))"))
+  @@map("users")
+}
+
+/// Database check constraints defined by the Kysely migration remain authoritative.
+model Session {
+  id                String    @id @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  tokenHash         String    @unique @map("token_hash")
+  csrfSecretHash    String    @map("csrf_secret_hash")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  lastSeenAt        DateTime  @map("last_seen_at") @db.Timestamptz(6)
+  idleExpiresAt     DateTime  @map("idle_expires_at") @db.Timestamptz(6)
+  absoluteExpiresAt DateTime  @map("absolute_expires_at") @db.Timestamptz(6)
+  revokedAt         DateTime? @map("revoked_at") @db.Timestamptz(6)
+  ipHash            String?   @map("ip_hash")
+  userAgentSummary  String?   @map("user_agent_summary") @db.VarChar(256)
+  user              User      @relation(fields: [userId], references: [id], onUpdate: NoAction)
+
+  @@index([userId, createdAt])
+  @@index([idleExpiresAt], where: raw("(revoked_at IS NULL)"))
+  @@index([absoluteExpiresAt])
+  @@map("sessions")
+}
+
+/// Database check constraints defined by the Kysely migration remain authoritative.
+model Invitation {
+  id              String    @id @db.Uuid
+  emailNormalized String    @map("email_normalized")
+  role            String
+  tokenHash       String    @unique @map("token_hash")
+  inviterId       String    @map("inviter_id") @db.Uuid
+  acceptedById    String?   @map("accepted_by_id") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  expiresAt       DateTime  @map("expires_at") @db.Timestamptz(6)
+  acceptedAt      DateTime? @map("accepted_at") @db.Timestamptz(6)
+  revokedAt       DateTime? @map("revoked_at") @db.Timestamptz(6)
+  version         BigInt    @default(1)
+  acceptedBy      User?     @relation("InvitationAcceptor", fields: [acceptedById], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  inviter         User      @relation("InvitationInviter", fields: [inviterId], references: [id], onUpdate: NoAction)
+
+  @@index([emailNormalized])
+  @@index([inviterId])
+  @@index([acceptedById])
+  @@index([expiresAt], map: "invitations_pending_expiry_idx", where: raw("((accepted_at IS NULL) AND (revoked_at IS NULL))"))
+  @@map("invitations")
+}
+
+/// Database check constraints and the append-only trigger defined by Kysely remain authoritative.
+model AuditEvent {
+  id               String   @id @db.Uuid
+  actorId          String?  @map("actor_id") @db.Uuid
+  action           String   @db.VarChar(96)
+  entityType       String   @map("entity_type") @db.VarChar(64)
+  entityId         String?  @map("entity_id") @db.Uuid
+  correlationId    String   @map("correlation_id") @db.VarChar(128)
+  requestId        String   @map("request_id") @db.VarChar(128)
+  beforeJson       Json?    @map("before_json")
+  afterJson        Json?    @map("after_json")
+  ipHash           String?  @map("ip_hash")
+  userAgentSummary String?  @map("user_agent_summary") @db.VarChar(256)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  actor            User?    @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([createdAt, id], map: "audit_events_created_at_idx")
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId, createdAt], map: "audit_events_entity_idx")
+  @@index([correlationId])
+  @@index([requestId])
+  @@map("audit_events")
 }

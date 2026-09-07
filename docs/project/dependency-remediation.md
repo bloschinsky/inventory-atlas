@@ -76,7 +76,7 @@ The license approval is resolved. The CLI is available for schema/client work.
 directory without modifying committed generated files. `prisma:generate` is the
 explicit command to update those files once schema changes are ready.
 
-This maintenance step does not complete Auth model introspection/drift checks,
-Owner bootstrap, sessions, invitations, role policies, rate limiting, audit or
-the authentication API/UI. Those remain the unchecked FND-04 tasks. Kysely is
-still the only migration authority; Prisma Migrate is not used in deployment.
+Auth model introspection and migrated-schema drift checks are now complete.
+Owner bootstrap, sessions, invitations, role policies, rate limiting, audit and
+the authentication API/UI remain unchecked FND-04 tasks. Kysely is still the
+only migration authority; Prisma Migrate is not used in deployment.

@@ -52,7 +52,11 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   AppSetting: 'AppSetting',
-  InstallationMetadata: 'InstallationMetadata'
+  InstallationMetadata: 'InstallationMetadata',
+  User: 'User',
+  Session: 'Session',
+  Invitation: 'Invitation',
+  AuditEvent: 'AuditEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -88,6 +92,78 @@ export const InstallationMetadataScalarFieldEnum = {
 export type InstallationMetadataScalarFieldEnum = (typeof InstallationMetadataScalarFieldEnum)[keyof typeof InstallationMetadataScalarFieldEnum]
 
 
+export const UserScalarFieldEnum = {
+  id: 'id',
+  emailNormalized: 'emailNormalized',
+  displayName: 'displayName',
+  passwordHash: 'passwordHash',
+  role: 'role',
+  locale: 'locale',
+  status: 'status',
+  lastLoginAt: 'lastLoginAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  archivedAt: 'archivedAt',
+  version: 'version'
+} as const
+
+export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const SessionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  tokenHash: 'tokenHash',
+  csrfSecretHash: 'csrfSecretHash',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  lastSeenAt: 'lastSeenAt',
+  idleExpiresAt: 'idleExpiresAt',
+  absoluteExpiresAt: 'absoluteExpiresAt',
+  revokedAt: 'revokedAt',
+  ipHash: 'ipHash',
+  userAgentSummary: 'userAgentSummary'
+} as const
+
+export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum]
+
+
+export const InvitationScalarFieldEnum = {
+  id: 'id',
+  emailNormalized: 'emailNormalized',
+  role: 'role',
+  tokenHash: 'tokenHash',
+  inviterId: 'inviterId',
+  acceptedById: 'acceptedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  expiresAt: 'expiresAt',
+  acceptedAt: 'acceptedAt',
+  revokedAt: 'revokedAt',
+  version: 'version'
+} as const
+
+export type InvitationScalarFieldEnum = (typeof InvitationScalarFieldEnum)[keyof typeof InvitationScalarFieldEnum]
+
+
+export const AuditEventScalarFieldEnum = {
+  id: 'id',
+  actorId: 'actorId',
+  action: 'action',
+  entityType: 'entityType',
+  entityId: 'entityId',
+  correlationId: 'correlationId',
+  requestId: 'requestId',
+  beforeJson: 'beforeJson',
+  afterJson: 'afterJson',
+  ipHash: 'ipHash',
+  userAgentSummary: 'userAgentSummary',
+  createdAt: 'createdAt'
+} as const
+
+export type AuditEventScalarFieldEnum = (typeof AuditEventScalarFieldEnum)[keyof typeof AuditEventScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -96,10 +172,35 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
 } as const
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 

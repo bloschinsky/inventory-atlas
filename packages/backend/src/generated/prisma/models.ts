@@ -10,4 +10,8 @@
  */
 export type * from './models/AppSetting.js'
 export type * from './models/InstallationMetadata.js'
+export type * from './models/User.js'
+export type * from './models/Session.js'
+export type * from './models/Invitation.js'
+export type * from './models/AuditEvent.js'
 export type * from './commonInputTypes.js'

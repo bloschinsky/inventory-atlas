@@ -51,3 +51,23 @@ export type AppSetting = Prisma.AppSettingModel
  * 
  */
 export type InstallationMetadata = Prisma.InstallationMetadataModel
+/**
+ * Model User
+ * Database check constraints defined by the Kysely migration remain authoritative.
+ */
+export type User = Prisma.UserModel
+/**
+ * Model Session
+ * Database check constraints defined by the Kysely migration remain authoritative.
+ */
+export type Session = Prisma.SessionModel
+/**
+ * Model Invitation
+ * Database check constraints defined by the Kysely migration remain authoritative.
+ */
+export type Invitation = Prisma.InvitationModel
+/**
+ * Model AuditEvent
+ * Database check constraints and the append-only trigger defined by Kysely remain authoritative.
+ */
+export type AuditEvent = Prisma.AuditEventModel

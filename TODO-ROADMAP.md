@@ -255,7 +255,7 @@ Suggested pull requests:
 Tasks:
 
 - [x] Add Kysely migrations for users, sessions, invitations, audit events, app settings, and required indexes/checks.
-- [ ] Generate Prisma client models from the migrated schema and add drift verification.
+- [x] Generate Prisma client models from the migrated schema and add drift verification.
 - [ ] Implement one-time first-Owner bootstrap with safe concurrency behavior.
 - [x] Implement Argon2id password hashing with parameters encoded in the stored hash.
 - [ ] Generate opaque session tokens and store only their hashes.
@@ -270,7 +270,8 @@ Tasks:
 Implementation evidence: [Auth credential adapter and checks](docs/project/authentication.md).
 The owner approved the development-only Prisma dependency exception; CLI tooling
 is available under [the scoped license and security policy](docs/project/dependency-remediation.md).
-Auth model generation and migrated-schema drift verification remain implementation tasks.
+Auth model generation and migrated-schema drift verification run against a clean,
+Kysely-migrated PostgreSQL schema in the integration pipeline.
 
 Acceptance criteria (verbatim from the approved blueprint):
 

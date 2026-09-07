@@ -1,8 +1,9 @@
 # Authentication implementation status
 
-FND-04 currently provides the Auth/Audit migrations and the Auth credential
-adapter exported as `PasswordHasher` from `@inventory-atlas/backend`. Owner
-bootstrap, sign-in, sessions, invitations and authorization remain roadmap tasks.
+FND-04 currently provides the Auth/Audit migrations, generated Prisma models,
+migrated-schema drift verification and the Auth credential adapter exported as
+`PasswordHasher` from `@inventory-atlas/backend`. Owner bootstrap, sign-in,
+sessions, invitations and authorization remain roadmap tasks.
 
 ## Password credentials
 
@@ -36,14 +37,16 @@ install the same pinned package and native binding as the development workspace.
 - Run `pnpm test`, `pnpm test:integration`, `pnpm lint`, `pnpm check`, `pnpm build`
   and `pnpm license:check` through the documented Docker developer workflow.
 
-Verified for this increment: all 45 unit tests and 34 PostgreSQL integration
-tests passed, along with lint, types/boundaries/contracts, build, schema-version,
-formatting and dependency-license checks. The production API image built from
-the frozen lockfile also hashed and verified a synthetic password as its non-root
-runtime user, without network access. The first overloaded parallel unit run hit
-a timeout; the complete rerun passed without changing timeouts or work factors.
+Verified for this increment: all 51 unit tests and 35 PostgreSQL integration
+tests passed, along with Prisma validation/generation, lint,
+types/boundaries/contracts, build and formatting checks. The earlier credential
+increment also verified the production API image and dependency-license policy.
 
 The subsequent [dependency remediation](dependency-remediation.md) resolves the
 owner-approved Prisma CLI license exception and the dependency audit findings.
-Auth Prisma models and migrated-schema drift verification remain to be implemented;
-the existing generated Prisma files have not been edited manually.
+The committed Auth Prisma client is generated from `db/prisma/schema.prisma`.
+An integration check applies every Kysely migration to an isolated PostgreSQL
+schema, removes only Kysely's bookkeeping tables from the introspection scope,
+and fails when Prisma's introspected model differs from the committed schema.
+Unsupported check constraints and the append-only audit trigger remain enforced
+by the Kysely migration and their PostgreSQL integration tests.
