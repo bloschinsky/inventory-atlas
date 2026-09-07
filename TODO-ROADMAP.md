@@ -256,7 +256,7 @@ Tasks:
 
 - [x] Add Kysely migrations for users, sessions, invitations, audit events, app settings, and required indexes/checks.
 - [x] Generate Prisma client models from the migrated schema and add drift verification.
-- [ ] Implement one-time first-Owner bootstrap with safe concurrency behavior.
+- [x] Implement one-time first-Owner bootstrap with safe concurrency behavior.
 - [x] Implement Argon2id password hashing with parameters encoded in the stored hash.
 - [ ] Generate opaque session tokens and store only their hashes.
 - [ ] Implement secure cookie, CSRF, idle expiry, absolute expiry, last-seen, and revocation behavior.

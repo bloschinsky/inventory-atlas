@@ -2,8 +2,17 @@
 
 FND-04 currently provides the Auth/Audit migrations, generated Prisma models,
 migrated-schema drift verification and the Auth credential adapter exported as
-`PasswordHasher` from `@inventory-atlas/backend`. Owner bootstrap, sign-in,
-sessions, invitations and authorization remain roadmap tasks.
+`PasswordHasher` from `@inventory-atlas/backend`, plus one-time first-Owner
+bootstrap. Sign-in, sessions, invitations and authorization remain roadmap tasks.
+
+## First Owner bootstrap
+
+`bootstrapFirstOwner` normalizes the email, hashes the credential before opening
+the transaction, and then takes a PostgreSQL table lock around the empty-user
+check and Owner insert. Exactly one concurrent bootstrap succeeds, including
+when another user writer does not participate in an application advisory-lock
+protocol. Once any user exists, bootstrap stays unavailable. The returned value
+contains only the Owner's public account fields and never the credential hash.
 
 ## Password credentials
 
@@ -37,7 +46,7 @@ install the same pinned package and native binding as the development workspace.
 - Run `pnpm test`, `pnpm test:integration`, `pnpm lint`, `pnpm check`, `pnpm build`
   and `pnpm license:check` through the documented Docker developer workflow.
 
-Verified for this increment: all 51 unit tests and 35 PostgreSQL integration
+Verified for this increment: all 51 unit tests and 37 PostgreSQL integration
 tests passed, along with Prisma validation/generation, lint,
 types/boundaries/contracts, build and formatting checks. The earlier credential
 increment also verified the production API image and dependency-license policy.
