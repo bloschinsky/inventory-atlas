@@ -90,6 +90,8 @@ pnpm test:e2e
 pnpm db:migrate
 pnpm db:seed
 pnpm db:verify
+pnpm prisma:check
+pnpm security:check
 pnpm api:spec
 pnpm contracts:generate
 pnpm contracts:check

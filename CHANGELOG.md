@@ -6,6 +6,10 @@ The project follows the version policy in `docs/project/versioning.md`.
 
 ## [Unreleased]
 
+### Changed
+
+- Approved the exact development-only Prisma Studio/elkjs license exception and restored Prisma CLI tooling. Patched YAML/esbuild and newly introduced CLI dependency advisories, added CI security/license/tooling gates, and separated backend production dependencies from build tooling with an image-content check.
+
 ### Added
 
 - Added the FND-04 Argon2id credential adapter with encoded work factors, random salts, fail-closed verification, real hashing tests and a PostgreSQL credential round-trip test.

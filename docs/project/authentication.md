@@ -43,13 +43,7 @@ the frozen lockfile also hashed and verified a synthetic password as its non-roo
 runtime user, without network access. The first overloaded parallel unit run hit
 a timeout; the complete rerun passed without changing timeouts or work factors.
 
-Prisma CLI regeneration remains blocked by the transitive license review recorded
-in [dependencies.md](dependencies.md). This does not prevent the independent
-password hashing task; generated Prisma files have not been edited manually.
-
-The dependency audit for this increment reported existing `js-yaml` advisories
-[GHSA-52cp-r559-cp3m](https://github.com/advisories/GHSA-52cp-r559-cp3m) and
-[GHSA-5p4m-2wfm-xmqj](https://github.com/advisories/GHSA-5p4m-2wfm-xmqj) in the
-OpenAPI generator dependency tree (two high findings; also one low finding in
-the full audit). The Argon2 dependency addition does not change that tree.
-Dependency remediation remains outstanding; this is not a release approval.
+The subsequent [dependency remediation](dependency-remediation.md) resolves the
+owner-approved Prisma CLI license exception and the dependency audit findings.
+Auth Prisma models and migrated-schema drift verification remain to be implemented;
+the existing generated Prisma files have not been edited manually.

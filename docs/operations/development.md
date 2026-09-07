@@ -69,8 +69,10 @@ through `tools` (for example, `pnpm --filter @inventory-atlas/web add <package>`
 Manifest and lockfile changes reach the host; dependency files stay in volumes.
 Then rebuild and restart `dev`. `install` uses the frozen lockfile on startup.
 When Playwright changes, rebuilding also installs its matching browser version.
-Prisma client regeneration remains subject to the existing CLI license review;
-containerization does not resolve that dependency-policy issue.
+Prisma CLI is approved for development use. Run `pnpm prisma:check` to validate
+the existing schema and generate a client in isolation, or `pnpm prisma:generate`
+when deliberately updating committed generated files. See the
+[scoped license approval and security policy](../project/dependency-remediation.md).
 
 ## Compose checks from containers
 

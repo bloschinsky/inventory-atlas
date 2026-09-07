@@ -268,8 +268,9 @@ Tasks:
 - [ ] Add API and UI flows for sign-in, sign-out, invitation acceptance, session management, users, and roles.
 
 Implementation evidence: [Auth credential adapter and checks](docs/project/authentication.md).
-Prisma model generation remains blocked by the CLI dependency license review
-recorded in [the dependency baseline](docs/project/dependencies.md).
+The owner approved the development-only Prisma dependency exception; CLI tooling
+is available under [the scoped license and security policy](docs/project/dependency-remediation.md).
+Auth model generation and migrated-schema drift verification remain implementation tasks.
 
 Acceptance criteria (verbatim from the approved blueprint):
 

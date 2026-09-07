@@ -30,6 +30,6 @@ Migration metadata is scoped to the connection's current PostgreSQL schema so
 parallel isolated test schemas cannot be mistaken for one another.
 
 Prisma model/client generation and migrated-schema drift verification remain the
-next unchecked FND-04 task, subject to the CLI dependency review recorded in
-[`dependencies.md`](../../docs/project/dependencies.md). This migration adds no
+next unchecked FND-04 task. The CLI license review is resolved under the
+[development-only approval](../../docs/project/dependency-remediation.md). This migration adds no
 bootstrap, sign-in or authorization endpoint and does not complete FND-04A.

@@ -6,7 +6,9 @@ FROM ${NODE_IMAGE} AS build
 ENV PNPM_HOME=/pnpm
 ENV PATH=${PNPM_HOME}:${PATH}
 WORKDIR /workspace
-RUN npm install --global corepack@0.36.0 \
+RUN apt-get update && apt-get install -y --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/* \
+    && npm install --global corepack@0.36.0 \
     && corepack enable \
     && corepack prepare pnpm@11.25.0 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./

@@ -41,6 +41,10 @@ Sources checked on 2026-09-04:
 
 ## Update policy
 
+The FND-04 maintenance update pins `tsx` 4.23.13 for esbuild 0.28.1, restores
+Prisma CLI 7.10.0 with its reviewed development-only dependencies, and applies
+narrow security overrides. See [dependency remediation](dependency-remediation.md).
+
 - Review runtime, package, browser, and PostgreSQL security advisories weekly;
   triage critical/high findings within two working days.
 - Review dependency updates monthly. Update a coherent compatibility group

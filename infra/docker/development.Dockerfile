@@ -9,7 +9,7 @@ ENV npm_config_store_dir=/pnpm/store
 WORKDIR /workspace
 
 # Only the CLI is installed: docker-tools talks to the host daemon, never DinD.
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl git \
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl git openssl \
     && install -m 0755 -d /etc/apt/keyrings \
     && curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian bookworm stable" > /etc/apt/sources.list.d/docker.list \

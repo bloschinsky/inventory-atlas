@@ -69,7 +69,9 @@ the install authority.
 | `@hey-api/openapi-ts` | `0.99.0` | MIT | Generated operations/types/Zod inputs |
 | `vue-tsc` | `3.3.11` | MIT | Vue SFC-aware JavaScript `checkJs` validation |
 | `@vue/test-utils` | `2.4.6` | MIT | Vue component smoke and interaction tests |
-| `tsx` | `4.21.0` | MIT | Local NestJS TypeScript entrypoint runner |
+| `tsx` | `4.23.13` | MIT | Local NestJS TypeScript entrypoint runner; supports patched esbuild |
+| `prisma` | `7.10.0` | Apache-2.0 | Development-only schema/client generator |
+| `react` / `react-dom` | `19.2.8` | MIT | Development-only Prisma Studio peers |
 | `globals` | `16.5.0` | MIT | ESLint runtime global definitions |
 
 TypeScript 6.0.3 is intentionally selected instead of the newer 7.x line:
@@ -78,11 +80,11 @@ contract generator supports TypeScript 6. This is a verified common range.
 Prisma CLI and client must remain on the same stable version, `7.10.0`; the
 newer Prisma prerelease is not part of the baseline.
 
-The runtime uses `@prisma/client` and `@prisma/adapter-pg` 7.10.0. The Prisma
-CLI is temporarily absent from the installed workspace because its current
-transitive Studio dependency includes EPL-2.0 and fails the repository license
-gate. The generated 7.10.0 client is committed, so clean builds remain
-reproducible; regenerating it is blocked pending the required license review.
+The runtime uses `@prisma/client` and `@prisma/adapter-pg` 7.10.0. The owner
+approved `elkjs@0.11.1` (EPL-2.0), transitively used by Prisma Studio, for
+development tooling only. The 7.10.0 CLI is now installed as a dev dependency.
+Production images exclude development and optional tooling dependencies and
+verify that exclusion. See [the scoped approval and security overrides](dependency-remediation.md).
 
 FND-04 installs the approved `argon2` 0.45.1 runtime dependency and explicitly
 allows its native-binding install script. The credential adapter and validation

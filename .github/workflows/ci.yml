@@ -19,7 +19,11 @@ jobs:
       - run: corepack enable && corepack install --global pnpm@11.25.0
       - run: pnpm install --frozen-lockfile
       - run: pnpm license:check
+      - run: pnpm security:check
+      - run: pnpm prisma:check
       - run: pnpm lint
       - run: pnpm check
       - run: pnpm test
       - run: pnpm build
+      - run: docker build --file infra/docker/backend.Dockerfile --target api --tag inventory-atlas-runtime-check .
+      - run: docker run --rm --network none inventory-atlas-runtime-check node scripts/check-runtime-smoke.mjs
