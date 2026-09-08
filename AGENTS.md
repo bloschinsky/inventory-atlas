@@ -75,7 +75,7 @@ Do not change product scope, frozen architecture, an acceptance criterion, or an
 4. Implement the smallest complete vertical change.
 5. Add or update unit, integration, contract, E2E, security, localization, and operational checks as applicable.
 6. Run the narrow relevant checks, then the required root checks.
-7. Update generated contracts, documentation, and roadmap checkboxes only when the implementation evidence exists.
+7. Update generated contracts, documentation, and tracking checkboxes only when the implementation evidence exists. When a completion item is represented by a checkbox in both `TODO-ROADMAP.md` and `IMPLEMENTATION-BLUEPRINT.md`, update both marks in the same change so their states remain identical. This includes duplicated acceptance criteria and bootstrap/adoption items. Preserve verbatim acceptance-criterion text, and do not turn normative blueprint lists into tracking checklists.
 8. Review the diff for unrelated edits, secrets, private values, generated drift, and ownership violations.
 9. Create a local commit only under the commit policy below.
 

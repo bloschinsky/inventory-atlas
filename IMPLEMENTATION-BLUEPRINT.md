@@ -1409,11 +1409,11 @@ As a developer, I can install, lint, check, test, and build the entire repositor
 
 Acceptance criteria:
 
-- [ ] Workspace structure matches section 5.
-- [ ] Node and package-manager versions are pinned.
-- [ ] Frontend JavaScript `checkJs` and backend TypeScript checks pass.
-- [ ] Boundary checks reject forbidden cross-module imports.
-- [ ] Clean checkout requires no undocumented global tools.
+- [x] Workspace structure matches section 5.
+- [x] Node and package-manager versions are pinned.
+- [x] Frontend JavaScript `checkJs` and backend TypeScript checks pass.
+- [x] Boundary checks reject forbidden cross-module imports.
+- [x] Clean checkout requires no undocumented global tools.
 
 #### FND-02 Start the compact environment
 
@@ -1421,11 +1421,11 @@ As an operator, I can start Inventory Atlas with one Docker Compose command.
 
 Acceptance criteria:
 
-- [ ] PostgreSQL, migration, API, static web, and Caddy start in the required order.
-- [ ] Database is not published publicly by default.
-- [ ] Liveness/readiness checks report useful states.
-- [ ] Persistent data survives container recreation.
-- [ ] `.env.example` documents every setting.
+- [x] PostgreSQL, migration, API, static web, and Caddy start in the required order.
+- [x] Database is not published publicly by default.
+- [x] Liveness/readiness checks report useful states.
+- [x] Persistent data survives container recreation.
+- [x] `.env.example` documents every setting.
 
 #### FND-03 Generate one API contract
 
@@ -1433,10 +1433,10 @@ As a frontend developer, I consume generated API declarations and Zod schemas fr
 
 Acceptance criteria:
 
-- [ ] One command emits normalized OpenAPI and all client artifacts.
-- [ ] Generated artifacts carry the same spec checksum.
-- [ ] CI fails on contract drift.
-- [ ] A handwritten duplicate payload schema is rejected by review/lint policy.
+- [x] One command emits normalized OpenAPI and all client artifacts.
+- [x] Generated artifacts carry the same spec checksum.
+- [x] CI fails on contract drift.
+- [x] A handwritten duplicate payload schema is rejected by review/lint policy.
 
 #### FND-04 Authenticate and authorize users
 
@@ -1444,10 +1444,10 @@ As an installation owner, I can bootstrap the first account, sign in, invite use
 
 Acceptance criteria:
 
-- [ ] Argon2id and hashed opaque sessions are implemented.
-- [ ] Cookie, CSRF, expiry, and revocation tests pass.
-- [ ] Public, Viewer, Editor, Owner, and Admin permissions match section 16.
-- [ ] Security events appear in audit without secrets.
+- [x] Argon2id and hashed opaque sessions are implemented.
+- [x] Cookie, CSRF, expiry, and revocation tests pass.
+- [x] Public, Viewer, Editor, Owner, and Admin permissions match section 16.
+- [x] Security events appear in audit without secrets.
 
 #### FND-05 Deliver English and Ukrainian foundations
 
@@ -1455,10 +1455,10 @@ As a user, I start in English and can select Ukrainian.
 
 Acceptance criteria:
 
-- [ ] English is source/default and fallback.
-- [ ] Locale choice persists for anonymous and authenticated actors.
-- [ ] Coverage script detects missing Ukrainian MVP keys.
-- [ ] Browser locale can suggest but cannot silently change the default.
+- [x] English is source/default and fallback.
+- [x] Locale choice persists for anonymous and authenticated actors.
+- [x] Coverage script detects missing Ukrainian MVP keys.
+- [x] Browser locale can suggest but cannot silently change the default.
 
 ### EPIC CAT - Core catalog and schema
 
@@ -1811,16 +1811,16 @@ Any deferred choice that changes an approved module boundary, schema contract, s
 
 Before the first feature pull request:
 
-- [ ] Copy this file to repository root as `IMPLEMENTATION-BLUEPRINT.md`.
-- [ ] Copy the approved design document to `docs/product/` without editing it.
-- [ ] Create ADR files 001-026 with the approved decision text and status.
-- [ ] Create the workspace and composition roots from section 5.
-- [ ] Record exact dependency versions in the lockfile.
-- [ ] Establish the single migration stream and clean-database CI job.
-- [ ] Implement module-boundary validation.
-- [ ] Implement normalized OpenAPI generation and contract drift checks.
-- [ ] Establish English/Ukrainian localization coverage checks.
-- [ ] Create the first reference PostgreSQL and media fixtures.
-- [ ] Convert the epic backlog into `TODO-ROADMAP.md` without changing acceptance criteria.
+- [x] Copy this file to repository root as `IMPLEMENTATION-BLUEPRINT.md`.
+- [x] Copy the approved design document to `docs/product/` without editing it.
+- [x] Create ADR files 001-026 with the approved decision text and status.
+- [x] Create the workspace and composition roots from section 5.
+- [x] Record exact dependency versions in the lockfile.
+- [x] Establish the single migration stream and clean-database CI job.
+- [x] Implement module-boundary validation.
+- [x] Implement normalized OpenAPI generation and contract drift checks.
+- [x] Establish English/Ukrainian localization coverage checks.
+- [x] Create the first reference PostgreSQL and media fixtures.
+- [x] Convert the epic backlog into `TODO-ROADMAP.md` without changing acceptance criteria.
 
 Implementation may begin when every handoff item is assigned and the Foundation epic has an owner.
