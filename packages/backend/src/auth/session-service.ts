@@ -57,7 +57,8 @@ export class SessionError extends Error {
       | 'AUTH_CREDENTIALS_INVALID'
       | 'AUTH_SESSION_INVALID'
       | 'AUTH_CSRF_INVALID'
-      | 'AUTH_SESSION_NOT_FOUND',
+      | 'AUTH_SESSION_NOT_FOUND'
+      | 'AUTH_LOCALE_CONFLICT',
     message: string,
   ) {
     super(message);
@@ -272,6 +273,44 @@ export class SessionService {
       current: session.id === current.id,
       userAgentSummary: session.userAgentSummary,
     }));
+  }
+
+  async updateLocale(
+    token: string,
+    csrfToken: string,
+    locale: 'en' | 'uk',
+    metadata: SessionRequestMetadata = {},
+  ): Promise<SessionActor> {
+    const current = await this.authenticate(token, csrfToken);
+    if (current.actor.locale === locale) return current.actor;
+    const now = this.now();
+    return this.prisma.$transaction(async (transaction) => {
+      const changed = await transaction.user.updateMany({
+        where: {
+          id: current.actor.id,
+          locale: current.actor.locale,
+          status: 'active',
+          archivedAt: null,
+        },
+        data: { locale, updatedAt: now, version: { increment: 1 } },
+      });
+      if (changed.count !== 1) {
+        throw new SessionError(
+          'AUTH_LOCALE_CONFLICT',
+          'The language preference changed in another session.',
+        );
+      }
+      await this.audit(
+        transaction,
+        current.actor.id,
+        'auth.locale.updated',
+        'user',
+        current.actor.id,
+        { locale },
+        metadata,
+      );
+      return { ...current.actor, locale };
+    });
   }
 
   private randomToken(): string {

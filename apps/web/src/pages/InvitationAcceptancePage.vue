@@ -5,13 +5,17 @@ import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { AppButton, AppField, AppFormSection, AppInput, AppSelect } from '../shared/ui/index.js';
 import { acceptInvitation } from '../features/auth/api.js';
-const { t } = useI18n();
+const { locale: activeLocale, t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const token = ref(typeof route.query.token === 'string' ? route.query.token : '');
 const displayName = ref('');
 const password = ref('');
-const locale = ref('en');
+const locale = ref(activeLocale.value);
+const localeOptions = [
+  { value: 'en', labelKey: 'locale.en' },
+  { value: 'uk', labelKey: 'locale.uk' },
+];
 const error = ref('');
 const mutation = useMutation({
   mutationFn: acceptInvitation,
@@ -50,7 +54,12 @@ function submit() {
             required
         /></AppField>
         <AppField input-id="invite-locale" :label="t('auth.locale')"
-          ><AppSelect v-model="locale" input-id="invite-locale" :options="['en', 'uk']"
+          ><AppSelect
+            v-model="locale"
+            input-id="invite-locale"
+            :options="localeOptions.map((option) => ({ ...option, label: t(option.labelKey) }))"
+            option-label="label"
+            option-value="value"
         /></AppField>
         <p v-if="error" role="alert">{{ error }}</p>
         <AppButton type="submit" :loading="mutation.isPending.value">{{

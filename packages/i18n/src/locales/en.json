@@ -2,7 +2,8 @@
   "app": {
     "name": "Inventory Atlas",
     "skipToContent": "Skip to content",
-    "navigation": "Primary navigation"
+    "navigation": "Primary navigation",
+    "languageSelector": "Language"
   },
   "nav": {
     "items": "Items",
@@ -41,7 +42,37 @@
   "common": {
     "loading": "Loading…",
     "loadFailed": "Could not load this information.",
-    "saveFailed": "Could not save the change."
+    "saveFailed": "Could not save the change.",
+    "saving": "Saving…"
+  },
+  "locale": {
+    "en": "English",
+    "uk": "Ukrainian",
+    "suggested": "suggested"
+  },
+  "roles": {
+    "viewer": "Viewer",
+    "editor": "Editor",
+    "admin": "Admin",
+    "owner": "Owner"
+  },
+  "statuses": {
+    "active": "Active",
+    "disabled": "Disabled"
+  },
+  "validation": {
+    "required": "This field is required.",
+    "email": "Enter a valid email address.",
+    "invalid": "Check the highlighted fields."
+  },
+  "problems": {
+    "badRequest": "The request is invalid.",
+    "unauthorized": "Sign in to continue.",
+    "forbidden": "You do not have permission to do that.",
+    "notFound": "The requested information was not found.",
+    "conflict": "This information changed. Reload it and try again.",
+    "rateLimited": "Too many attempts. Try again later.",
+    "serverError": "The server could not complete the request."
   },
   "auth": {
     "acceptInvitation": "Accept invitation",

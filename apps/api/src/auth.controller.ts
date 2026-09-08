@@ -11,6 +11,7 @@ import {
   Ip,
   NotFoundException,
   Param,
+  Patch,
   Post,
   Req,
   Res,
@@ -25,6 +26,8 @@ import {
 } from '@inventory-atlas/backend';
 import {
   ApiBadRequestResponse,
+  ApiBody,
+  ApiConflictResponse,
   ApiCookieAuth,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -109,6 +112,10 @@ class SessionSummaryDto {
   @ApiProperty({ format: 'date-time', type: String }) declare absoluteExpiresAt: string;
   @ApiProperty({ type: Boolean }) declare current: boolean;
   @ApiPropertyOptional({ nullable: true, type: String }) declare userAgentSummary: string | null;
+}
+
+class UpdateLocaleRequestDto {
+  @ApiProperty({ enum: ['en', 'uk'], type: String }) declare locale: 'en' | 'uk';
 }
 
 interface RequestHeaders {
@@ -225,6 +232,40 @@ export class AuthController {
     }
   }
 
+  @Patch('me/locale')
+  @ApiCookieAuth()
+  @ApiOperation({ operationId: 'updateCurrentActorLocale' })
+  @ApiBody({ type: UpdateLocaleRequestDto })
+  @ApiOkResponse({ type: SessionActorDto })
+  @ApiBadRequestResponse({ type: ProblemDetailsDto })
+  @ApiConflictResponse({ type: ProblemDetailsDto })
+  @ApiUnauthorizedResponse({ type: ProblemDetailsDto })
+  async updateLocale(
+    @Body() body: unknown,
+    @Headers('cookie') cookieHeader: string | undefined,
+    @Headers('x-csrf-token') csrfToken: string | undefined,
+    @Req() request: { headers: RequestHeaders },
+    @Ip() ipAddress: string,
+  ): Promise<SessionActorDto> {
+    if (!isLocaleBody(body)) throw new BadRequestException('Language preference is invalid.');
+    try {
+      return await this.runtime
+        .authSessions()
+        .updateLocale(requireSession(cookieHeader), requireCsrf(csrfToken), body.locale, {
+          ipAddress,
+          ...(request.headers['user-agent'] ? { userAgent: request.headers['user-agent'] } : {}),
+          ...(request.headers['x-request-id']
+            ? { requestId: request.headers['x-request-id'] }
+            : {}),
+          ...(request.headers['x-correlation-id']
+            ? { correlationId: request.headers['x-correlation-id'] }
+            : {}),
+        });
+    } catch (error) {
+      throw mapSessionError(error);
+    }
+  }
+
   @Delete('session')
   @HttpCode(204)
   @ApiCookieAuth()
@@ -286,6 +327,12 @@ function isSignInBody(value: unknown): value is SignInRequestDto {
   );
 }
 
+function isLocaleBody(value: unknown): value is UpdateLocaleRequestDto {
+  if (typeof value !== 'object' || value === null) return false;
+  const locale = (value as Record<string, unknown>).locale;
+  return locale === 'en' || locale === 'uk';
+}
+
 function requireSession(cookieHeader: string | undefined): string {
   const token = readSessionCookie(cookieHeader);
   if (!token) throw new SessionError('AUTH_SESSION_INVALID', 'Session is invalid or expired.');
@@ -301,6 +348,7 @@ function requireCsrf(value: string | undefined): string {
 
 function mapSessionError(error: unknown): Error {
   if (!(error instanceof SessionError)) return error as Error;
+  if (error.code === 'AUTH_LOCALE_CONFLICT') return new HttpException(error.message, 409);
   if (error.code === 'AUTH_SESSION_NOT_FOUND') return new NotFoundException(error.message);
   return new UnauthorizedException(error.message);
 }

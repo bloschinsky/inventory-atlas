@@ -12,6 +12,8 @@ The project follows the version policy in `docs/project/versioning.md`.
 
 ### Added
 
+- Completed FND-05 with English source/fallback resources, complete initial Ukrainian coverage, explicit/stored locale resolution, non-automatic browser suggestions, public and authenticated selectors, persisted user preferences, locale-aware formatting and problem messages, and an MVP coverage gate.
+
 - Completed FND-04C with hashed one-time invitations, the section 16 role/capability policy, last-Owner protection, authentication rate limits, secret-free security audit events, versioned user administration, generated API contracts, and English/Ukrainian browser flows for sign-in, invitations, users, roles, and sessions.
 
 - Added the FND-04 Argon2id credential adapter with encoded work factors, random salts, fail-closed verification, real hashing tests and a PostgreSQL credential round-trip test.

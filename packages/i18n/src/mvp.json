@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "keys": [
+    "app.*",
+    "nav.*",
+    "routes.*",
+    "foundation.*",
+    "common.*",
+    "locale.*",
+    "roles.*",
+    "statuses.*",
+    "validation.*",
+    "problems.*",
+    "auth.*"
+  ]
+}

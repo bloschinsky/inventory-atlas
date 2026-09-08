@@ -3,6 +3,7 @@ import type {
   AuthRateLimiter,
   AuthenticatedSession,
   IssuedSession,
+  SessionActor,
   SessionRequestMetadata,
   SessionSummary,
 } from '@inventory-atlas/backend';
@@ -19,6 +20,12 @@ export interface AuthSessionPort {
   revokeCurrent(token: string, csrfToken: string): Promise<void>;
   revokeOwned(token: string, csrfToken: string, sessionId: string): Promise<void>;
   listOwned(token: string): Promise<SessionSummary[]>;
+  updateLocale(
+    token: string,
+    csrfToken: string,
+    locale: 'en' | 'uk',
+    metadata?: SessionRequestMetadata,
+  ): Promise<SessionActor>;
 }
 
 export interface AuthRuntimePort {

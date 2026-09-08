@@ -5,6 +5,17 @@ body {
   margin: 0;
   background: var(--ia-color-surface-50);
 }
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .skip-link {
   position: fixed;
   left: var(--ia-space-3);
@@ -50,6 +61,10 @@ body {
 }
 .session-actions a {
   color: inherit;
+}
+.locale-error {
+  max-width: 18rem;
+  color: var(--ia-color-surface-0);
 }
 .auth-panel {
   width: min(100%, 32rem);

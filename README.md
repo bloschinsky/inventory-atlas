@@ -37,13 +37,18 @@ The MVP has no mandatory Redis, external search engine, message broker, or S3 se
 
 ## Status
 
-Implementation is in progress. FND-01 provides the pinned monorepo, stable root commands, application composition roots, frontend shell, and UI facade. FND-02 provides the verified compact deployment, Docker-only development workflow, configuration bootstrap, and operational health checks. FND-03 provides one normalized OpenAPI source with generated TypeScript, JSDoc, Fetch client, and Zod artifacts plus contract drift enforcement.
+Implementation is in progress. Stage 1 Foundation is complete: the repository has
+the pinned monorepo and UI facade, compact Docker deployment, generated OpenAPI
+contracts, authentication and authorization, plus persistent English/Ukrainian
+localization with an MVP coverage gate.
 
 Current development version: **`0.1.0-dev.1`**.
 
-FND-04 now includes Auth/Audit migrations and the tested Argon2id credential adapter.
+FND-04 includes Auth/Audit migrations and the tested Argon2id credential adapter.
 See [authentication implementation status](docs/project/authentication.md) for
 completed behavior, checks and remaining dependencies.
+See [localization foundation](docs/project/localization.md) for locale resolution,
+persistence, formatting and coverage rules.
 
 First release target: **`0.1.0` Technical Demo**.
 

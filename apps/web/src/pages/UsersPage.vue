@@ -12,7 +12,8 @@ import {
   updateUser,
 } from '../features/auth/api.js';
 import { useSessionContext } from '../shared/auth/session-context.js';
-const { t } = useI18n();
+import { problemMessageKey } from '../shared/lib/problem-message.js';
+const { d, t } = useI18n();
 const queryClient = useQueryClient();
 const session = useSessionContext();
 const users = useQuery({ queryKey: authKeys.users, queryFn: listUsers });
@@ -22,9 +23,10 @@ const role = ref('viewer');
 const issuedToken = ref('');
 const error = ref('');
 const roleOptions = computed(() =>
-  session.summary?.role === 'owner'
+  (session.summary?.role === 'owner'
     ? ['viewer', 'editor', 'admin', 'owner']
-    : ['viewer', 'editor', 'admin'],
+    : ['viewer', 'editor', 'admin']
+  ).map((value) => ({ value, label: t(`roles.${value}`) })),
 );
 /** @param {{ email: string, role: string }} input */
 function issueOne(input) {
@@ -49,8 +51,8 @@ const invite = useMutation({
     email.value = '';
     await queryClient.invalidateQueries({ queryKey: authKeys.invitations });
   },
-  onError: () => {
-    error.value = t('common.saveFailed');
+  onError: (problem) => {
+    error.value = t(problemMessageKey(problem));
   },
 });
 const change = useMutation({
@@ -79,7 +81,12 @@ function setRole(user, nextRole) {
         <AppField input-id="invitation-email" :label="t('auth.email')"
           ><AppInput id="invitation-email" v-model="email" type="email" required /></AppField
         ><AppField input-id="invitation-role" :label="t('auth.role')"
-          ><AppSelect v-model="role" input-id="invitation-role" :options="roleOptions" /></AppField
+          ><AppSelect
+            v-model="role"
+            input-id="invitation-role"
+            :options="roleOptions"
+            option-label="label"
+            option-value="value" /></AppField
         ><AppButton type="submit" :loading="invite.isPending.value">{{
           t('auth.issueInvitation')
         }}</AppButton>
@@ -96,11 +103,13 @@ function setRole(user, nextRole) {
         <li v-for="user in users.data.value ?? []" :key="user.id">
           <div>
             <strong>{{ user.displayName }}</strong>
-            <small class="record-meta">{{ user.email }} · {{ user.status }}</small>
+            <small class="record-meta">{{ user.email }} · {{ t(`statuses.${user.status}`) }}</small>
           </div>
           <AppSelect
             :model-value="user.role"
             :options="roleOptions"
+            option-label="label"
+            option-value="value"
             :disabled="
               change.isPending.value || (user.role === 'owner' && session.summary?.role !== 'owner')
             "
@@ -114,7 +123,7 @@ function setRole(user, nextRole) {
           <div>
             <strong>{{ item.email }}</strong>
             <small class="record-meta">
-              {{ item.role }} · {{ new Date(item.expiresAt).toLocaleString() }}
+              {{ t(`roles.${item.role}`) }} · {{ d(new Date(item.expiresAt), 'short') }}
             </small>
           </div>
           <AppButton

@@ -10,6 +10,20 @@ export const authKeys = {
 export function getCurrentSession() {
   return apiRequest('/auth/me');
 }
+/** @param {string} locale @param {string} csrfToken @returns {Promise<{ locale: string }>} */
+export function updateCurrentLocale(locale, csrfToken) {
+  return /** @type {Promise<{ locale: string }>} */ (
+    apiRequest(
+      '/auth/me/locale',
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locale }),
+      },
+      { csrfToken },
+    )
+  );
+}
 /** @param {{ email: string, password: string }} input */
 export function signIn(input) {
   return apiRequest('/auth/session', {

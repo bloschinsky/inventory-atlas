@@ -52,6 +52,10 @@ suite('opaque session lifecycle', () => {
 
   beforeEach(async () => {
     await prisma.session.deleteMany();
+    await prisma.user.update({
+      where: { id: ownerId },
+      data: { locale: 'en', version: 1 },
+    });
     now = new Date('2026-09-07T10:00:00.000Z');
   });
 
@@ -205,5 +209,29 @@ suite('opaque session lifecycle', () => {
     await expect(service().authenticate(current.token)).rejects.toMatchObject({
       code: 'AUTH_SESSION_INVALID',
     });
+  });
+
+  it('persists an authenticated locale choice with CSRF, concurrency, and safe audit data', async () => {
+    const sessions = service();
+    const issued = await sessions.signIn('owner@example.test', 'correct synthetic password');
+
+    await expect(sessions.updateLocale(issued.token, 'wrong-csrf', 'uk')).rejects.toMatchObject({
+      code: 'AUTH_CSRF_INVALID',
+    });
+    const actor = await sessions.updateLocale(issued.token, issued.csrfToken, 'uk', {
+      requestId: 'locale-request',
+    });
+
+    expect(actor.locale).toBe('uk');
+    expect(await prisma.user.findUniqueOrThrow({ where: { id: ownerId } })).toMatchObject({
+      locale: 'uk',
+      version: 2n,
+    });
+    expect(await sessions.authenticate(issued.token)).toMatchObject({ actor: { locale: 'uk' } });
+    const audit = await prisma.auditEvent.findFirstOrThrow({
+      where: { action: 'auth.locale.updated', actorId: ownerId },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(audit.afterJson).toEqual({ locale: 'uk' });
   });
 });

@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { AppButton } from '../shared/ui/index.js';
 import { authKeys, listSessions, revokeSession } from '../features/auth/api.js';
 import { useSessionContext } from '../shared/auth/session-context.js';
-const { t } = useI18n();
+const { d, t } = useI18n();
 const router = useRouter();
 const queryClient = useQueryClient();
 const session = useSessionContext();
@@ -37,7 +37,7 @@ const revoke = useMutation({
               ? t('auth.currentSession')
               : item.userAgentSummary || t('auth.unknownDevice')
           }}</strong>
-          <small class="record-meta">{{ new Date(item.lastSeenAt).toLocaleString() }}</small>
+          <small class="record-meta">{{ d(new Date(item.lastSeenAt), 'short') }}</small>
         </div>
         <AppButton
           variant="danger"

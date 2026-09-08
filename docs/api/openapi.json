@@ -198,6 +198,11 @@
         ],
         "type": "object"
       },
+      "UpdateLocaleRequestDto": {
+        "properties": { "locale": { "enum": ["en", "uk"], "type": "string" } },
+        "required": ["locale"],
+        "type": "object"
+      },
       "UserSummaryDto": {
         "properties": {
           "archivedAt": { "format": "date-time", "nullable": true, "type": "string" },
@@ -461,6 +466,49 @@
         "tags": ["authentication"]
       }
     },
+    "/api/v1/auth/me/locale": {
+      "patch": {
+        "operationId": "updateCurrentActorLocale",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateLocaleRequestDto" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/SessionActorDto" } }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["authentication"]
+      }
+    },
     "/api/v1/auth/session": {
       "delete": {
         "operationId": "deleteAuthSession",
@@ -636,5 +684,5 @@
   },
   "servers": [],
   "tags": [],
-  "x-spec-checksum": "53e357f5428261f7ad381ddabca571537d3b8e31422a1fbea1f6c4c3247ad2fb"
+  "x-spec-checksum": "b8c7d1274950296a32c41c569f58b1fe2781e91b24e7888be7fe71ffd2f6d6e0"
 }

@@ -8,6 +8,7 @@ import {
   routeConflict,
 } from '../shared/api/mutations.js';
 import { fieldErrorsFromProblem } from '../shared/lib/form-errors.js';
+import { problemMessageKey } from '../shared/lib/problem-message.js';
 import { useSessionStore } from './stores/session.js';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -44,6 +45,7 @@ describe('frontend architecture policies', () => {
     session.summary = {
       id: 'user-1',
       displayName: 'Viewer',
+      locale: 'en',
       role: 'viewer',
       permissions: [],
       csrfToken: 'csrf',
@@ -73,5 +75,12 @@ describe('frontend architecture policies', () => {
     expect(
       fieldErrorsFromProblem({ errors: [{ fieldKey: 'serial_number', message: 'Required' }] }),
     ).toEqual({ serial_number: 'Required' });
+  });
+
+  it('maps problem status to a local translation key instead of server prose', () => {
+    expect(problemMessageKey(new ApiConflict(409, { detail: 'server wording' }))).toBe(
+      'problems.conflict',
+    );
+    expect(problemMessageKey(new Error('network'))).toBe('problems.serverError');
   });
 });

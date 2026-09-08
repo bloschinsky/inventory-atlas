@@ -5,7 +5,7 @@ import { installUi } from '@inventory-atlas/ui';
 import '@inventory-atlas/ui/tokens.css';
 import App from './app/App.vue';
 import { createAppRouter } from './app/router.js';
-import { i18n } from './shared/i18n/index.js';
+import { applyDocumentLocale, i18n, initialLocale } from './shared/i18n/index.js';
 import './app/app.css';
 
 const app = createApp(App);
@@ -16,4 +16,5 @@ app.use(VueQueryPlugin, {
 app.use(createAppRouter());
 app.use(i18n);
 installUi(app);
+applyDocumentLocale(initialLocale);
 app.mount('#app');

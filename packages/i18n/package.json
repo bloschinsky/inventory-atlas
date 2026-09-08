@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.js",
     "./locales/en.json": "./src/locales/en.json",
-    "./locales/uk.json": "./src/locales/uk.json"
+    "./locales/uk.json": "./src/locales/uk.json",
+    "./mvp.json": "./src/mvp.json"
   },
   "scripts": {
     "build": "tsc -p jsconfig.json",

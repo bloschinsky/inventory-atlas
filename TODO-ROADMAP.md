@@ -294,30 +294,32 @@ Suggested pull requests:
 
 Tasks:
 
-- [ ] Create shared English source resources and complete initial Ukrainian resources.
-- [ ] Define stable translation-key naming and fallback rules.
-- [ ] Implement locale resolution: explicit choice, stored preference, then English fallback.
-- [ ] Allow browser locale to suggest Ukrainian without silently switching the application.
-- [ ] Persist anonymous locale locally and authenticated locale on the user record.
-- [ ] Add a locale selector to public and authenticated shells.
-- [ ] Localize validation, problem details, dates, numbers, and accessibility labels.
-- [ ] Implement `check-i18n-coverage.mjs` for all MVP-marked keys.
-- [ ] Add an E2E test that starts in English and switches to Ukrainian without restart.
+- [x] Create shared English source resources and complete initial Ukrainian resources.
+- [x] Define stable translation-key naming and fallback rules.
+- [x] Implement locale resolution: explicit choice, stored preference, then English fallback.
+- [x] Allow browser locale to suggest Ukrainian without silently switching the application.
+- [x] Persist anonymous locale locally and authenticated locale on the user record.
+- [x] Add a locale selector to public and authenticated shells.
+- [x] Localize validation, problem details, dates, numbers, and accessibility labels.
+- [x] Implement `check-i18n-coverage.mjs` for all MVP-marked keys.
+- [x] Add an E2E test that starts in English and switches to Ukrainian without restart.
+
+Implementation evidence: [Localization foundation and verification](docs/project/localization.md).
 
 Acceptance criteria (verbatim from the approved blueprint):
 
-- [ ] English is source/default and fallback.
-- [ ] Locale choice persists for anonymous and authenticated actors.
-- [ ] Coverage script detects missing Ukrainian MVP keys.
-- [ ] Browser locale can suggest but cannot silently change the default.
+- [x] English is source/default and fallback.
+- [x] Locale choice persists for anonymous and authenticated actors.
+- [x] Coverage script detects missing Ukrainian MVP keys.
+- [x] Browser locale can suggest but cannot silently change the default.
 
 ### Stage 1 exit checklist
 
-- [ ] FND-01 through FND-05 acceptance criteria pass.
-- [ ] Clean checkout installs, checks, tests, builds, migrates, and starts through documented root commands.
-- [ ] Owner can sign in and permissions match the approved matrix.
-- [ ] OpenAPI, declarations, and Zod artifacts share one checksum.
-- [ ] English default and Ukrainian selection pass E2E.
+- [x] FND-01 through FND-05 acceptance criteria pass.
+- [x] Clean checkout installs, checks, tests, builds, migrates, and starts through documented root commands.
+- [x] Owner can sign in and permissions match the approved matrix.
+- [x] OpenAPI, declarations, and Zod artifacts share one checksum.
+- [x] English default and Ukrainian selection pass E2E.
 - [x] FND-01D frontend structure, state ownership, route shell, UI facade, semantic tokens, and boundary checks are complete.
 - [x] Compact Docker Compose deployment is ready for the first catalog increment.
 

@@ -50,6 +50,7 @@ function createAuthRuntime() {
     revokeCurrent: vi.fn(async () => undefined),
     revokeOwned: vi.fn(async () => undefined),
     listOwned: vi.fn(async () => []),
+    updateLocale: vi.fn(async (_token, _csrf, locale) => ({ ...actor, locale })),
   };
 }
 
@@ -122,6 +123,7 @@ describe('API composition root', () => {
       'listUsers',
       'revokeAuthSession',
       'revokeInvitation',
+      'updateCurrentActorLocale',
       'updateUser',
     ]);
     expect(new Set(operationIds).size).toBe(operationIds.length);
@@ -198,6 +200,37 @@ describe('API composition root', () => {
     expect(sessions.revokeCurrent).toHaveBeenCalledWith(sessionToken, csrfToken);
     expect(signOut.headers['set-cookie']).toContain('Max-Age=0');
     expect(signOut.headers['set-cookie']).not.toContain('Secure');
+    await app.close();
+  });
+
+  it('persists the current actor locale through a CSRF-protected endpoint', async () => {
+    const sessions = createAuthRuntime();
+    const app = await createApiApplication({ ...runtime, authSessions: () => sessions });
+    await app.init();
+    const cookie = `inventory_atlas_session=${sessionToken}`;
+
+    const rejected = await app.inject({
+      method: 'PATCH',
+      url: '/api/v1/auth/me/locale',
+      headers: { cookie },
+      payload: { locale: 'uk' },
+    });
+    expect(rejected.statusCode).toBe(401);
+
+    const accepted = await app.inject({
+      method: 'PATCH',
+      url: '/api/v1/auth/me/locale',
+      headers: { cookie, 'x-csrf-token': csrfToken, 'x-request-id': 'locale-request' },
+      payload: { locale: 'uk' },
+    });
+    expect(accepted.statusCode).toBe(200);
+    expect(accepted.json()).toMatchObject({ id: actor.id, locale: 'uk' });
+    expect(sessions.updateLocale).toHaveBeenCalledWith(
+      sessionToken,
+      csrfToken,
+      'uk',
+      expect.objectContaining({ requestId: 'locale-request' }),
+    );
     await app.close();
   });
 
