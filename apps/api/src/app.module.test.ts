@@ -1,4 +1,4 @@
-import { SessionError } from '@inventory-atlas/backend';
+import { AuthRateLimiter, SessionError, permissionsFor } from '@inventory-atlas/backend';
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthRuntimePort } from './auth.runtime.js';
 import type { FoundationRuntimePort } from './foundation.runtime.js';
@@ -15,7 +15,20 @@ const actor = {
   displayName: 'Synthetic Owner',
   locale: 'en' as const,
   role: 'owner' as const,
+  permissions: permissionsFor('owner'),
 };
+
+function createAdministrationRuntime() {
+  return {
+    listUsers: vi.fn(async () => []),
+    listInvitations: vi.fn(async () => []),
+    issueInvitation: vi.fn(),
+    revokeInvitation: vi.fn(async () => undefined),
+    acceptInvitation: vi.fn(),
+    updateUser: vi.fn(),
+    archiveUser: vi.fn(async () => undefined),
+  };
+}
 
 function createAuthRuntime() {
   return {
@@ -36,10 +49,13 @@ function createAuthRuntime() {
     })),
     revokeCurrent: vi.fn(async () => undefined),
     revokeOwned: vi.fn(async () => undefined),
+    listOwned: vi.fn(async () => []),
   };
 }
 
 const authSessions = createAuthRuntime();
+const administration = createAdministrationRuntime();
+const rateLimiter = new AuthRateLimiter('test-secret');
 const runtime: FoundationRuntimePort & AuthRuntimePort = {
   async readiness() {
     return {
@@ -67,6 +83,12 @@ const runtime: FoundationRuntimePort & AuthRuntimePort = {
   authSessions() {
     return authSessions;
   },
+  authAdministration() {
+    return administration;
+  },
+  authRateLimiter() {
+    return rateLimiter;
+  },
   secureSessionCookies() {
     return true;
   },
@@ -85,6 +107,8 @@ describe('API composition root', () => {
     );
 
     expect(operationIds.toSorted()).toEqual([
+      'acceptInvitation',
+      'archiveUser',
       'createAuthSession',
       'deleteAuthSession',
       'getCurrentActor',
@@ -92,7 +116,13 @@ describe('API composition root', () => {
       'getLiveness',
       'getMetadata',
       'getReadiness',
+      'issueInvitation',
+      'listAuthSessions',
+      'listInvitations',
+      'listUsers',
       'revokeAuthSession',
+      'revokeInvitation',
+      'updateUser',
     ]);
     expect(new Set(operationIds).size).toBe(operationIds.length);
     expect(document.components?.schemas).toMatchObject({
@@ -189,6 +219,52 @@ describe('API composition root', () => {
     });
     expect(response.statusCode).toBe(404);
     expect(response.body).not.toContain('owner');
+    await app.close();
+  });
+
+  it('requires CSRF and passes the authenticated actor to invitation issuance', async () => {
+    const sessions = createAuthRuntime();
+    const authAdministration = createAdministrationRuntime();
+    authAdministration.issueInvitation.mockResolvedValueOnce({
+      id: '0198f40c-92f3-7a12-bc9a-653f97786c2d',
+      email: 'viewer@example.test',
+      role: 'viewer',
+      expiresAt: new Date('2026-09-15T10:00:00.000Z'),
+      acceptedAt: null,
+      revokedAt: null,
+      version: 1,
+      token: 'i'.repeat(43),
+    });
+    const app = await createApiApplication({
+      ...runtime,
+      authSessions: () => sessions,
+      authAdministration: () => authAdministration,
+    });
+    await app.init();
+    const cookie = `inventory_atlas_session=${sessionToken}`;
+
+    const rejected = await app.inject({
+      method: 'POST',
+      url: '/api/v1/admin/invitations',
+      headers: { cookie },
+      payload: { email: 'viewer@example.test', role: 'viewer' },
+    });
+    expect(rejected.statusCode).toBe(401);
+
+    const accepted = await app.inject({
+      method: 'POST',
+      url: '/api/v1/admin/invitations',
+      headers: { cookie, 'x-csrf-token': csrfToken, 'x-request-id': 'request-1' },
+      payload: { email: 'viewer@example.test', role: 'viewer' },
+    });
+    expect(accepted.statusCode).toBe(201);
+    expect(accepted.json()).toMatchObject({ role: 'viewer', token: 'i'.repeat(43) });
+    expect(sessions.authenticate).toHaveBeenCalledWith(sessionToken, csrfToken);
+    expect(authAdministration.issueInvitation).toHaveBeenCalledWith(
+      actor,
+      { email: 'viewer@example.test', role: 'viewer' },
+      expect.objectContaining({ requestId: 'request-1' }),
+    );
     await app.close();
   });
 

@@ -42,6 +42,54 @@ body {
   flex-wrap: wrap;
   gap: var(--ia-space-2);
 }
+.session-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--ia-space-2);
+}
+.session-actions a {
+  color: inherit;
+}
+.auth-panel {
+  width: min(100%, 32rem);
+  margin-inline: auto;
+}
+.stack {
+  display: grid;
+  gap: var(--ia-space-4);
+}
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--ia-space-3);
+}
+.record-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: var(--ia-space-2);
+}
+.record-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--ia-space-3);
+  padding: var(--ia-space-3);
+  background: var(--ia-color-surface-0);
+  border-radius: var(--ia-radius-md);
+}
+.record-meta {
+  display: block;
+}
+.token-result {
+  display: grid;
+  gap: var(--ia-space-2);
+}
+.token-result code {
+  overflow-wrap: anywhere;
+}
 .app-main {
   width: min(100% - 2 * var(--ia-space-4), var(--ia-content-max-width));
   margin: var(--ia-space-6) auto;

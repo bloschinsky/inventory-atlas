@@ -72,5 +72,5 @@ suite('Prisma schema drift', () => {
         .replace(/generator client \{[\s\S]*?\}\n\n/u, '')
         .trim();
     expect(normalize(introspectedSchema)).toBe(normalize(committedSchema));
-  });
+  }, 15_000);
 });

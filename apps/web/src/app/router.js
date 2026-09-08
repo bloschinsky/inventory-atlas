@@ -2,6 +2,10 @@ import { createRouter, createWebHistory } from 'vue-router';
 import FoundationPage from '../pages/FoundationPage.vue';
 import ErrorPage from '../pages/ErrorPage.vue';
 import NotFoundPage from '../pages/NotFoundPage.vue';
+import InvitationAcceptancePage from '../pages/InvitationAcceptancePage.vue';
+import SessionsPage from '../pages/SessionsPage.vue';
+import SignInPage from '../pages/SignInPage.vue';
+import UsersPage from '../pages/UsersPage.vue';
 
 export const routeRecords = [
   ['/', 'routes.home'],
@@ -23,7 +27,7 @@ export const routeRecords = [
   ['/admin/audit', 'routes.adminAudit'],
 ].map(([path, titleKey]) => ({
   path,
-  component: FoundationPage,
+  component: path === '/admin/users' ? UsersPage : FoundationPage,
   meta: {
     titleKey,
     layout: ['/', '/items/:publicId', '/storage/:publicId'].includes(path)
@@ -33,6 +37,21 @@ export const routeRecords = [
 }));
 
 export const supportRoutes = [
+  {
+    path: '/auth/sign-in',
+    component: SignInPage,
+    meta: { layout: 'public', titleKey: 'auth.signIn' },
+  },
+  {
+    path: '/auth/invitations/accept',
+    component: InvitationAcceptancePage,
+    meta: { layout: 'public', titleKey: 'auth.acceptInvitation' },
+  },
+  {
+    path: '/account/sessions',
+    component: SessionsPage,
+    meta: { layout: 'authenticated', titleKey: 'auth.sessions' },
+  },
   { path: '/error', component: ErrorPage, meta: { layout: 'public', titleKey: 'routes.error' } },
   {
     path: '/:pathMatch(.*)*',

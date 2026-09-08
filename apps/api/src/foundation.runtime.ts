@@ -1,10 +1,13 @@
 import { Logger, type OnApplicationShutdown } from '@nestjs/common';
 import {
+  AuthAdministrationService,
+  AuthRateLimiter,
   createDatabase,
   createSettingsClient,
   currentSchemaVersion,
   expectedSchemaVersion,
   initializeInstallationSettings,
+  readAdminAuthorizationSettings,
   SessionService,
 } from '@inventory-atlas/backend';
 import {
@@ -45,14 +48,16 @@ export class FoundationRuntime
   implements FoundationRuntimePort, AuthRuntimePort, OnApplicationShutdown
 {
   private schemaVersion: string | null = null;
-  private readonly sessions: SessionService;
+  private sessions: SessionService | null = null;
+  private administration: AuthAdministrationService | null = null;
+  private readonly rateLimiter: AuthRateLimiter;
 
   private constructor(
     private readonly configuration: RuntimeConfiguration,
     private readonly database: ReturnType<typeof createDatabase>,
     private readonly settingsClient: ReturnType<typeof createSettingsClient>,
   ) {
-    this.sessions = new SessionService(settingsClient, configuration.sessionSecret);
+    this.rateLimiter = new AuthRateLimiter(configuration.sessionSecret);
   }
 
   static async create(
@@ -74,6 +79,15 @@ export class FoundationRuntime
       }
       await initializeInstallationSettings(settingsClient, configuration, (message) =>
         Logger.warn(message, FoundationRuntime.name),
+      );
+      const authorizationSettings = await readAdminAuthorizationSettings(settingsClient);
+      runtime.sessions = new SessionService(settingsClient, configuration.sessionSecret, {
+        authorizationSettings,
+      });
+      runtime.administration = new AuthAdministrationService(
+        settingsClient,
+        configuration.sessionSecret,
+        authorizationSettings,
       );
       await runtime.verifyMedia();
       return runtime;
@@ -136,7 +150,17 @@ export class FoundationRuntime
   }
 
   authSessions(): SessionService {
+    if (!this.sessions) throw new Error('Auth sessions are not initialized.');
     return this.sessions;
+  }
+
+  authAdministration(): AuthAdministrationService {
+    if (!this.administration) throw new Error('Auth administration is not initialized.');
+    return this.administration;
+  }
+
+  authRateLimiter(): AuthRateLimiter {
+    return this.rateLimiter;
   }
 
   secureSessionCookies(): boolean {

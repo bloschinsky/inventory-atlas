@@ -29,6 +29,12 @@ const documentationRuntime: FoundationRuntimePort & AuthRuntimePort = {
   authSessions() {
     throw new Error('The documentation runtime does not serve auth requests.');
   },
+  authAdministration() {
+    throw new Error('The documentation runtime does not serve auth requests.');
+  },
+  authRateLimiter() {
+    throw new Error('The documentation runtime does not serve auth requests.');
+  },
   secureSessionCookies() {
     return true;
   },

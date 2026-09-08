@@ -1,6 +1,7 @@
 import { createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { PasswordHasher } from './password-hasher.js';
+import { permissionsFor, type AuthorizationSettings, type Capability } from './authorization.js';
 
 // A public synthetic hash keeps unknown-account and known-account failures on
 // the same Argon2id verification path. It is not a credential or a secret.
@@ -19,6 +20,7 @@ export interface SessionActor {
   displayName: string;
   locale: 'en' | 'uk';
   role: 'viewer' | 'editor' | 'admin' | 'owner';
+  permissions: readonly Capability[];
 }
 
 export interface IssuedSession {
@@ -35,6 +37,18 @@ export type AuthenticatedSession = Omit<IssuedSession, 'token'>;
 export interface SessionRequestMetadata {
   ipAddress?: string;
   userAgent?: string;
+  requestId?: string;
+  correlationId?: string;
+}
+
+export interface SessionSummary {
+  id: string;
+  createdAt: Date;
+  lastSeenAt: Date;
+  idleExpiresAt: Date;
+  absoluteExpiresAt: Date;
+  current: boolean;
+  userAgentSummary: string | null;
 }
 
 export class SessionError extends Error {
@@ -54,12 +68,14 @@ export class SessionError extends Error {
 interface SessionServiceOptions {
   now?: () => Date;
   passwordHasher?: Pick<PasswordHasher, 'verify'>;
+  authorizationSettings?: AuthorizationSettings;
 }
 
 /** Owns opaque session issuance, validation, expiry and revocation. */
 export class SessionService {
   private readonly now: () => Date;
   private readonly passwordHasher: Pick<PasswordHasher, 'verify'>;
+  private readonly authorizationSettings: AuthorizationSettings;
 
   constructor(
     private readonly prisma: PrismaClient,
@@ -69,6 +85,7 @@ export class SessionService {
     if (!secret) throw new Error('A session hashing secret is required.');
     this.now = options.now ?? (() => new Date());
     this.passwordHasher = options.passwordHasher ?? new PasswordHasher();
+    this.authorizationSettings = options.authorizationSettings ?? {};
   }
 
   async signIn(
@@ -85,6 +102,15 @@ export class SessionService {
       password,
     );
     if (!user || !credentialMatches || user.status !== 'active' || user.archivedAt !== null) {
+      await this.audit(
+        this.prisma,
+        user?.id ?? null,
+        'auth.sign_in.denied',
+        'user',
+        user?.id ?? null,
+        { result: 'denied' },
+        metadata,
+      );
       throw new SessionError('AUTH_CREDENTIALS_INVALID', 'Email or password is invalid.');
     }
 
@@ -114,6 +140,15 @@ export class SessionService {
         where: { id: user.id },
         data: { lastLoginAt: now, updatedAt: now },
       });
+      await this.audit(
+        transaction,
+        user.id,
+        'auth.sign_in.succeeded',
+        'session',
+        created.id,
+        { result: 'succeeded' },
+        metadata,
+      );
       return created;
     });
 
@@ -123,7 +158,7 @@ export class SessionService {
       csrfToken,
       idleExpiresAt,
       absoluteExpiresAt,
-      actor: actorFromUser(user),
+      actor: actorFromUser(user, this.authorizationSettings),
     };
   }
 
@@ -176,29 +211,67 @@ export class SessionService {
       csrfToken: this.csrfFor(token),
       idleExpiresAt,
       absoluteExpiresAt: session.absoluteExpiresAt,
-      actor: actorFromUser(session.user),
+      actor: actorFromUser(session.user, this.authorizationSettings),
     };
   }
 
   async revokeCurrent(token: string, csrfToken: string): Promise<void> {
     const current = await this.authenticate(token, csrfToken);
     const now = this.now();
-    await this.prisma.session.updateMany({
-      where: { id: current.id, revokedAt: null },
-      data: { revokedAt: now, updatedAt: now },
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.session.updateMany({
+        where: { id: current.id, revokedAt: null },
+        data: { revokedAt: now, updatedAt: now },
+      });
+      await this.audit(
+        transaction,
+        current.actor.id,
+        'auth.session.revoked',
+        'session',
+        current.id,
+        { current: true },
+        {},
+      );
     });
   }
 
   async revokeOwned(token: string, csrfToken: string, sessionId: string): Promise<void> {
     const current = await this.authenticate(token, csrfToken);
     const now = this.now();
-    const revoked = await this.prisma.session.updateMany({
-      where: { id: sessionId, userId: current.actor.id, revokedAt: null },
-      data: { revokedAt: now, updatedAt: now },
+    await this.prisma.$transaction(async (transaction) => {
+      const revoked = await transaction.session.updateMany({
+        where: { id: sessionId, userId: current.actor.id, revokedAt: null },
+        data: { revokedAt: now, updatedAt: now },
+      });
+      if (revoked.count !== 1)
+        throw new SessionError('AUTH_SESSION_NOT_FOUND', 'Session was not found.');
+      await this.audit(
+        transaction,
+        current.actor.id,
+        'auth.session.revoked',
+        'session',
+        sessionId,
+        { current: sessionId === current.id },
+        {},
+      );
     });
-    if (revoked.count !== 1) {
-      throw new SessionError('AUTH_SESSION_NOT_FOUND', 'Session was not found.');
-    }
+  }
+
+  async listOwned(token: string): Promise<SessionSummary[]> {
+    const current = await this.authenticate(token);
+    const sessions = await this.prisma.session.findMany({
+      where: { userId: current.actor.id, revokedAt: null },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+    return sessions.map((session) => ({
+      id: session.id,
+      createdAt: session.createdAt,
+      lastSeenAt: session.lastSeenAt,
+      idleExpiresAt: session.idleExpiresAt,
+      absoluteExpiresAt: session.absoluteExpiresAt,
+      current: session.id === current.id,
+      userAgentSummary: session.userAgentSummary,
+    }));
   }
 
   private randomToken(): string {
@@ -218,21 +291,51 @@ export class SessionService {
       .update(value, 'utf8')
       .digest('hex');
   }
+
+  private async audit(
+    client: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0] | PrismaClient,
+    actorId: string | null,
+    action: string,
+    entityType: string,
+    entityId: string | null,
+    afterJson: Record<string, string | boolean>,
+    metadata: SessionRequestMetadata,
+  ): Promise<void> {
+    await client.auditEvent.create({
+      data: {
+        id: randomUUID(),
+        actorId,
+        action,
+        entityType,
+        entityId,
+        correlationId: safeRequestId(metadata.correlationId),
+        requestId: safeRequestId(metadata.requestId),
+        afterJson,
+        ipHash: metadata.ipAddress ? this.digest('client-ip', metadata.ipAddress.trim()) : null,
+        userAgentSummary: normalizeUserAgent(metadata.userAgent),
+        createdAt: this.now(),
+      },
+    });
+  }
 }
 
-function actorFromUser(user: {
-  id: string;
-  emailNormalized: string;
-  displayName: string;
-  locale: string;
-  role: string;
-}): SessionActor {
+function actorFromUser(
+  user: {
+    id: string;
+    emailNormalized: string;
+    displayName: string;
+    locale: string;
+    role: string;
+  },
+  settings: AuthorizationSettings,
+): SessionActor {
   return {
     id: user.id,
     email: user.emailNormalized,
     displayName: user.displayName,
     locale: user.locale as SessionActor['locale'],
     role: user.role as SessionActor['role'],
+    permissions: permissionsFor(user.role as SessionActor['role'], settings),
   };
 }
 
@@ -253,4 +356,8 @@ function safeHashEquals(expected: string, actual: string): boolean {
 
 function invalidSession(): SessionError {
   return new SessionError('AUTH_SESSION_INVALID', 'Session is invalid or expired.');
+}
+
+function safeRequestId(value: string | undefined): string {
+  return value?.trim().slice(0, 128) || randomUUID();
 }

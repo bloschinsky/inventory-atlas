@@ -9,7 +9,11 @@ import {
   expectedSchemaVersion,
   migrateToLatest,
 } from './database.js';
-import { createSettingsClient, initializeInstallationSettings } from './settings.repository.js';
+import {
+  createSettingsClient,
+  initializeInstallationSettings,
+  readAdminAuthorizationSettings,
+} from './settings.repository.js';
 
 const integrationDatabaseUrl = process.env.INTEGRATION_DATABASE_URL;
 const suite = integrationDatabaseUrl ? describe : describe.skip;
@@ -74,6 +78,9 @@ suite('foundation database lifecycle', () => {
         vi.fn(),
       );
       expect(second.initializedAt).toEqual(first.initializedAt);
+      expect(await readAdminAuthorizationSettings(settingsClient)).toEqual({
+        adminGrants: ['manageUsers', 'manageSettings'],
+      });
 
       await settingsClient.appSetting.update({
         where: { settingKey: 'default_locale' },
@@ -103,6 +110,14 @@ suite('foundation database lifecycle', () => {
           vi.fn(),
         ),
       ).rejects.toThrow(/PUBLIC_CATALOG_MODE conflicts/);
+
+      await settingsClient.appSetting.update({
+        where: { settingKey: 'admin_capabilities' },
+        data: { valueText: 'manageUsers,manageAudit' },
+      });
+      expect(await readAdminAuthorizationSettings(settingsClient)).toEqual({
+        adminGrants: ['manageUsers', 'manageAudit'],
+      });
     } finally {
       await database.destroy();
       await settingsClient.$disconnect();

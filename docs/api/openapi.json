@@ -27,6 +27,36 @@
         "required": ["limit"],
         "type": "object"
       },
+      "InvitationSummaryDto": {
+        "properties": {
+          "acceptedAt": { "format": "date-time", "nullable": true, "type": "string" },
+          "email": { "format": "email", "type": "string" },
+          "expiresAt": { "format": "date-time", "type": "string" },
+          "id": { "format": "uuid", "type": "string" },
+          "revokedAt": { "format": "date-time", "nullable": true, "type": "string" },
+          "role": { "enum": ["admin", "editor", "owner", "viewer"], "type": "string" },
+          "version": { "minimum": 1, "type": "number" }
+        },
+        "required": ["email", "expiresAt", "id", "role", "version"],
+        "type": "object"
+      },
+      "IssuedInvitationDto": {
+        "properties": {
+          "acceptedAt": { "format": "date-time", "nullable": true, "type": "string" },
+          "email": { "format": "email", "type": "string" },
+          "expiresAt": { "format": "date-time", "type": "string" },
+          "id": { "format": "uuid", "type": "string" },
+          "revokedAt": { "format": "date-time", "nullable": true, "type": "string" },
+          "role": { "enum": ["admin", "editor", "owner", "viewer"], "type": "string" },
+          "token": {
+            "description": "One-time token shown only when the invitation is issued.",
+            "type": "string"
+          },
+          "version": { "minimum": 1, "type": "number" }
+        },
+        "required": ["email", "expiresAt", "id", "role", "token", "version"],
+        "type": "object"
+      },
       "ItemMutationRequestDto": {
         "properties": {
           "categoryId": {
@@ -108,9 +138,30 @@
           "email": { "format": "email", "type": "string" },
           "id": { "format": "uuid", "type": "string" },
           "locale": { "enum": ["en", "uk"], "type": "string" },
+          "permissions": {
+            "items": {
+              "enum": [
+                "editItems",
+                "manageAudit",
+                "manageIntegrations",
+                "manageJobs",
+                "managePortability",
+                "manageSchema",
+                "manageSettings",
+                "manageUsers",
+                "moveInventory",
+                "searchPrivateValues",
+                "viewAuthenticatedFields",
+                "viewPrivateFields",
+                "viewPublicCards"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
           "role": { "enum": ["admin", "editor", "owner", "viewer"], "type": "string" }
         },
-        "required": ["displayName", "email", "id", "locale", "role"],
+        "required": ["displayName", "email", "id", "locale", "permissions", "role"],
         "type": "object"
       },
       "SessionResponseDto": {
@@ -125,6 +176,40 @@
           "sessionId": { "format": "uuid", "type": "string" }
         },
         "required": ["absoluteExpiresAt", "actor", "csrfToken", "idleExpiresAt", "sessionId"],
+        "type": "object"
+      },
+      "SessionSummaryDto": {
+        "properties": {
+          "absoluteExpiresAt": { "format": "date-time", "type": "string" },
+          "createdAt": { "format": "date-time", "type": "string" },
+          "current": { "type": "boolean" },
+          "id": { "format": "uuid", "type": "string" },
+          "idleExpiresAt": { "format": "date-time", "type": "string" },
+          "lastSeenAt": { "format": "date-time", "type": "string" },
+          "userAgentSummary": { "nullable": true, "type": "string" }
+        },
+        "required": [
+          "absoluteExpiresAt",
+          "createdAt",
+          "current",
+          "id",
+          "idleExpiresAt",
+          "lastSeenAt"
+        ],
+        "type": "object"
+      },
+      "UserSummaryDto": {
+        "properties": {
+          "archivedAt": { "format": "date-time", "nullable": true, "type": "string" },
+          "displayName": { "type": "string" },
+          "email": { "format": "email", "type": "string" },
+          "id": { "format": "uuid", "type": "string" },
+          "locale": { "enum": ["en", "uk"], "type": "string" },
+          "role": { "enum": ["admin", "editor", "owner", "viewer"], "type": "string" },
+          "status": { "enum": ["active", "disabled"], "type": "string" },
+          "version": { "minimum": 1, "type": "number" }
+        },
+        "required": ["displayName", "email", "id", "locale", "role", "status", "version"],
         "type": "object"
       },
       "VersionConflictProblemDto": {
@@ -201,6 +286,156 @@
         "tags": ["foundation"]
       }
     },
+    "/api/v1/admin/invitations": {
+      "get": {
+        "operationId": "listInvitations",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": { "$ref": "#/components/schemas/InvitationSummaryDto" },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["authentication administration"]
+      },
+      "post": {
+        "operationId": "issueInvitation",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/IssuedInvitationDto" }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["authentication administration"]
+      }
+    },
+    "/api/v1/admin/invitations/{id}": {
+      "delete": {
+        "operationId": "revokeInvitation",
+        "parameters": [],
+        "responses": { "204": { "description": "" } },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["authentication administration"]
+      }
+    },
+    "/api/v1/admin/users": {
+      "get": {
+        "operationId": "listUsers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": { "$ref": "#/components/schemas/UserSummaryDto" },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["authentication administration"]
+      }
+    },
+    "/api/v1/admin/users/{id}": {
+      "delete": {
+        "operationId": "archiveUser",
+        "parameters": [],
+        "responses": {
+          "204": { "description": "" },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["authentication administration"]
+      },
+      "patch": {
+        "operationId": "updateUser",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/UserSummaryDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["authentication administration"]
+      }
+    },
+    "/api/v1/auth/invitations/accept": {
+      "post": {
+        "operationId": "acceptInvitation",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/UserSummaryDto" } }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "summary": "",
+        "tags": ["authentication administration"]
+      }
+    },
     "/api/v1/auth/me": {
       "get": {
         "operationId": "getCurrentActor",
@@ -268,6 +503,34 @@
             "description": ""
           }
         },
+        "summary": "",
+        "tags": ["authentication"]
+      }
+    },
+    "/api/v1/auth/sessions": {
+      "get": {
+        "operationId": "listAuthSessions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": { "$ref": "#/components/schemas/SessionSummaryDto" },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
         "summary": "",
         "tags": ["authentication"]
       }
@@ -373,5 +636,5 @@
   },
   "servers": [],
   "tags": [],
-  "x-spec-checksum": "5826c018afc413668de2d15d84938c1a419578aaadae128c7a38e73442160eef"
+  "x-spec-checksum": "53e357f5428261f7ad381ddabca571537d3b8e31422a1fbea1f6c4c3247ad2fb"
 }

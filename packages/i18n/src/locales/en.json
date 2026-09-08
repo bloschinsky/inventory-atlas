@@ -37,5 +37,35 @@
     "pending": "This route is ready for its feature story.",
     "error": "The application could not display this page.",
     "notFound": "The requested page does not exist."
+  },
+  "common": {
+    "loading": "Loading…",
+    "loadFailed": "Could not load this information.",
+    "saveFailed": "Could not save the change."
+  },
+  "auth": {
+    "acceptInvitation": "Accept invitation",
+    "account": "Account",
+    "confirmOwnerChange": "Confirm this change to an Owner account?",
+    "copyTokenNow": "Copy this token now. It will not be shown again.",
+    "createAccount": "Create account",
+    "currentSession": "Current session",
+    "displayName": "Display name",
+    "email": "Email",
+    "invitationInvalid": "This invitation is invalid or has expired.",
+    "invitationToken": "Invitation token",
+    "inviteUser": "Invite user",
+    "issueInvitation": "Issue invitation",
+    "locale": "Language",
+    "password": "Password",
+    "pendingInvitations": "Invitations",
+    "revoke": "Revoke",
+    "role": "Role",
+    "sessions": "Sessions",
+    "signIn": "Sign in",
+    "signInFailed": "Email or password is invalid.",
+    "signOut": "Sign out",
+    "unknownDevice": "Unknown device",
+    "users": "Users"
   }
 }

@@ -41,7 +41,13 @@ describe('frontend architecture policies', () => {
   it('clears only the Pinia session summary', () => {
     setActivePinia(createPinia());
     const session = useSessionStore();
-    session.summary = { role: 'Viewer' };
+    session.summary = {
+      id: 'user-1',
+      displayName: 'Viewer',
+      role: 'viewer',
+      permissions: [],
+      csrfToken: 'csrf',
+    };
     session.clear();
     expect(session.summary).toBeNull();
   });

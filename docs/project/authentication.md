@@ -1,10 +1,9 @@
 # Authentication implementation status
 
-FND-04 currently provides the Auth/Audit migrations, generated Prisma models,
+FND-04 provides the Auth/Audit migrations, generated Prisma models,
 migrated-schema drift verification, the Auth credential adapter, one-time
-first-Owner bootstrap, and the FND-04B opaque session lifecycle. Invitations,
-the complete role policy, authentication rate limits, security audit events and
-the browser UI remain roadmap tasks.
+first-Owner bootstrap, opaque sessions, invitations, role policy, rate limits,
+security audit events, and the browser account-administration flows.
 
 ## First Owner bootstrap
 
@@ -63,6 +62,62 @@ its installation script explicitly enabled in `pnpm-workspace.yaml`. The wrapper
 uses the [node-argon2 API](https://github.com/ranisalt/node-argon2). Docker builds
 install the same pinned package and native binding as the development workspace.
 
+## Invitations and user administration
+
+An Owner, or an Admin with the database-authoritative `manageUsers` capability,
+can issue a seven-day invitation. The API returns its 256-bit token once and
+PostgreSQL stores only a domain-separated HMAC-SHA-256 digest. Issuing another
+active invitation for the same normalized email revokes the earlier one.
+Acceptance validates expiry and revocation, hashes the new password before the
+transaction, and atomically creates the account and consumes the invitation.
+
+User and invitation mutations use resource versions. Role, disable and archive
+operations revoke the affected account's active sessions. Operations affecting
+an Owner require an authenticated Owner plus explicit confirmation, and a table
+lock serializes the active-Owner count so the last Owner cannot be disabled,
+archived or demoted. Admin can manage non-Owner accounts but can neither grant
+nor remove Owner authority.
+
+## Capabilities and rate limits
+
+The section 16.1 matrix is encoded as named server capabilities and returned by
+`GET /api/v1/auth/me`. Owner always receives every capability. Public catalog
+viewing follows installation configuration; Viewer and Editor permissions are
+fixed; Admin's limited capabilities come from the validated
+`admin_capabilities` database setting. Its default enables non-Owner user and
+settings administration while portability, integrations, audit and job
+administration require explicit grants.
+
+Sign-in is limited to five attempts per hashed IP/email identity per 15 minutes.
+Invitation acceptance is limited to ten attempts per hashed IP/token identity
+per 15 minutes. Successful use clears its bucket; rejected requests return 429
+and `Retry-After`. Limiter keys are HMAC digests, so raw emails, IP addresses and
+tokens are not retained in memory.
+
+## Security audit
+
+Sign-in success and denial, session revocation, invitation issue/revoke/accept,
+and user role/status/archive changes append audit rows in the owning business
+transaction where one exists. Audit JSON is a fixed safe projection containing
+only results, roles, statuses and boolean state. It excludes passwords, session
+and invitation tokens, credential hashes and email addresses. Client IPs use the
+same domain-separated HMAC policy as sessions; user-agent and request identifiers
+are normalized and bounded.
+
+## API and browser flows
+
+The API adds session listing, invitation listing/issue/revoke/accept, user
+listing, versioned role/status changes and account archival. Authenticated
+mutations require the session-bound CSRF token. Generated OpenAPI declarations,
+JavaScript types and Zod schemas cover every route under one checksum.
+
+Vue pages provide sign-in and sign-out, invitation acceptance, active-session
+revocation, user/role administration and one-time invitation-token display.
+Vue Query owns every server collection and mutation; Pinia retains only the
+current session summary and CSRF value. English and Ukrainian strings are kept
+in the shared locale resources, and application code uses only the semantic UI
+facade.
+
 ## Verification
 
 - Unit tests use real Argon2id: encoded parameters, fresh salts, mismatches,
@@ -80,7 +135,7 @@ install the same pinned package and native binding as the development workspace.
 - Run `pnpm test`, `pnpm test:integration`, `pnpm lint`, `pnpm check`, `pnpm build`
   and `pnpm license:check` through the documented Docker developer workflow.
 
-Verified for this increment: all 57 unit tests and 42 PostgreSQL integration
+Verified for this increment: all 61 unit tests and 46 PostgreSQL integration
 tests passed, along with lint, types/boundaries/contracts, build, schema,
 localization and formatting checks. The earlier credential increment also
 verified the production API image and dependency-license policy.

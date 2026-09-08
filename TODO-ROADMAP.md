@@ -260,12 +260,12 @@ Tasks:
 - [x] Implement Argon2id password hashing with parameters encoded in the stored hash.
 - [x] Generate opaque session tokens and store only their hashes.
 - [x] Implement secure cookie, CSRF, idle expiry, absolute expiry, last-seen, and revocation behavior.
-- [ ] Implement invite issue, hash, expiry, revoke, and accept flows.
-- [ ] Encode the Public, Viewer, Editor, Owner, and Admin capability matrix from blueprint section 16.1.
-- [ ] Prevent deletion/demotion of the last Owner and enforce explicit Owner confirmation where required.
-- [ ] Add rate limiting to authentication and token workflows.
-- [ ] Record safe authentication/authorization audit events without secrets.
-- [ ] Add API and UI flows for sign-in, sign-out, invitation acceptance, session management, users, and roles.
+- [x] Implement invite issue, hash, expiry, revoke, and accept flows.
+- [x] Encode the Public, Viewer, Editor, Owner, and Admin capability matrix from blueprint section 16.1.
+- [x] Prevent deletion/demotion of the last Owner and enforce explicit Owner confirmation where required.
+- [x] Add rate limiting to authentication and token workflows.
+- [x] Record safe authentication/authorization audit events without secrets.
+- [x] Add API and UI flows for sign-in, sign-out, invitation acceptance, session management, users, and roles.
 
 Implementation evidence: [Auth credential adapter and checks](docs/project/authentication.md).
 The owner approved the development-only Prisma dependency exception; CLI tooling
@@ -277,8 +277,8 @@ Acceptance criteria (verbatim from the approved blueprint):
 
 - [x] Argon2id and hashed opaque sessions are implemented.
 - [x] Cookie, CSRF, expiry, and revocation tests pass.
-- [ ] Public, Viewer, Editor, Owner, and Admin permissions match section 16.
-- [ ] Security events appear in audit without secrets.
+- [x] Public, Viewer, Editor, Owner, and Admin permissions match section 16.
+- [x] Security events appear in audit without secrets.
 
 ### FND-05 Deliver English and Ukrainian foundations
 

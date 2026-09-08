@@ -39,6 +39,15 @@ suite('opaque session lifecycle', () => {
         role: 'owner',
       },
     });
+    await prisma.user.create({
+      data: {
+        id: randomUUID(),
+        emailNormalized: 'admin@example.test',
+        displayName: 'Synthetic Admin',
+        passwordHash: await new PasswordHasher().hash('correct synthetic password'),
+        role: 'admin',
+      },
+    });
   });
 
   beforeEach(async () => {
@@ -100,6 +109,11 @@ suite('opaque session lifecycle', () => {
     }
     expect(metadataRow?.ipHash).toMatch(/^[0-9a-f]{64}$/);
     expect(metadataRow?.ipHash).not.toBe(createHash('sha256').update('192.0.2.10').digest('hex'));
+    const audit = JSON.stringify(await prisma.auditEvent.findMany());
+    expect(audit).toContain('auth.sign_in.succeeded');
+    expect(audit).not.toContain(first.token);
+    expect(audit).not.toContain(first.csrfToken);
+    expect(audit).not.toContain('correct synthetic password');
   });
 
   it('rejects invalid credentials without creating a session', async () => {
@@ -131,6 +145,24 @@ suite('opaque session lifecycle', () => {
       lastSeenAt: now,
       idleExpiresAt: authenticated.idleExpiresAt,
     });
+  });
+
+  it('projects configured Admin capabilities into the authenticated actor', async () => {
+    const restrictedAdmin = new SessionService(prisma, 'synthetic-session-secret-for-tests', {
+      now: () => new Date(now),
+      authorizationSettings: { adminGrants: [] },
+      passwordHasher: {
+        verify: async (_encodedHash: string, password: string) =>
+          password === 'correct synthetic password',
+      },
+    });
+
+    const issued = await restrictedAdmin.signIn('admin@example.test', 'correct synthetic password');
+    const authenticated = await restrictedAdmin.authenticate(issued.token);
+
+    expect(authenticated.actor.permissions).toContain('manageSchema');
+    expect(authenticated.actor.permissions).not.toContain('manageUsers');
+    expect(authenticated.actor.permissions).not.toContain('manageSettings');
   });
 
   it('enforces idle and absolute expiry and marks expired sessions revoked', async () => {

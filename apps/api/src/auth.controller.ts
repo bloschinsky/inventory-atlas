@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Headers,
+  HttpException,
   HttpCode,
   Inject,
   Ip,
@@ -15,7 +16,13 @@ import {
   Res,
   UnauthorizedException,
 } from '@nestjs/common';
-import { SessionError, sessionPolicy, type SessionActor } from '@inventory-atlas/backend';
+import {
+  permissionsFor,
+  RateLimitError,
+  SessionError,
+  sessionPolicy,
+  type SessionActor,
+} from '@inventory-atlas/backend';
 import {
   ApiBadRequestResponse,
   ApiCookieAuth,
@@ -24,6 +31,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiProperty,
+  ApiPropertyOptional,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -54,6 +62,9 @@ class SessionActorDto implements SessionActor {
 
   @ApiProperty({ enum: ['viewer', 'editor', 'admin', 'owner'], type: String })
   declare role: 'viewer' | 'editor' | 'admin' | 'owner';
+
+  @ApiProperty({ enum: permissionsFor('owner'), isArray: true, type: String })
+  declare permissions: SessionActor['permissions'];
 }
 
 class SessionResponseDto {
@@ -90,9 +101,21 @@ class CurrentSessionResponseDto {
   declare actor: SessionActorDto;
 }
 
+class SessionSummaryDto {
+  @ApiProperty({ format: 'uuid', type: String }) declare id: string;
+  @ApiProperty({ format: 'date-time', type: String }) declare createdAt: string;
+  @ApiProperty({ format: 'date-time', type: String }) declare lastSeenAt: string;
+  @ApiProperty({ format: 'date-time', type: String }) declare idleExpiresAt: string;
+  @ApiProperty({ format: 'date-time', type: String }) declare absoluteExpiresAt: string;
+  @ApiProperty({ type: Boolean }) declare current: boolean;
+  @ApiPropertyOptional({ nullable: true, type: String }) declare userAgentSummary: string | null;
+}
+
 interface RequestHeaders {
   cookie?: string;
   'user-agent'?: string;
+  'x-request-id'?: string;
+  'x-correlation-id'?: string;
 }
 
 interface ReplyHeaders {
@@ -117,11 +140,17 @@ export class AuthController {
     @Res({ passthrough: true }) reply: ReplyHeaders,
   ): Promise<SessionResponseDto> {
     if (!isSignInBody(body)) throw new BadRequestException('Email and password are required.');
+    const rateIdentity = `${ipAddress}|${body.email.trim().toLowerCase()}`;
     try {
+      this.runtime.authRateLimiter().consume('sign-in', rateIdentity);
       const userAgent = request.headers['user-agent'];
       const issued = await this.runtime.authSessions().signIn(body.email, body.password, {
         ipAddress,
         ...(userAgent ? { userAgent } : {}),
+        ...(request.headers['x-request-id'] ? { requestId: request.headers['x-request-id'] } : {}),
+        ...(request.headers['x-correlation-id']
+          ? { correlationId: request.headers['x-correlation-id'] }
+          : {}),
       });
       reply.header(
         'Set-Cookie',
@@ -132,6 +161,7 @@ export class AuthController {
         ),
       );
       reply.header('Cache-Control', 'no-store');
+      this.runtime.authRateLimiter().reset('sign-in', rateIdentity);
       return {
         sessionId: issued.id,
         csrfToken: issued.csrfToken,
@@ -139,6 +169,30 @@ export class AuthController {
         absoluteExpiresAt: issued.absoluteExpiresAt.toISOString(),
         actor: issued.actor,
       };
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        reply.header('Retry-After', String(error.retryAfterSeconds));
+        throw new HttpException(error.message, 429);
+      }
+      throw mapSessionError(error);
+    }
+  }
+
+  @Get('sessions')
+  @ApiCookieAuth()
+  @ApiOperation({ operationId: 'listAuthSessions' })
+  @ApiOkResponse({ type: [SessionSummaryDto] })
+  @ApiUnauthorizedResponse({ type: ProblemDetailsDto })
+  async sessions(@Headers('cookie') cookieHeader?: string): Promise<SessionSummaryDto[]> {
+    try {
+      const sessions = await this.runtime.authSessions().listOwned(requireSession(cookieHeader));
+      return sessions.map((session) => ({
+        ...session,
+        createdAt: session.createdAt.toISOString(),
+        lastSeenAt: session.lastSeenAt.toISOString(),
+        idleExpiresAt: session.idleExpiresAt.toISOString(),
+        absoluteExpiresAt: session.absoluteExpiresAt.toISOString(),
+      }));
     } catch (error) {
       throw mapSessionError(error);
     }

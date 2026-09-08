@@ -8,6 +8,16 @@ import {
   type SupportedLocale,
 } from '@inventory-atlas/config';
 import { PrismaClient } from './generated/prisma/client.js';
+import type { AuthorizationSettings, Capability } from './auth/authorization.js';
+
+const configurableAdminCapabilities = [
+  'manageUsers',
+  'manageSettings',
+  'managePortability',
+  'manageIntegrations',
+  'manageAudit',
+  'manageJobs',
+] as const satisfies readonly Capability[];
 
 export function createSettingsClient(
   connectionString: string,
@@ -54,6 +64,11 @@ export async function initializeInstallationSettings(
             valueText: configuration.publicCatalogMode,
             updatedAt: initializedAt,
           },
+          {
+            settingKey: 'admin_capabilities',
+            valueText: 'manageUsers,manageSettings',
+            updatedAt: initializedAt,
+          },
         ],
       });
       await transaction.installationMetadata.create({
@@ -73,7 +88,9 @@ export async function initializeInstallationSettings(
     if (
       rows.some(
         (row) =>
-          !['app_base_url', 'default_locale', 'public_catalog_mode'].includes(row.settingKey),
+          !['app_base_url', 'default_locale', 'public_catalog_mode', 'admin_capabilities'].includes(
+            row.settingKey,
+          ),
       )
     ) {
       throw new ConfigurationError(
@@ -106,4 +123,23 @@ export async function initializeInstallationSettings(
     );
     return { settings, initializedAt: metadata.settingsInitializedAt };
   });
+}
+
+export async function readAdminAuthorizationSettings(
+  prisma: PrismaClient,
+): Promise<AuthorizationSettings> {
+  const row = await prisma.appSetting.findUnique({ where: { settingKey: 'admin_capabilities' } });
+  const values = (row?.valueText ?? 'manageUsers,manageSettings')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+  if (values.some((value) => !configurableAdminCapabilities.includes(value as never))) {
+    throw new ConfigurationError(
+      'CONFIG_ADMIN_CAPABILITIES_INVALID',
+      'admin_capabilities contains an unsupported capability.',
+    );
+  }
+  return {
+    adminGrants: values as NonNullable<AuthorizationSettings['adminGrants']>,
+  };
 }
