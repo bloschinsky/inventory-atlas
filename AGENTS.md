@@ -116,19 +116,36 @@ See `docs/project/versioning.md` for the complete release procedure.
 
 ## Required checks
 
-Use the root commands defined by the blueprint as they become available. Before a feature commit, run all checks relevant to the changed area. Before a release candidate, run the complete pipeline, including:
+The root scripts in `package.json` are the authoritative command list; read them instead of assuming a command name. The supported way to execute them is inside the Docker tools container described in `docs/operations/development.md`. The `pnpm <script>` forms below name the script, not the host invocation.
+
+`pnpm check` is an aggregate. It already runs `check:types`, `boundaries:check`, `contracts:check`, `ui:facade-gaps`, and `clean-checkout:check`, so do not run or list those members as separate gates.
+
+`pnpm prisma:check` validates and generates the schema with the pinned CLI in isolation, so `pnpm prisma:validate` is not a separate gate either.
+
+Before a feature commit, run all checks relevant to the changed area.
+
+Before a release candidate, run the complete pipeline:
 
 ```bash
+pnpm format:check
+pnpm license:check
+pnpm security:check
+pnpm prisma:check
 pnpm lint
 pnpm check
 pnpm test
 pnpm test:integration
-pnpm test:e2e
+pnpm build
 pnpm db:verify
-pnpm contracts:check
 pnpm i18n:check
+pnpm test:e2e
 pnpm compose:validate
+pnpm test:compose:persistence
 ```
+
+`db:verify` and `test:integration` require a reachable PostgreSQL instance with migrations applied. The compose checks run in the `docker-tools` service, not `tools`.
+
+`.github/workflows/ci.yml` enforces only part of this pipeline: `license:check`, `security:check`, `prisma:check`, `lint`, `check`, `test`, `test:integration`, `build`, and the runtime smoke image. A green CI run is therefore not evidence that `format:check`, `db:verify`, `i18n:check`, `test:e2e`, `compose:validate`, or `test:compose:persistence` passed; run those locally before a release candidate.
 
 Never mark a roadmap checkbox complete solely because code exists. Required tests, contracts, localization, documentation, and applicable Definition of Done items must also pass.
 
