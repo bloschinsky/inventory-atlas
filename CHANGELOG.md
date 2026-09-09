@@ -12,6 +12,15 @@ The project follows the version policy in `docs/project/versioning.md`.
 
 ### Added
 
+- Continued CAT-02B with the Schema module validation engine and canonical EAV
+  adapters: a closed per-type validation-rule set, one canonical value serializer
+  shared by every persistence path, stable field-key issue codes,
+  `TransactionalAttributeValuePort` with parity-tested Prisma and Kysely branches,
+  Prisma-owned definition/option repositories with definition-version audit
+  snapshots and optimistic concurrency, deduplicated `FieldDefinitionChanged` and
+  `FieldOptionLabelChanged` rebuild messages with mass-reindex warnings, and
+  non-destructive type-change impact analysis with a conversion preview.
+
 - Started CAT-02A with the Kysely-owned Schema tables: constrained field
   definitions for the `item` and `storage_node` scopes with optional category
   applicability, all twelve approved data types, bilingual label/help objects,

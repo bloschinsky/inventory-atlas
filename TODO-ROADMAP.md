@@ -371,15 +371,15 @@ Tasks:
 
 - [x] Add migrations for field definitions, options, and typed scalar attribute rows.
 - [x] Add database checks for one owner, one typed value group, money pairs, positions, owner/field/position uniqueness, and multiselect option uniqueness.
-- [ ] Implement Item and StorageNode scopes with optional category applicability.
-- [ ] Implement all approved data types, validation rules, units, defaults, ordering, visibility, and search/filter/sort flags.
-- [ ] Implement option ownership and archived-option resolution.
-- [ ] Implement `AttributeValuePort` Prisma and Kysely adapters with equivalent parameterized semantics.
-- [ ] Store repeatable scalars as contiguous rows and multiselect as ordered `value_option_id` rows only.
-- [ ] Reject `repeatable` for select and multiselect definitions.
-- [ ] Implement definition-version snapshots and optimistic concurrency.
-- [ ] Implement type-change impact analysis and conversion preview without direct destructive mutation.
-- [ ] Warn and enqueue the required rebuild when public/search-related behavior changes.
+- [x] Implement Item and StorageNode scopes with optional category applicability.
+- [x] Implement all approved data types, validation rules, units, defaults, ordering, visibility, and search/filter/sort flags.
+- [x] Implement option ownership and archived-option resolution.
+- [x] Implement `AttributeValuePort` Prisma and Kysely adapters with equivalent parameterized semantics.
+- [x] Store repeatable scalars as contiguous rows and multiselect as ordered `value_option_id` rows only.
+- [x] Reject `repeatable` for select and multiselect definitions.
+- [x] Implement definition-version snapshots and optimistic concurrency.
+- [x] Implement type-change impact analysis and conversion preview without direct destructive mutation.
+- [x] Warn and enqueue the required rebuild when public/search-related behavior changes.
 - [ ] Build bilingual Admin field/option editor and dynamic preview controls.
 - [ ] Add constraint, adapter parity, rollback, authorization, and UI tests.
 
