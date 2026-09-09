@@ -58,11 +58,14 @@ export async function generateOpenApi(outputPath = openApiPath) {
   const temporaryDirectory = await mkdtemp(path.join(tmpdir(), 'inventory-atlas-openapi-'));
   const rawPath = path.join(temporaryDirectory, 'raw.json');
   try {
+    // The development condition resolves workspace packages to their sources, so the
+    // contract never depends on a prior build or a stale dist directory.
     await run('pnpm', [
       '--filter',
       '@inventory-atlas/api',
       'exec',
       'tsx',
+      '--conditions=development',
       'src/openapi.cli.ts',
       rawPath,
     ]);
