@@ -32,7 +32,7 @@ missing licenses and development packages physically present in runtime files.
 
 | Dependency | Fixed version | Reason and scope |
 | --- | --- | --- |
-| `js-yaml` via `@hey-api/json-schema-ref-parser@1.4.4` | 4.3.1 | Fixes merge-chain and ordered-map CPU exhaustion; narrow override of the parser's exact 4.2.0 pin |
+| `js-yaml` via `@hey-api/json-schema-ref-parser@1.4.4` | 4.3.2 | Fixes merge-chain, ordered-map and empty-merge-source CPU exhaustion; narrow override of the parser's exact 4.2.0 pin |
 | `esbuild` | 0.28.1 | Fixes Windows development-server path traversal; one pinned version across consumers |
 | `tsx` | 4.23.13 | Supports the patched esbuild 0.28 line; API/worker development only |
 | `deepmerge-ts` via `@prisma/config@7.10.0` | 8.0.0 | Fixes recursive graph stack exhaustion discovered when CLI was installed |
@@ -46,6 +46,7 @@ PostgreSQL. Revisit the overrides when upstream packages adopt patched versions.
 
 Advisories: [YAML merge](https://github.com/advisories/GHSA-52cp-r559-cp3m),
 [YAML ordered map](https://github.com/advisories/GHSA-5p4m-2wfm-xmqj),
+[YAML empty merge sources](https://github.com/advisories/GHSA-2883-xcg3-v3hh),
 [esbuild](https://github.com/advisories/GHSA-g7r4-m6w7-qqqr),
 [deepmerge-ts](https://github.com/advisories/GHSA-ggr8-5vv4-36mx),
 [MySQL authentication](https://github.com/advisories/GHSA-3f6p-5ww8-9rcr),
