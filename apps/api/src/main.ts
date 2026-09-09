@@ -6,9 +6,10 @@ import { AppModule } from './app.module.js';
 import { FoundationRuntime, type FoundationRuntimePort } from './foundation.runtime.js';
 import type { AuthRuntimePort } from './auth.runtime.js';
 import type { CatalogRuntimePort } from './catalog.runtime.js';
+import type { SchemaRuntimePort } from './schema.runtime.js';
 
 export async function createApiApplication(
-  runtime: FoundationRuntimePort & AuthRuntimePort & CatalogRuntimePort,
+  runtime: FoundationRuntimePort & AuthRuntimePort & CatalogRuntimePort & SchemaRuntimePort,
 ): Promise<NestFastifyApplication> {
   return NestFactory.create<NestFastifyApplication>(
     AppModule.register(runtime),

@@ -74,7 +74,8 @@ export interface FieldDefinitionRecord {
   sortable: boolean;
   visibility: FieldVisibility;
   unit: string | null;
-  defaultValue: unknown;
+  /** Ordered API-shaped default values; a scalar field projects a single-entry array. */
+  defaultValue: unknown[] | null;
   validation: ValidationRules;
   displayOrder: number;
   version: number;
@@ -1036,9 +1037,13 @@ function toDefinitionRecord(
   };
 }
 
-function readStoredDefault(shape: FieldValueShape, value: unknown): unknown {
+function readStoredDefault(shape: FieldValueShape, value: unknown): unknown[] | null {
   if (!Array.isArray(value)) return null;
-  return projectFieldValues(shape, value as CanonicalFieldValue[]);
+  // Defaults always project as an ordered array so one contract shape covers every data type.
+  return projectFieldValues(
+    { ...shape, repeatable: true },
+    value as CanonicalFieldValue[],
+  ) as unknown[];
 }
 
 function toOptionRecord(row: OptionRowShape): FieldOptionRecord {

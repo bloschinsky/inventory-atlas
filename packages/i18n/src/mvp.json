@@ -12,6 +12,7 @@
     "validation.*",
     "problems.*",
     "auth.*",
-    "catalog.*"
+    "catalog.*",
+    "schema.*"
   ]
 }

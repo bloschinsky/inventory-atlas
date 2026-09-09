@@ -15,6 +15,164 @@
         "required": ["displayOrder", "id", "key", "labels", "version"],
         "type": "object"
       },
+      "ConversionPreviewDto": {
+        "properties": {
+          "analyzedValues": { "minimum": 0, "type": "number" },
+          "blockingIssues": {
+            "description": "Stable issue codes for blocking values. Never contains a stored value.",
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "blockingValues": { "minimum": 0, "type": "number" },
+          "convertibleValues": { "minimum": 0, "type": "number" },
+          "currentDataType": {
+            "enum": [
+              "boolean",
+              "date",
+              "datetime",
+              "email",
+              "long_text",
+              "money",
+              "multiselect",
+              "number",
+              "reference",
+              "select",
+              "text",
+              "url"
+            ],
+            "type": "string"
+          },
+          "fieldDefinitionId": { "format": "uuid", "type": "string" },
+          "fieldKey": { "pattern": "^[a-z][a-z0-9_]{0,63}$", "type": "string" },
+          "lossless": { "type": "boolean" },
+          "reindexRequired": { "type": "boolean" },
+          "requiresBackgroundConversion": { "type": "boolean" },
+          "supported": { "type": "boolean" },
+          "targetDataType": {
+            "enum": [
+              "boolean",
+              "date",
+              "datetime",
+              "email",
+              "long_text",
+              "money",
+              "multiselect",
+              "number",
+              "reference",
+              "select",
+              "text",
+              "url"
+            ],
+            "type": "string"
+          },
+          "totalValues": { "minimum": 0, "type": "number" },
+          "truncated": { "type": "boolean" }
+        },
+        "required": [
+          "analyzedValues",
+          "blockingIssues",
+          "blockingValues",
+          "convertibleValues",
+          "currentDataType",
+          "fieldDefinitionId",
+          "fieldKey",
+          "lossless",
+          "reindexRequired",
+          "requiresBackgroundConversion",
+          "supported",
+          "targetDataType",
+          "totalValues",
+          "truncated"
+        ],
+        "type": "object"
+      },
+      "ConversionPreviewRequestDto": {
+        "properties": {
+          "targetDataType": {
+            "enum": [
+              "boolean",
+              "date",
+              "datetime",
+              "email",
+              "long_text",
+              "money",
+              "multiselect",
+              "number",
+              "reference",
+              "select",
+              "text",
+              "url"
+            ],
+            "type": "string"
+          }
+        },
+        "required": ["targetDataType"],
+        "type": "object"
+      },
+      "CreateFieldDefinitionDto": {
+        "properties": {
+          "categoryId": { "format": "uuid", "nullable": true, "type": "string" },
+          "dataType": {
+            "enum": [
+              "boolean",
+              "date",
+              "datetime",
+              "email",
+              "long_text",
+              "money",
+              "multiselect",
+              "number",
+              "reference",
+              "select",
+              "text",
+              "url"
+            ],
+            "type": "string"
+          },
+          "defaultValue": {
+            "description": "Ordered API-shaped default values. A scalar field carries a single-entry array; multiselect and repeatable fields carry one entry per value.",
+            "items": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "number" },
+                { "type": "boolean" },
+                { "additionalProperties": true, "type": "object" }
+              ]
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "displayOrder": { "minimum": 0, "type": "number" },
+          "filterable": { "type": "boolean" },
+          "help": {
+            "allOf": [{ "$ref": "#/components/schemas/LocalizedTextDto" }],
+            "nullable": true,
+            "type": "object"
+          },
+          "key": { "pattern": "^[a-z][a-z0-9_]{0,63}$", "type": "string" },
+          "labels": { "$ref": "#/components/schemas/LocalizedTextDto" },
+          "repeatable": { "type": "boolean" },
+          "required": { "type": "boolean" },
+          "scope": { "enum": ["item", "storage_node"], "type": "string" },
+          "searchable": { "type": "boolean" },
+          "sortable": { "type": "boolean" },
+          "unit": { "maxLength": 32, "nullable": true, "type": "string" },
+          "validation": { "$ref": "#/components/schemas/ValidationRulesDto" },
+          "visibility": { "enum": ["authenticated", "private", "public"], "type": "string" }
+        },
+        "required": ["dataType", "key", "labels", "scope"],
+        "type": "object"
+      },
+      "CreateFieldOptionDto": {
+        "properties": {
+          "displayOrder": { "minimum": 0, "type": "number" },
+          "expectedVersion": { "minimum": 1, "type": "number" },
+          "key": { "pattern": "^[a-z][a-z0-9_]{0,63}$", "type": "string" },
+          "labels": { "$ref": "#/components/schemas/LocalizedTextDto" }
+        },
+        "required": ["expectedVersion", "key", "labels"],
+        "type": "object"
+      },
       "CurrentSessionResponseDto": {
         "properties": {
           "absoluteExpiresAt": { "format": "date-time", "type": "string" },
@@ -39,6 +197,106 @@
           }
         },
         "required": ["limit"],
+        "type": "object"
+      },
+      "FieldDefinitionDto": {
+        "properties": {
+          "archivedAt": { "format": "date-time", "nullable": true, "type": "string" },
+          "categoryId": { "format": "uuid", "nullable": true, "type": "string" },
+          "dataType": {
+            "enum": [
+              "boolean",
+              "date",
+              "datetime",
+              "email",
+              "long_text",
+              "money",
+              "multiselect",
+              "number",
+              "reference",
+              "select",
+              "text",
+              "url"
+            ],
+            "type": "string"
+          },
+          "defaultValue": {
+            "description": "Ordered API-shaped default values. A scalar field carries a single-entry array; multiselect and repeatable fields carry one entry per value.",
+            "items": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "number" },
+                { "type": "boolean" },
+                { "additionalProperties": true, "type": "object" }
+              ]
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "displayOrder": { "minimum": 0, "type": "number" },
+          "filterable": { "type": "boolean" },
+          "help": {
+            "allOf": [{ "$ref": "#/components/schemas/LocalizedTextDto" }],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": { "format": "uuid", "type": "string" },
+          "key": {
+            "example": "serial_number",
+            "pattern": "^[a-z][a-z0-9_]{0,63}$",
+            "type": "string"
+          },
+          "labels": { "$ref": "#/components/schemas/LocalizedTextDto" },
+          "options": {
+            "items": { "$ref": "#/components/schemas/FieldOptionDto" },
+            "type": "array"
+          },
+          "repeatable": { "type": "boolean" },
+          "required": { "type": "boolean" },
+          "scope": { "enum": ["item", "storage_node"], "type": "string" },
+          "searchable": { "type": "boolean" },
+          "sortable": { "type": "boolean" },
+          "unit": { "maxLength": 32, "nullable": true, "type": "string" },
+          "validation": { "$ref": "#/components/schemas/ValidationRulesDto" },
+          "version": { "minimum": 1, "type": "number" },
+          "visibility": { "enum": ["authenticated", "private", "public"], "type": "string" }
+        },
+        "required": [
+          "dataType",
+          "displayOrder",
+          "filterable",
+          "id",
+          "key",
+          "labels",
+          "options",
+          "repeatable",
+          "required",
+          "scope",
+          "searchable",
+          "sortable",
+          "validation",
+          "version",
+          "visibility"
+        ],
+        "type": "object"
+      },
+      "FieldDefinitionMutationDto": {
+        "properties": {
+          "definition": { "$ref": "#/components/schemas/FieldDefinitionDto" },
+          "reindex": { "$ref": "#/components/schemas/ReindexWarningDto" }
+        },
+        "required": ["definition", "reindex"],
+        "type": "object"
+      },
+      "FieldOptionDto": {
+        "properties": {
+          "archivedAt": { "format": "date-time", "nullable": true, "type": "string" },
+          "displayOrder": { "minimum": 0, "type": "number" },
+          "id": { "format": "uuid", "type": "string" },
+          "key": { "example": "metal", "pattern": "^[a-z][a-z0-9_]{0,63}$", "type": "string" },
+          "labels": { "$ref": "#/components/schemas/LocalizedTextDto" }
+        },
+        "required": ["displayOrder", "id", "key", "labels"],
         "type": "object"
       },
       "InvitationSummaryDto": {
@@ -136,6 +394,14 @@
         "required": ["en"],
         "type": "object"
       },
+      "LocalizedTextDto": {
+        "properties": {
+          "en": { "example": "Serial number", "maxLength": 200, "minLength": 1, "type": "string" },
+          "uk": { "example": "Серійний номер", "maxLength": 200, "minLength": 1, "type": "string" }
+        },
+        "required": ["en"],
+        "type": "object"
+      },
       "ProblemDetailsDto": {
         "properties": {
           "code": { "example": "VALIDATION_FAILED", "type": "string" },
@@ -169,6 +435,21 @@
           }
         },
         "required": ["field", "messages"],
+        "type": "object"
+      },
+      "ReindexWarningDto": {
+        "properties": {
+          "massReindexRequired": { "type": "boolean" },
+          "reasons": {
+            "items": {
+              "enum": ["archived", "filterable", "labels", "searchable", "sortable", "visibility"],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "topic": { "example": "search.rebuild-items.v1", "type": "string" }
+        },
+        "required": ["massReindexRequired", "reasons", "topic"],
         "type": "object"
       },
       "SessionActorDto": {
@@ -237,6 +518,68 @@
         ],
         "type": "object"
       },
+      "UpdateFieldDefinitionDto": {
+        "properties": {
+          "categoryId": { "format": "uuid", "nullable": true, "type": "string" },
+          "dataType": {
+            "enum": [
+              "boolean",
+              "date",
+              "datetime",
+              "email",
+              "long_text",
+              "money",
+              "multiselect",
+              "number",
+              "reference",
+              "select",
+              "text",
+              "url"
+            ],
+            "type": "string"
+          },
+          "defaultValue": {
+            "description": "Ordered API-shaped default values. A scalar field carries a single-entry array; multiselect and repeatable fields carry one entry per value.",
+            "items": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "number" },
+                { "type": "boolean" },
+                { "additionalProperties": true, "type": "object" }
+              ]
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "displayOrder": { "minimum": 0, "type": "number" },
+          "expectedVersion": { "minimum": 1, "type": "number" },
+          "filterable": { "type": "boolean" },
+          "help": {
+            "allOf": [{ "$ref": "#/components/schemas/LocalizedTextDto" }],
+            "nullable": true,
+            "type": "object"
+          },
+          "labels": { "$ref": "#/components/schemas/LocalizedTextDto" },
+          "repeatable": { "type": "boolean" },
+          "required": { "type": "boolean" },
+          "searchable": { "type": "boolean" },
+          "sortable": { "type": "boolean" },
+          "unit": { "maxLength": 32, "nullable": true, "type": "string" },
+          "validation": { "$ref": "#/components/schemas/ValidationRulesDto" },
+          "visibility": { "enum": ["authenticated", "private", "public"], "type": "string" }
+        },
+        "required": ["expectedVersion"],
+        "type": "object"
+      },
+      "UpdateFieldOptionDto": {
+        "properties": {
+          "displayOrder": { "minimum": 0, "type": "number" },
+          "expectedVersion": { "minimum": 1, "type": "number" },
+          "labels": { "$ref": "#/components/schemas/LocalizedTextDto" }
+        },
+        "required": ["expectedVersion"],
+        "type": "object"
+      },
       "UpdateLocaleRequestDto": {
         "properties": { "locale": { "enum": ["en", "uk"], "type": "string" } },
         "required": ["locale"],
@@ -254,6 +597,25 @@
           "version": { "minimum": 1, "type": "number" }
         },
         "required": ["displayName", "email", "id", "locale", "role", "status", "version"],
+        "type": "object"
+      },
+      "ValidationRulesDto": {
+        "properties": {
+          "currencies": {
+            "example": ["UAH", "EUR"],
+            "items": { "type": "string" },
+            "type": "array"
+          },
+          "integer": { "type": "boolean" },
+          "max": { "example": "100000", "type": "string" },
+          "maxLength": { "minimum": 0, "type": "number" },
+          "maxSelected": { "minimum": 0, "type": "number" },
+          "min": { "example": "0", "type": "string" },
+          "minLength": { "minimum": 0, "type": "number" },
+          "minSelected": { "minimum": 0, "type": "number" },
+          "pattern": { "maxLength": 200, "type": "string" },
+          "referenceScope": { "enum": ["any", "item", "storage_node"], "type": "string" }
+        },
         "type": "object"
       },
       "VersionConflictProblemDto": {
@@ -819,6 +1181,485 @@
         "tags": ["catalog dictionaries"]
       }
     },
+    "/api/v1/field-definitions": {
+      "get": {
+        "operationId": "listFieldDefinitions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "includeArchived",
+            "required": false,
+            "schema": { "type": "boolean" }
+          },
+          {
+            "in": "query",
+            "name": "categoryId",
+            "required": false,
+            "schema": { "format": "uuid", "type": "string" }
+          },
+          {
+            "in": "query",
+            "name": "scope",
+            "required": false,
+            "schema": { "enum": ["item", "storage_node"], "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": { "$ref": "#/components/schemas/FieldDefinitionDto" },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["dynamic schema"]
+      },
+      "post": {
+        "operationId": "createFieldDefinition",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateFieldDefinitionDto" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FieldDefinitionDto" }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["dynamic schema"]
+      }
+    },
+    "/api/v1/field-definitions/{id}": {
+      "delete": {
+        "operationId": "archiveFieldDefinition",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FieldDefinitionMutationDto" }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["dynamic schema"]
+      },
+      "patch": {
+        "operationId": "updateFieldDefinition",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateFieldDefinitionDto" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FieldDefinitionMutationDto" }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["dynamic schema"]
+      }
+    },
+    "/api/v1/field-definitions/{id}/conversion-preview": {
+      "post": {
+        "operationId": "previewFieldDefinitionConversion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ConversionPreviewRequestDto" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ConversionPreviewDto" }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["dynamic schema"]
+      }
+    },
+    "/api/v1/field-definitions/{id}/options": {
+      "post": {
+        "operationId": "createFieldOption",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateFieldOptionDto" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FieldDefinitionDto" }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["dynamic schema"]
+      }
+    },
+    "/api/v1/field-definitions/{id}/options/{optionId}": {
+      "delete": {
+        "operationId": "archiveFieldOption",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "optionId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FieldDefinitionDto" }
+              }
+            },
+            "description": ""
+          },
+          "204": { "description": "" },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["dynamic schema"]
+      },
+      "patch": {
+        "operationId": "updateFieldOption",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "optionId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateFieldOptionDto" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FieldDefinitionDto" }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["dynamic schema"]
+      }
+    },
     "/api/v1/lifecycle-statuses": {
       "get": {
         "operationId": "listLifecycleStatuses",
@@ -1061,5 +1902,5 @@
   },
   "servers": [],
   "tags": [],
-  "x-spec-checksum": "fd191f00242f382b33e1d2d207ed5b085d788d39d4385814f0592e81cb1255bb"
+  "x-spec-checksum": "c4e7f9d4a7dee5e3a82a623396b61dfb4b776a3433a68a712fabe21732739c33"
 }

@@ -1,6 +1,8 @@
 import {
   AuthRateLimiter,
   CatalogDictionaryAuthorizationError,
+  SchemaAuthorizationError,
+  SchemaPolicyError,
   SessionError,
   permissionsFor,
 } from '@inventory-atlas/backend';
@@ -8,6 +10,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { AuthRuntimePort } from './auth.runtime.js';
 import type { FoundationRuntimePort } from './foundation.runtime.js';
 import type { CatalogRuntimePort } from './catalog.runtime.js';
+import type { SchemaRuntimePort } from './schema.runtime.js';
 import { createApiApplication } from './main.js';
 import { createOpenApiDocument } from './openapi-document.js';
 
@@ -73,7 +76,72 @@ const dictionaries = {
   updateLifecycleStatus: vi.fn(),
   archiveLifecycleStatus: vi.fn(),
 };
-const runtime: FoundationRuntimePort & AuthRuntimePort & CatalogRuntimePort = {
+const fieldDefinitionId = '0198f40c-92f3-7a12-bc9a-653f97786c30';
+const fieldDefinition = {
+  id: fieldDefinitionId,
+  key: 'serial_number',
+  scope: 'item' as const,
+  categoryId: null,
+  labels: { en: 'Serial number', uk: 'Серійний номер' },
+  help: null,
+  dataType: 'text' as const,
+  required: false,
+  repeatable: false,
+  searchable: true,
+  filterable: true,
+  sortable: false,
+  visibility: 'authenticated' as const,
+  unit: null,
+  defaultValue: null,
+  validation: {},
+  displayOrder: 0,
+  version: 1,
+  archivedAt: null,
+  options: [],
+};
+function createSchemaRuntime() {
+  return {
+    listFields: vi.fn(async () => [fieldDefinition]),
+    createField: vi.fn(async () => fieldDefinition),
+    updateField: vi.fn(async () => ({
+      definition: { ...fieldDefinition, visibility: 'public' as const, version: 2 },
+      reindex: {
+        massReindexRequired: true,
+        reasons: ['visibility'] as const,
+        topic: 'search.rebuild-items.v1' as const,
+      },
+    })),
+    archiveField: vi.fn(async () => ({
+      definition: fieldDefinition,
+      reindex: {
+        massReindexRequired: true,
+        reasons: ['archived'] as const,
+        topic: 'search.rebuild-items.v1' as const,
+      },
+    })),
+    createOption: vi.fn(async () => fieldDefinition),
+    updateOption: vi.fn(async () => fieldDefinition),
+    archiveOption: vi.fn(async () => fieldDefinition),
+    previewConversion: vi.fn(async () => ({
+      fieldDefinitionId,
+      fieldKey: 'serial_number',
+      currentDataType: 'text' as const,
+      targetDataType: 'number' as const,
+      supported: true,
+      lossless: false,
+      totalValues: 3,
+      analyzedValues: 3,
+      convertibleValues: 1,
+      blockingValues: 2,
+      truncated: false,
+      requiresBackgroundConversion: true,
+      reindexRequired: true,
+      blockingIssues: ['INVALID_NUMBER'] as const,
+    })),
+  };
+}
+const schemaFields = createSchemaRuntime();
+const runtime: FoundationRuntimePort & AuthRuntimePort & CatalogRuntimePort & SchemaRuntimePort = {
   async readiness() {
     return {
       status: 'ready',
@@ -112,6 +180,9 @@ const runtime: FoundationRuntimePort & AuthRuntimePort & CatalogRuntimePort = {
   catalogDictionaries() {
     return dictionaries;
   },
+  schemaFields() {
+    return schemaFields;
+  },
 };
 
 describe('API composition root', () => {
@@ -129,10 +200,14 @@ describe('API composition root', () => {
     expect(operationIds.toSorted()).toEqual([
       'acceptInvitation',
       'archiveCategory',
+      'archiveFieldDefinition',
+      'archiveFieldOption',
       'archiveLifecycleStatus',
       'archiveUser',
       'createAuthSession',
       'createCategory',
+      'createFieldDefinition',
+      'createFieldOption',
       'createLifecycleStatus',
       'deleteAuthSession',
       'getCurrentActor',
@@ -143,13 +218,17 @@ describe('API composition root', () => {
       'issueInvitation',
       'listAuthSessions',
       'listCategories',
+      'listFieldDefinitions',
       'listInvitations',
       'listLifecycleStatuses',
       'listUsers',
+      'previewFieldDefinitionConversion',
       'revokeAuthSession',
       'revokeInvitation',
       'updateCategory',
       'updateCurrentActorLocale',
+      'updateFieldDefinition',
+      'updateFieldOption',
       'updateLifecycleStatus',
       'updateUser',
     ]);
@@ -260,6 +339,186 @@ describe('API composition root', () => {
     });
     expect(response.statusCode).toBe(403);
     expect(response.body).not.toContain('listLifecycleStatuses');
+    await app.close();
+  });
+
+  it('protects dynamic schema mutations with CSRF and returns the reindex warning', async () => {
+    const fields = createSchemaRuntime();
+    const app = await createApiApplication({ ...runtime, schemaFields: () => fields });
+    await app.init();
+    const cookie = `inventory_atlas_session=${sessionToken}`;
+
+    const listed = await app.inject({
+      method: 'GET',
+      url: '/api/v1/field-definitions?scope=item&includeArchived=true',
+      headers: { cookie },
+    });
+    expect(listed.statusCode).toBe(200);
+    expect(listed.json()).toMatchObject([{ key: 'serial_number', options: [] }]);
+    expect(fields.listFields).toHaveBeenCalledWith(actor, {
+      scope: 'item',
+      includeArchived: true,
+    });
+
+    const rejectedScope = await app.inject({
+      method: 'GET',
+      url: '/api/v1/field-definitions?scope=node',
+      headers: { cookie },
+    });
+    expect(rejectedScope.statusCode).toBe(400);
+
+    const rejected = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/field-definitions/${fieldDefinitionId}`,
+      headers: { cookie },
+      payload: { expectedVersion: 1, visibility: 'public' },
+    });
+    expect(rejected.statusCode).toBe(401);
+    expect(fields.updateField).not.toHaveBeenCalled();
+
+    const accepted = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/field-definitions/${fieldDefinitionId}`,
+      headers: { cookie, 'x-csrf-token': csrfToken, 'x-request-id': 'schema-request' },
+      payload: { expectedVersion: 1, visibility: 'public' },
+    });
+    expect(accepted.statusCode).toBe(200);
+    expect(accepted.json()).toMatchObject({
+      definition: { visibility: 'public', version: 2 },
+      reindex: { massReindexRequired: true, reasons: ['visibility'] },
+    });
+    expect(fields.updateField).toHaveBeenCalledWith(
+      actor,
+      fieldDefinitionId,
+      1,
+      { visibility: 'public' },
+      { requestId: 'schema-request' },
+    );
+
+    const immutable = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/field-definitions/${fieldDefinitionId}`,
+      headers: { cookie, 'x-csrf-token': csrfToken },
+      payload: { expectedVersion: 1, key: 'renamed' },
+    });
+    expect(immutable.statusCode).toBe(400);
+
+    const archived = await app.inject({
+      method: 'DELETE',
+      url: `/api/v1/field-definitions/${fieldDefinitionId}`,
+      headers: { cookie, 'x-csrf-token': csrfToken, 'if-match': '2' },
+    });
+    expect(archived.statusCode).toBe(200);
+    expect(archived.json()).toMatchObject({ reindex: { reasons: ['archived'] } });
+    expect(fields.archiveField).toHaveBeenCalledWith(actor, fieldDefinitionId, 2, {});
+    await app.close();
+  });
+
+  it('previews a conversion and maps a required conversion to a conflict', async () => {
+    const fields = createSchemaRuntime();
+    const app = await createApiApplication({ ...runtime, schemaFields: () => fields });
+    await app.init();
+    const cookie = `inventory_atlas_session=${sessionToken}`;
+
+    const preview = await app.inject({
+      method: 'POST',
+      url: `/api/v1/field-definitions/${fieldDefinitionId}/conversion-preview`,
+      headers: { cookie, 'x-csrf-token': csrfToken },
+      payload: { targetDataType: 'number' },
+    });
+    expect(preview.statusCode).toBe(200);
+    expect(preview.json()).toMatchObject({
+      supported: true,
+      totalValues: 3,
+      blockingValues: 2,
+      blockingIssues: ['INVALID_NUMBER'],
+    });
+    expect(fields.previewConversion).toHaveBeenCalledWith(actor, fieldDefinitionId, 'number');
+
+    fields.updateField.mockRejectedValueOnce(
+      new SchemaPolicyError(
+        'SCHEMA_FIELD_CONVERSION_REQUIRED',
+        'Existing values require a conversion preview and plan before the data type changes.',
+      ),
+    );
+    const conflicted = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/field-definitions/${fieldDefinitionId}`,
+      headers: { cookie, 'x-csrf-token': csrfToken },
+      payload: { expectedVersion: 1, dataType: 'number' },
+    });
+    expect(conflicted.statusCode).toBe(409);
+    await app.close();
+  });
+
+  it('manages field options through the parent definition version', async () => {
+    const fields = createSchemaRuntime();
+    const app = await createApiApplication({ ...runtime, schemaFields: () => fields });
+    await app.init();
+    const cookie = `inventory_atlas_session=${sessionToken}`;
+    const optionId = '0198f40c-92f3-7a12-bc9a-653f97786c31';
+
+    const created = await app.inject({
+      method: 'POST',
+      url: `/api/v1/field-definitions/${fieldDefinitionId}/options`,
+      headers: { cookie, 'x-csrf-token': csrfToken },
+      payload: { expectedVersion: 1, key: 'metal', labels: { en: 'Metal', uk: 'Метал' } },
+    });
+    expect(created.statusCode).toBe(201);
+    expect(fields.createOption).toHaveBeenCalledWith(
+      actor,
+      fieldDefinitionId,
+      1,
+      { key: 'metal', labels: { en: 'Metal', uk: 'Метал' }, displayOrder: 0 },
+      {},
+    );
+
+    const renamed = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/field-definitions/${fieldDefinitionId}/options/${optionId}`,
+      headers: { cookie, 'x-csrf-token': csrfToken },
+      payload: { expectedVersion: 2, labels: { en: 'Steel' } },
+    });
+    expect(renamed.statusCode).toBe(200);
+    expect(fields.updateOption).toHaveBeenCalledWith(
+      actor,
+      fieldDefinitionId,
+      optionId,
+      2,
+      { labels: { en: 'Steel' } },
+      {},
+    );
+
+    const immutableKey = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/field-definitions/${fieldDefinitionId}/options/${optionId}`,
+      headers: { cookie, 'x-csrf-token': csrfToken },
+      payload: { expectedVersion: 2, key: 'steel' },
+    });
+    expect(immutableKey.statusCode).toBe(400);
+
+    const archivedOption = await app.inject({
+      method: 'DELETE',
+      url: `/api/v1/field-definitions/${fieldDefinitionId}/options/${optionId}`,
+      headers: { cookie, 'x-csrf-token': csrfToken, 'if-match': 'W/"3"' },
+    });
+    expect(archivedOption.statusCode).toBe(200);
+    expect(fields.archiveOption).toHaveBeenCalledWith(actor, fieldDefinitionId, optionId, 3, {});
+    await app.close();
+  });
+
+  it('maps dynamic schema authorization failures without exposing the adapter', async () => {
+    const fields = createSchemaRuntime();
+    fields.listFields.mockRejectedValueOnce(new SchemaAuthorizationError());
+    const app = await createApiApplication({ ...runtime, schemaFields: () => fields });
+    await app.init();
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/field-definitions',
+      headers: { cookie: `inventory_atlas_session=${sessionToken}` },
+    });
+    expect(response.statusCode).toBe(403);
+    expect(response.body).not.toContain('listFields');
     await app.close();
   });
 
@@ -450,7 +709,10 @@ describe('API composition root', () => {
   });
 
   it('returns actionable component states when readiness fails', async () => {
-    const unreadyRuntime: FoundationRuntimePort & AuthRuntimePort & CatalogRuntimePort = {
+    const unreadyRuntime: FoundationRuntimePort &
+      AuthRuntimePort &
+      CatalogRuntimePort &
+      SchemaRuntimePort = {
       ...runtime,
       async readiness() {
         return {

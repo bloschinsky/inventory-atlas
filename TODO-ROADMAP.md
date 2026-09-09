@@ -380,17 +380,19 @@ Tasks:
 - [x] Implement definition-version snapshots and optimistic concurrency.
 - [x] Implement type-change impact analysis and conversion preview without direct destructive mutation.
 - [x] Warn and enqueue the required rebuild when public/search-related behavior changes.
-- [ ] Build bilingual Admin field/option editor and dynamic preview controls.
-- [ ] Add constraint, adapter parity, rollback, authorization, and UI tests.
+- [x] Build bilingual Admin field/option editor and dynamic preview controls.
+- [x] Add constraint, adapter parity, rollback, authorization, and UI tests.
+
+Implementation evidence: [Dynamic field schema and typed EAV](docs/project/dynamic-schema.md).
 
 Acceptance criteria (verbatim from the approved blueprint):
 
-- [ ] All approved field types are represented.
-- [ ] Required, repeatable, validation, unit, search/filter/sort, and visibility flags work.
-- [ ] Multiselect persists as ordered scalar `value_option_id` rows with option ownership enforced; no UUID-array storage is accepted.
-- [ ] `repeatable = true` is rejected for `select` and `multiselect` definitions.
-- [ ] Type changes with existing data require conversion preview.
-- [ ] Public-visibility/searchability changes warn about mass reindex.
+- [x] All approved field types are represented.
+- [x] Required, repeatable, validation, unit, search/filter/sort, and visibility flags work.
+- [x] Multiselect persists as ordered scalar `value_option_id` rows with option ownership enforced; no UUID-array storage is accepted.
+- [x] `repeatable = true` is rejected for `select` and `multiselect` definitions.
+- [x] Type changes with existing data require conversion preview.
+- [x] Public-visibility/searchability changes warn about mass reindex.
 
 ### CAT-03 Create an Item aggregate
 
@@ -1171,7 +1173,7 @@ Every mandatory test from blueprint section 20.2 has an explicit delivery owner.
 | [ ] | Reject an archived/missing Item destination when the projection path-resolution statement finds no writable node, rolling back the entire Prisma transaction. | STO-03 |
 | [ ] | Serialize a concurrent Item create/move against destination-node move/rename with the shared root advisory lock and commit only a path consistent with the final tree state. | CAT-03 + STO-03 |
 | [ ] | Replace StorageNode attributes through the Kysely `AttributeValuePort`; required-field failure rolls back node, values, version, projection, audit, and outbox together. | STO-01 |
-| [ ] | Persist multiselect as ordered scalar option rows only; reject wrong-field options, duplicates, gaps, and any array-shaped persistence representation. | CAT-02 |
+| [x] | Persist multiselect as ordered scalar option rows only; reject wrong-field options, duplicates, gaps, and any array-shaped persistence representation. | CAT-02 |
 | [ ] | Reprint the same active scan token, invalidate its prior generation on revoke/reissue, and resolve retained key versions during rotation. | LAB-01 |
 | [x] | Apply bootstrap/database configuration precedence and fail startup on production conflicts for canonical base URL or public catalog mode. | FND-02 |
 | [ ] | Remove a field value from public projections after `public_visibility` changes. | SRCH-03 |

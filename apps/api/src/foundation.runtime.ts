@@ -8,9 +8,12 @@ import {
   createSettingsClient,
   currentSchemaVersion,
   expectedSchemaVersion,
+  FieldDefinitionRepository,
+  FieldDefinitionService,
   initializeInstallationSettings,
   readAdminAuthorizationSettings,
   SessionService,
+  TransactionalAttributeValuePort,
 } from '@inventory-atlas/backend';
 import {
   parseEnvironment,
@@ -22,6 +25,7 @@ import { constants } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { AuthRuntimePort } from './auth.runtime.js';
 import type { CatalogRuntimePort } from './catalog.runtime.js';
+import type { SchemaRuntimePort } from './schema.runtime.js';
 
 export const FOUNDATION_RUNTIME = Symbol('FOUNDATION_RUNTIME');
 
@@ -48,12 +52,18 @@ export interface FoundationRuntimePort {
 }
 
 export class FoundationRuntime
-  implements FoundationRuntimePort, AuthRuntimePort, CatalogRuntimePort, OnApplicationShutdown
+  implements
+    FoundationRuntimePort,
+    AuthRuntimePort,
+    CatalogRuntimePort,
+    SchemaRuntimePort,
+    OnApplicationShutdown
 {
   private schemaVersion: string | null = null;
   private sessions: SessionService | null = null;
   private administration: AuthAdministrationService | null = null;
   private dictionaries: CatalogDictionaryService | null = null;
+  private schemaFieldService: FieldDefinitionService | null = null;
   private readonly rateLimiter: AuthRateLimiter;
 
   private constructor(
@@ -95,6 +105,10 @@ export class FoundationRuntime
       );
       runtime.dictionaries = new CatalogDictionaryService(
         new CatalogDictionaryRepository(settingsClient),
+      );
+      runtime.schemaFieldService = new FieldDefinitionService(
+        new FieldDefinitionRepository(settingsClient),
+        new TransactionalAttributeValuePort(),
       );
       await runtime.verifyMedia();
       return runtime;
@@ -173,6 +187,11 @@ export class FoundationRuntime
   catalogDictionaries(): CatalogDictionaryService {
     if (!this.dictionaries) throw new Error('Catalog dictionaries are not initialized.');
     return this.dictionaries;
+  }
+
+  schemaFields(): FieldDefinitionService {
+    if (!this.schemaFieldService) throw new Error('Dynamic schema is not initialized.');
+    return this.schemaFieldService;
   }
 
   secureSessionCookies(): boolean {

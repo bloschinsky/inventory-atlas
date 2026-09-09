@@ -12,6 +12,12 @@ The project follows the version policy in `docs/project/versioning.md`.
 
 ### Added
 
+- Completed CAT-02C with the `/api/v1/field-definitions` REST surface, contract
+  request bodies and path parameters, versioned option management through the
+  parent definition, a conversion-preview endpoint, mass-reindex warnings on
+  every mutation response, and the bilingual `/admin/fields` designer whose
+  editor preview renders the real control for each data type.
+
 - Continued CAT-02B with the Schema module validation engine and canonical EAV
   adapters: a closed per-type validation-rule set, one canonical value serializer
   shared by every persistence path, stable field-key issue codes,

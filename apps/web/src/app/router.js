@@ -7,6 +7,7 @@ import SessionsPage from '../pages/SessionsPage.vue';
 import SignInPage from '../pages/SignInPage.vue';
 import UsersPage from '../pages/UsersPage.vue';
 import DictionaryPage from '../pages/DictionaryPage.vue';
+import FieldDesignerPage from '../pages/FieldDesignerPage.vue';
 
 export const routeRecords = [
   ['/', 'routes.home'],
@@ -30,9 +31,11 @@ export const routeRecords = [
   path,
   component: ['/admin/categories', '/admin/statuses'].includes(path)
     ? DictionaryPage
-    : path === '/admin/users'
-      ? UsersPage
-      : FoundationPage,
+    : path === '/admin/fields'
+      ? FieldDesignerPage
+      : path === '/admin/users'
+        ? UsersPage
+        : FoundationPage,
   meta: {
     titleKey,
     layout: ['/', '/items/:publicId', '/storage/:publicId'].includes(path)

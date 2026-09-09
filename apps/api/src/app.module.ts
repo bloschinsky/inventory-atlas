@@ -7,11 +7,13 @@ import { FOUNDATION_RUNTIME, type FoundationRuntimePort } from './foundation.run
 import { HealthController, MetaController } from './health.controller.js';
 import { CatalogDictionariesController } from './catalog-dictionaries.controller.js';
 import { CATALOG_RUNTIME, type CatalogRuntimePort } from './catalog.runtime.js';
+import { SchemaFieldsController } from './schema-fields.controller.js';
+import { SCHEMA_RUNTIME, type SchemaRuntimePort } from './schema.runtime.js';
 
 @Module({})
 export class AppModule {
   static register(
-    runtime: FoundationRuntimePort & AuthRuntimePort & CatalogRuntimePort,
+    runtime: FoundationRuntimePort & AuthRuntimePort & CatalogRuntimePort & SchemaRuntimePort,
   ): DynamicModule {
     return {
       module: AppModule,
@@ -22,11 +24,13 @@ export class AppModule {
         FoundationController,
         HealthController,
         MetaController,
+        SchemaFieldsController,
       ],
       providers: [
         { provide: AUTH_RUNTIME, useValue: runtime },
         { provide: FOUNDATION_RUNTIME, useValue: runtime },
         { provide: CATALOG_RUNTIME, useValue: runtime },
+        { provide: SCHEMA_RUNTIME, useValue: runtime },
       ],
     };
   }

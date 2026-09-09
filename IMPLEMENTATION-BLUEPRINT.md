@@ -1479,12 +1479,12 @@ As an Admin, I can create ordered typed fields and options for Item or StorageNo
 
 Acceptance criteria:
 
-- [ ] All approved field types are represented.
-- [ ] Required, repeatable, validation, unit, search/filter/sort, and visibility flags work.
-- [ ] Multiselect persists as ordered scalar `value_option_id` rows with option ownership enforced; no UUID-array storage is accepted.
-- [ ] `repeatable = true` is rejected for `select` and `multiselect` definitions.
-- [ ] Type changes with existing data require conversion preview.
-- [ ] Public-visibility/searchability changes warn about mass reindex.
+- [x] All approved field types are represented.
+- [x] Required, repeatable, validation, unit, search/filter/sort, and visibility flags work.
+- [x] Multiselect persists as ordered scalar `value_option_id` rows with option ownership enforced; no UUID-array storage is accepted.
+- [x] `repeatable = true` is rejected for `select` and `multiselect` definitions.
+- [x] Type changes with existing data require conversion preview.
+- [x] Public-visibility/searchability changes warn about mass reindex.
 
 #### CAT-03 Create an Item aggregate
 

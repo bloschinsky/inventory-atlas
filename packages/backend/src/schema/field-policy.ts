@@ -687,7 +687,10 @@ function issue(fieldKey: string, code: AttributeIssueCode): AttributeValidationE
   return new AttributeValidationError([{ fieldKey, code }]);
 }
 
-/** Normalizes the definition default into canonical rows validated like a stored value. */
+/**
+ * Normalizes the definition default into canonical rows validated like a stored value. A default
+ * is accepted as the field's API shape or as the ordered array the API always projects back.
+ */
 export function normalizeDefaultValue(
   field: FieldValueShape,
   raw: unknown,
@@ -695,7 +698,10 @@ export function normalizeDefaultValue(
   if (raw === null || raw === undefined) return null;
   let values: CanonicalFieldValue[];
   try {
-    values = canonicalizeFieldValues(field, raw);
+    values = canonicalizeFieldValues(
+      { ...field, repeatable: true },
+      Array.isArray(raw) ? raw : [raw],
+    );
   } catch (error) {
     throw new SchemaPolicyError(
       'SCHEMA_FIELD_INVALID_DEFAULT',

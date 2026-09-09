@@ -43,7 +43,9 @@
     "loading": "Loading…",
     "loadFailed": "Could not load this information.",
     "saveFailed": "Could not save the change.",
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "yes": "Yes",
+    "no": "No"
   },
   "locale": {
     "en": "English",
@@ -123,5 +125,102 @@
       "order": "Enter a non-negative whole number.",
       "ukrainian": "The Ukrainian label cannot contain only spaces."
     }
+  },
+  "schema": {
+    "addOption": "Add option",
+    "applicability": "Applies to",
+    "archive": "Archive",
+    "archived": "Archived",
+    "cancel": "Cancel",
+    "conversion": "Type change",
+    "conversionBackground": "Needs background conversion",
+    "conversionBlocking": "Values that cannot convert",
+    "conversionConvertible": "Values that can convert",
+    "conversionHint": "Existing values need a conversion preview before the data type changes.",
+    "conversionPreview": "Check impact",
+    "conversionSupported": "Conversion supported",
+    "conversionTotal": "Stored values",
+    "create": "Create field",
+    "dataType": "Data type",
+    "description": "Define ordered typed fields, options and validation for Items and storage nodes.",
+    "displayOrder": "Display order",
+    "edit": "Edit",
+    "empty": "No field definitions found for this scope.",
+    "fields": "Field definitions",
+    "helpEn": "English help text",
+    "helpUk": "Ukrainian help text",
+    "key": "Stable key",
+    "labelEn": "English label",
+    "labelUk": "Ukrainian label",
+    "optionDefaultUnsupported": "Select and multiselect fields take their values from options, not a stored default.",
+    "optionKey": "Option key",
+    "options": "Options",
+    "preview": "Editor preview",
+    "previewHint": "This is the control editors will see, and its value is stored as the field default.",
+    "reindexWarning": "Saved. A mass reindex is required because of: {reasons}.",
+    "repeatableLocked": "Select and multiselect cannot be repeatable; use multiselect for several options.",
+    "save": "Save",
+    "scope": "Scope",
+    "unit": "Unit",
+    "validationRules": "Validation rules",
+    "visibility": "Visibility",
+    "wholeScope": "Every category in this scope",
+    "dataTypes": {
+      "boolean": "Yes or no",
+      "date": "Date",
+      "datetime": "Date and time",
+      "email": "Email address",
+      "longText": "Long text",
+      "money": "Money",
+      "multiselect": "Multiselect",
+      "number": "Number",
+      "reference": "Reference",
+      "select": "Select",
+      "text": "Text",
+      "url": "URL"
+    },
+    "flags": {
+      "filterable": "Filterable",
+      "repeatable": "Repeatable",
+      "required": "Required",
+      "searchable": "Searchable",
+      "sortable": "Sortable"
+    },
+    "reindexReasons": {
+      "archived": "archived field",
+      "filterable": "filterable change",
+      "labels": "label change",
+      "searchable": "searchable change",
+      "sortable": "sortable change",
+      "visibility": "visibility change"
+    },
+    "rules": {
+      "currencies": "Allowed currencies (ISO 4217, comma separated)",
+      "integer": "Whole numbers only (true or false)",
+      "max": "Maximum",
+      "maxLength": "Maximum length",
+      "maxSelected": "Maximum selected options",
+      "min": "Minimum",
+      "minLength": "Minimum length",
+      "minSelected": "Minimum selected options",
+      "pattern": "Pattern",
+      "referenceScope": "Allowed reference scope (item, storage_node or any)"
+    },
+    "scopes": {
+      "item": "Item fields",
+      "storageNode": "Storage node fields"
+    },
+    "validation": {
+      "key": "Use lower-case letters, digits, and underscores; start with a letter.",
+      "option": "An option needs a stable key and an English label.",
+      "order": "Enter a non-negative whole number.",
+      "unit": "A unit can contain at most 32 characters."
+    },
+    "visibilities": {
+      "authenticated": "Authenticated",
+      "private": "Private",
+      "public": "Public"
+    },
+    "currency": "Currency"
   }
 }

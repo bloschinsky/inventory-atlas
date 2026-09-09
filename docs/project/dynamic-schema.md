@@ -179,3 +179,43 @@ with the same serializer a conversion would use and reports `totalValues`,
 the analysis limit is reached, `lossless`, `requiresBackgroundConversion`, and
 the distinct blocking issue codes. It returns counts and codes only; a stored
 value never appears in the preview.
+
+## REST surface and the Admin field designer
+
+CAT-02C exposes the Schema module through `/api/v1/field-definitions`. Reading
+the resolved schema for a scope and optional category needs an authenticated
+actor; archived reads, every mutation and the conversion preview need
+`manageSchema` plus the session CSRF token.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/field-definitions` | Resolved schema by `scope`, `categoryId` and `includeArchived` |
+| POST | `/field-definitions` | Create a definition |
+| PATCH | `/field-definitions/{id}` | Versioned update returning the definition and its reindex warning |
+| DELETE | `/field-definitions/{id}` | Archive with `If-Match`, returning the reindex warning |
+| POST | `/field-definitions/{id}/conversion-preview` | Preview a controlled type conversion |
+| POST | `/field-definitions/{id}/options` | Add an option using the definition version |
+| PATCH | `/field-definitions/{id}/options/{optionId}` | Update an option label or order |
+| DELETE | `/field-definitions/{id}/options/{optionId}` | Archive an option with `If-Match` |
+
+Update and archive responses carry `{ definition, reindex }` so the caller sees
+the mass-reindex warning with the change that caused it. A data-type change with
+existing values returns `409` with the conversion-required code, and the preview
+endpoint reports the impact. Request bodies are part of the normalized OpenAPI
+contract, so the generated TypeScript, JSDoc, SDK and Zod artifacts describe the
+same surface under one checksum. A definition default is exchanged as an ordered
+array of API-shaped values, which keeps one contract shape for scalar,
+multiselect and repeatable fields.
+
+The `/admin/fields` route renders the bilingual field designer through the
+semantic `App*` facade and Vue Query. It lists both scopes, shows stable keys,
+data types, flags, visibility and archived state, and edits labels, help text,
+applicability, flags, unit, ordering and the per-type validation rules. The
+editor preview renders the control an editor will actually see for the selected
+data type — text, long text, number, yes/no, date, date and time, money with its
+currency, select, multiselect or reference — and that control's value is stored
+as the field default. Select and multiselect fields manage their options in the
+same dialog through the parent definition version, keep `repeatable` disabled,
+and take no stored default. Changing the data type of a saved field offers the
+conversion preview before the update is attempted, and a successful mutation
+reports the mass-reindex reasons.
