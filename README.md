@@ -70,7 +70,7 @@ See the [versioning policy](docs/project/versioning.md) for the full policy.
 - [Documentation index](docs/README.md)
 - [Product design](docs/product/inventory-atlas-design-document-v0.3.1.pdf)
 - [Versioning policy](docs/project/versioning.md)
-- [Agent instructions](AGENTS.md)
+- [Agent instructions](AGENTS.md), loaded by Claude Code through [CLAUDE.md](CLAUDE.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 - [Changelog](CHANGELOG.md)
