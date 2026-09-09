@@ -14,10 +14,12 @@ const admin: SessionActor = {
 function repository() {
   return {
     listCategories: vi.fn(async () => []),
+    findCategoryById: vi.fn(),
     createCategory: vi.fn(),
     updateCategory: vi.fn(),
     archiveCategory: vi.fn(),
     listLifecycleStatuses: vi.fn(async () => []),
+    findLifecycleStatusById: vi.fn(),
     createLifecycleStatus: vi.fn(),
     updateLifecycleStatus: vi.fn(),
     archiveLifecycleStatus: vi.fn(),
@@ -49,5 +51,15 @@ describe('catalog dictionary application service', () => {
       }),
     ).toThrow(expect.objectContaining({ code: 'CATALOG_DICTIONARY_FORBIDDEN' }));
     expect(adapter.createCategory).not.toHaveBeenCalled();
+  });
+
+  it('allows historical Item resolution to include archived dictionaries for a viewer', async () => {
+    const adapter = repository();
+    const service = new CatalogDictionaryService(adapter as never);
+    const viewer = { ...admin, role: 'viewer' as const, permissions: permissionsFor('viewer') };
+    await service.resolveCategory(viewer, 'category-id');
+    await service.resolveLifecycleStatus(viewer, 'status-id');
+    expect(adapter.findCategoryById).toHaveBeenCalledWith('category-id', true);
+    expect(adapter.findLifecycleStatusById).toHaveBeenCalledWith('status-id', true);
   });
 });

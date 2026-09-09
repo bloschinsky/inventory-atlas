@@ -5,6 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { migrateToLatest } from '../database.js';
 import { createSettingsClient } from '../settings.repository.js';
 import { seedLifecycleStatuses } from '../seed.js';
+import { TransactionalAuditPort } from '../infrastructure/index.js';
 import { CatalogDictionaryRepository } from './dictionary-repository.js';
 
 const integrationDatabaseUrl = process.env.INTEGRATION_DATABASE_URL;
@@ -111,6 +112,103 @@ suite('CAT-01 catalog dictionaries on PostgreSQL', () => {
         key: 'fixed',
       } as never),
     ).rejects.toMatchObject({ code: 'CATALOG_DICTIONARY_KEY_IMMUTABLE' });
+  });
+
+  it('writes audit rows and a category rename invalidation in the source transaction', async () => {
+    const category = await repository.createCategory({
+      key: 'power_tools',
+      labels: { en: 'Power tools', uk: 'Електроінструменти' },
+      displayOrder: 40,
+    });
+    const renamed = await repository.updateCategory(category.id, category.version, {
+      labels: { en: 'Powered tools', uk: 'Електричні інструменти' },
+    });
+    await repository.updateCategory(renamed.id, renamed.version, { displayOrder: 41 });
+
+    const audit = await prisma.auditEvent.findMany({
+      where: { entityType: 'category', entityId: category.id },
+      orderBy: { createdAt: 'asc' },
+    });
+    expect(audit.map(({ action }) => action)).toEqual([
+      'catalog.category.created',
+      'catalog.category.updated',
+      'catalog.category.updated',
+    ]);
+    const outbox = await adminPool.query(
+      `select topic, aggregate_type, aggregate_id, payload_json, deduplication_key
+       from "${schema}".outbox where aggregate_id = $1::uuid`,
+      [category.id],
+    );
+    expect(outbox.rows).toEqual([
+      {
+        topic: 'search.rebuild-items.v1',
+        aggregate_type: 'category',
+        aggregate_id: category.id,
+        payload_json: {
+          event: 'CategoryRenamed',
+          payloadVersion: 1,
+          categoryId: category.id,
+          dictionaryVersion: 2,
+        },
+        deduplication_key: `category-renamed:${category.id}:v2`,
+      },
+    ]);
+  });
+
+  it('rolls back the rename and audit when its outbox write fails', async () => {
+    const category = await repository.createCategory({
+      key: 'rollback_category',
+      labels: { en: 'Before rollback' },
+      displayOrder: 50,
+    });
+    const failingRepository = new CatalogDictionaryRepository(
+      prisma,
+      () => now,
+      new TransactionalAuditPort(),
+      { enqueue: async () => Promise.reject(new Error('synthetic outbox failure')) },
+    );
+    await expect(
+      failingRepository.updateCategory(category.id, category.version, {
+        labels: { en: 'Must roll back' },
+      }),
+    ).rejects.toThrow('synthetic outbox failure');
+
+    expect(await repository.findCategoryById(category.id)).toMatchObject({
+      labels: { en: 'Before rollback' },
+      version: 1,
+    });
+    expect(
+      await prisma.auditEvent.count({
+        where: { entityType: 'category', entityId: category.id },
+      }),
+    ).toBe(1);
+  });
+
+  it('resolves archived category and lifecycle IDs for historical Items', async () => {
+    const category = await repository.createCategory({
+      key: 'historical_category',
+      labels: { en: 'Historical category' },
+      displayOrder: 60,
+    });
+    const status = await repository.createLifecycleStatus({
+      key: 'historical_status',
+      labels: { en: 'Historical status' },
+      colorToken: 'status.muted',
+      displayOrder: 60,
+    });
+    await repository.archiveCategory(category.id, category.version);
+    await repository.archiveLifecycleStatus(status.id, status.version);
+
+    expect(await repository.findCategoryById(category.id)).toMatchObject({
+      id: category.id,
+      archivedAt: now,
+    });
+    expect(await repository.findLifecycleStatusById(status.id)).toMatchObject({
+      id: status.id,
+      archivedAt: now,
+    });
+    expect(await repository.findCategoryById(category.id, false)).toBeNull();
+    expect(await repository.findLifecycleStatusById(status.id, false)).toBeNull();
   });
 
   it('enforces key, label, order, version and immutable-key rules in PostgreSQL', async () => {

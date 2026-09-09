@@ -229,12 +229,20 @@ describe('API composition root', () => {
     const accepted = await app.inject({
       method: 'POST',
       url: '/api/v1/categories',
-      headers: { cookie, 'x-csrf-token': csrfToken },
+      headers: {
+        cookie,
+        'x-csrf-token': csrfToken,
+        'x-request-id': 'catalog-request',
+        'x-correlation-id': 'catalog-correlation',
+      },
       payload,
     });
     expect(accepted.statusCode).toBe(201);
     expect(accepted.json()).toMatchObject({ key: 'tools', labels: payload.labels, version: 1 });
-    expect(catalog.createCategory).toHaveBeenCalledWith(actor, payload);
+    expect(catalog.createCategory).toHaveBeenCalledWith(actor, payload, {
+      requestId: 'catalog-request',
+      correlationId: 'catalog-correlation',
+    });
     await app.close();
   });
 

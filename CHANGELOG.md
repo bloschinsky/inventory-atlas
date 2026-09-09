@@ -12,6 +12,11 @@ The project follows the version policy in `docs/project/versioning.md`.
 
 ### Added
 
+- Completed CAT-01C with same-transaction dictionary audit records, deduplicated
+  `CategoryRenamed` search-rebuild outbox messages, rollback coverage, and
+  authenticated historical resolution of archived categories and lifecycle
+  statuses.
+
 - Started CAT-01A with constrained category/lifecycle-status tables, immutable
   stable keys, bilingual labels, optimistic versions, acyclic category parents,
   idempotent lifecycle seeds, Prisma repositories, and PostgreSQL policy tests.

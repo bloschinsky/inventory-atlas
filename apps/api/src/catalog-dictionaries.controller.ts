@@ -14,12 +14,14 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UnauthorizedException,
 } from '@nestjs/common';
 import {
   CatalogDictionaryAuthorizationError,
   DictionaryPolicyError,
   type CategoryRecord,
+  type DictionaryRequestMetadata,
   type LifecycleStatusRecord,
   type LocalizedLabel,
   type SessionActor,
@@ -156,13 +158,18 @@ export class CatalogDictionariesController {
     @Body() body: unknown,
     @Headers('cookie') cookie?: string,
     @Headers('x-csrf-token') csrf?: string,
+    @Req() request?: { headers: Record<string, string | undefined> },
   ): Promise<CategoryDto> {
     if (!isCreateCategory(body)) throw new BadRequestException('Category details are invalid.');
     try {
       return categoryDto(
         await this.catalog
           .catalogDictionaries()
-          .createCategory(await this.mutationActor(cookie, csrf), body),
+          .createCategory(
+            await this.mutationActor(cookie, csrf),
+            body,
+            dictionaryMetadata(request),
+          ),
       );
     } catch (error) {
       throw mapCatalogError(error);
@@ -180,6 +187,7 @@ export class CatalogDictionariesController {
     @Body() body: unknown,
     @Headers('cookie') cookie?: string,
     @Headers('x-csrf-token') csrf?: string,
+    @Req() request?: { headers: Record<string, string | undefined> },
   ): Promise<CategoryDto> {
     if (!uuidPattern.test(id) || !isUpdateCategory(body))
       throw new BadRequestException('Category change is invalid.');
@@ -188,7 +196,13 @@ export class CatalogDictionariesController {
       return categoryDto(
         await this.catalog
           .catalogDictionaries()
-          .updateCategory(await this.mutationActor(cookie, csrf), id, expectedVersion, change),
+          .updateCategory(
+            await this.mutationActor(cookie, csrf),
+            id,
+            expectedVersion,
+            change,
+            dictionaryMetadata(request),
+          ),
       );
     } catch (error) {
       throw mapCatalogError(error);
@@ -207,12 +221,18 @@ export class CatalogDictionariesController {
     @Headers('if-match') ifMatch?: string,
     @Headers('cookie') cookie?: string,
     @Headers('x-csrf-token') csrf?: string,
+    @Req() request?: { headers: Record<string, string | undefined> },
   ): Promise<void> {
     if (!uuidPattern.test(id)) throw new BadRequestException('Category ID is invalid.');
     try {
       await this.catalog
         .catalogDictionaries()
-        .archiveCategory(await this.mutationActor(cookie, csrf), id, requireVersion(ifMatch));
+        .archiveCategory(
+          await this.mutationActor(cookie, csrf),
+          id,
+          requireVersion(ifMatch),
+          dictionaryMetadata(request),
+        );
     } catch (error) {
       throw mapCatalogError(error);
     }
@@ -246,6 +266,7 @@ export class CatalogDictionariesController {
     @Body() body: unknown,
     @Headers('cookie') cookie?: string,
     @Headers('x-csrf-token') csrf?: string,
+    @Req() request?: { headers: Record<string, string | undefined> },
   ): Promise<LifecycleStatusDto> {
     if (!isCreateStatus(body))
       throw new BadRequestException('Lifecycle status details are invalid.');
@@ -253,7 +274,11 @@ export class CatalogDictionariesController {
       return statusDto(
         await this.catalog
           .catalogDictionaries()
-          .createLifecycleStatus(await this.mutationActor(cookie, csrf), body),
+          .createLifecycleStatus(
+            await this.mutationActor(cookie, csrf),
+            body,
+            dictionaryMetadata(request),
+          ),
       );
     } catch (error) {
       throw mapCatalogError(error);
@@ -271,6 +296,7 @@ export class CatalogDictionariesController {
     @Body() body: unknown,
     @Headers('cookie') cookie?: string,
     @Headers('x-csrf-token') csrf?: string,
+    @Req() request?: { headers: Record<string, string | undefined> },
   ): Promise<LifecycleStatusDto> {
     if (!uuidPattern.test(id) || !isUpdateStatus(body))
       throw new BadRequestException('Lifecycle status change is invalid.');
@@ -284,6 +310,7 @@ export class CatalogDictionariesController {
             id,
             expectedVersion,
             change,
+            dictionaryMetadata(request),
           ),
       );
     } catch (error) {
@@ -303,6 +330,7 @@ export class CatalogDictionariesController {
     @Headers('if-match') ifMatch?: string,
     @Headers('cookie') cookie?: string,
     @Headers('x-csrf-token') csrf?: string,
+    @Req() request?: { headers: Record<string, string | undefined> },
   ): Promise<void> {
     if (!uuidPattern.test(id)) throw new BadRequestException('Lifecycle status ID is invalid.');
     try {
@@ -312,6 +340,7 @@ export class CatalogDictionariesController {
           await this.mutationActor(cookie, csrf),
           id,
           requireVersion(ifMatch),
+          dictionaryMetadata(request),
         );
     } catch (error) {
       throw mapCatalogError(error);
@@ -332,6 +361,17 @@ export class CatalogDictionariesController {
       throw new SessionError('AUTH_CSRF_INVALID', 'CSRF token is invalid.');
     return this.actor(cookie, csrf);
   }
+}
+
+function dictionaryMetadata(
+  request: { headers: Record<string, string | undefined> } | undefined,
+): DictionaryRequestMetadata {
+  const requestId = request?.headers['x-request-id'];
+  const correlationId = request?.headers['x-correlation-id'];
+  return {
+    ...(requestId ? { requestId } : {}),
+    ...(correlationId ? { correlationId } : {}),
+  };
 }
 
 function categoryDto(row: CategoryRecord): CategoryDto {

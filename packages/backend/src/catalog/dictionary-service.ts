@@ -6,6 +6,11 @@ import {
 } from './dictionary-repository.js';
 import type { LocalizedLabel } from './dictionary-policy.js';
 
+export interface DictionaryRequestMetadata {
+  correlationId?: string;
+  requestId?: string;
+}
+
 export class CatalogDictionaryAuthorizationError extends Error {
   readonly code = 'CATALOG_DICTIONARY_FORBIDDEN';
 
@@ -23,6 +28,11 @@ export class CatalogDictionaryService {
     return this.repository.listCategories(includeArchived);
   }
 
+  resolveCategory(actor: SessionActor, id: string): Promise<CategoryRecord | null> {
+    this.authorizeRead(actor, false);
+    return this.repository.findCategoryById(id, true);
+  }
+
   createCategory(
     actor: SessionActor,
     input: {
@@ -32,9 +42,10 @@ export class CatalogDictionaryService {
       displayTemplate?: string | null;
       displayOrder: number;
     },
+    metadata: DictionaryRequestMetadata = {},
   ): Promise<CategoryRecord> {
     this.authorize(actor);
-    return this.repository.createCategory(input);
+    return this.repository.createCategory(input, { actorId: actor.id, ...metadata });
   }
 
   updateCategory(
@@ -47,18 +58,26 @@ export class CatalogDictionaryService {
       displayTemplate?: string | null;
       displayOrder?: number;
     },
+    metadata: DictionaryRequestMetadata = {},
   ): Promise<CategoryRecord> {
     this.authorize(actor);
-    return this.repository.updateCategory(id, expectedVersion, input);
+    return this.repository.updateCategory(id, expectedVersion, input, {
+      actorId: actor.id,
+      ...metadata,
+    });
   }
 
   archiveCategory(
     actor: SessionActor,
     id: string,
     expectedVersion: number,
+    metadata: DictionaryRequestMetadata = {},
   ): Promise<CategoryRecord> {
     this.authorize(actor);
-    return this.repository.archiveCategory(id, expectedVersion);
+    return this.repository.archiveCategory(id, expectedVersion, {
+      actorId: actor.id,
+      ...metadata,
+    });
   }
 
   listLifecycleStatuses(
@@ -69,12 +88,18 @@ export class CatalogDictionaryService {
     return this.repository.listLifecycleStatuses(includeArchived);
   }
 
+  resolveLifecycleStatus(actor: SessionActor, id: string): Promise<LifecycleStatusRecord | null> {
+    this.authorizeRead(actor, false);
+    return this.repository.findLifecycleStatusById(id, true);
+  }
+
   createLifecycleStatus(
     actor: SessionActor,
     input: { key: string; labels: LocalizedLabel; colorToken: string; displayOrder: number },
+    metadata: DictionaryRequestMetadata = {},
   ): Promise<LifecycleStatusRecord> {
     this.authorize(actor);
-    return this.repository.createLifecycleStatus(input);
+    return this.repository.createLifecycleStatus(input, { actorId: actor.id, ...metadata });
   }
 
   updateLifecycleStatus(
@@ -82,18 +107,26 @@ export class CatalogDictionaryService {
     id: string,
     expectedVersion: number,
     input: { labels?: LocalizedLabel; colorToken?: string; displayOrder?: number },
+    metadata: DictionaryRequestMetadata = {},
   ): Promise<LifecycleStatusRecord> {
     this.authorize(actor);
-    return this.repository.updateLifecycleStatus(id, expectedVersion, input);
+    return this.repository.updateLifecycleStatus(id, expectedVersion, input, {
+      actorId: actor.id,
+      ...metadata,
+    });
   }
 
   archiveLifecycleStatus(
     actor: SessionActor,
     id: string,
     expectedVersion: number,
+    metadata: DictionaryRequestMetadata = {},
   ): Promise<LifecycleStatusRecord> {
     this.authorize(actor);
-    return this.repository.archiveLifecycleStatus(id, expectedVersion);
+    return this.repository.archiveLifecycleStatus(id, expectedVersion, {
+      actorId: actor.id,
+      ...metadata,
+    });
   }
 
   private authorize(actor: SessionActor): void {

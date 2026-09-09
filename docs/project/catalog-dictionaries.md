@@ -44,5 +44,13 @@ The `/admin/categories` and `/admin/statuses` routes use the shared semantic
 include archived records, preserve stable keys while editing, validate inputs,
 and invalidate their dictionary query after successful mutations.
 
-CAT-01C still owns complete Item history resolution plus transactional audit and
-search-invalidation behavior.
+CAT-01C adds ID-based historical resolvers that deliberately include archived
+categories and lifecycle statuses for authenticated Item reads. Active picker
+queries continue to exclude archived rows.
+
+Every dictionary mutation now writes an allowlisted audit snapshot in the same
+Prisma transaction as its source row. A category label change also inserts one
+deduplicated `CategoryRenamed` message for `search.rebuild-items.v1` through the
+transaction-aware `OutboxPort`; ordering, parent, and template-only edits do not
+enqueue a vector rebuild. If either audit or outbox insertion fails, the source
+mutation rolls back.

@@ -306,8 +306,8 @@ suite('FND-04 authentication schema on PostgreSQL', () => {
     );
   });
 
-  it('rolls back only Auth/Audit and reapplies cleanly', async () => {
-    expect((await migrator.migrateDown()).error).toBeUndefined();
+  it('rolls back through Auth/Audit and reapplies cleanly', async () => {
+    expect((await migrator.migrateTo('0002_auth')).error).toBeUndefined();
     expect(await currentSchemaVersion(database)).toBe('0002_auth');
     expect((await migrator.migrateDown()).error).toBeUndefined();
     expect(await currentSchemaVersion(database)).toBe('0001_foundation');

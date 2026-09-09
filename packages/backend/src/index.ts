@@ -60,8 +60,19 @@ export {
   validateExpectedVersion,
   validateStableKey,
   type CategoryRecord,
+  type DictionaryMutationMetadata,
   type DictionaryPolicyCode,
+  type DictionaryRequestMetadata,
   type LifecycleStatusRecord,
   type LocalizedLabel,
 } from './catalog/index.js';
+export {
+  TransactionalAuditPort,
+  TransactionalOutboxPort,
+  type AuditPort,
+  type AuditRecord,
+  type OutboxMessage,
+  type OutboxPort,
+  type TransactionContext,
+} from './infrastructure/index.js';
 export { lifecycleStatusSeeds, runSeeds, seedLifecycleStatuses } from './seed.js';

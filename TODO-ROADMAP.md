@@ -343,17 +343,17 @@ Tasks:
 - [x] Seed approved stable lifecycle keys idempotently.
 - [x] Implement stable-key, bilingual-label, ordering, archive, and version policies.
 - [x] Add application services and `/api/v1` Admin endpoints.
-- [ ] Emit audit and search invalidation outbox records for relevant changes.
+- [x] Emit audit and search invalidation outbox records for relevant changes.
 - [x] Build PrimeVue-facade list, create, edit, archive, and validation UI.
-- [ ] Preserve historical resolution of archived dictionary entries.
+- [x] Preserve historical resolution of archived dictionary entries.
 - [x] Add English/Ukrainian contract, integration, authorization, and UI tests.
 
 Acceptance criteria (verbatim from the approved blueprint):
 
 - [x] Stable keys do not change when labels change.
 - [x] English labels are required; Ukrainian labels are supported.
-- [ ] Archived entries remain resolvable for historical Items.
-- [ ] Rename produces the required search invalidation event.
+- [x] Archived entries remain resolvable for historical Items.
+- [x] Rename produces the required search invalidation event.
 
 ### CAT-02 Manage dynamic field definitions
 

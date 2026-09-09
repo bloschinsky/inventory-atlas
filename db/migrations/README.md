@@ -42,3 +42,10 @@ idempotent: it inserts missing rows and preserves labels, colors, ordering, and
 archive state already edited by an administrator. Rollback drops both dictionary
 tables and their data, so it is limited to disposable databases or a planned
 recovery operation.
+
+`0004_outbox.mjs` adds the Kysely-owned transactional outbox required by CAT-01C.
+It stores versioned JSON object payloads, unique deduplication keys, publication
+and retry metadata, plus pending and aggregate access indexes. Prisma-owned source
+transactions may only insert through the narrow parameterized `OutboxPort`; the
+Prisma model is ignored for generated CRUD access. Job claiming and outbox
+dispatch remain part of the shared Jobs workstream.

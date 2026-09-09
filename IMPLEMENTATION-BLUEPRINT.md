@@ -1470,8 +1470,8 @@ Acceptance criteria:
 
 - [x] Stable keys do not change when labels change.
 - [x] English labels are required; Ukrainian labels are supported.
-- [ ] Archived entries remain resolvable for historical Items.
-- [ ] Rename produces the required search invalidation event.
+- [x] Archived entries remain resolvable for historical Items.
+- [x] Rename produces the required search invalidation event.
 
 #### CAT-02 Manage dynamic field definitions
 

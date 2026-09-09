@@ -1,11 +1,13 @@
 export {
   CatalogDictionaryRepository,
   type CategoryRecord,
+  type DictionaryMutationMetadata,
   type LifecycleStatusRecord,
 } from './dictionary-repository.js';
 export {
   CatalogDictionaryAuthorizationError,
   CatalogDictionaryService,
+  type DictionaryRequestMetadata,
 } from './dictionary-service.js';
 export {
   DictionaryPolicyError,
