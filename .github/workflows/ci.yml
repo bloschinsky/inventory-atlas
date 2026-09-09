@@ -29,6 +29,10 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24.20.0
+          # pnpm arrives through Corepack in the next steps, so the automatic
+          # package-manager cache added in setup-node v5 would probe for a pnpm
+          # binary that does not exist yet and fail the job.
+          package-manager-cache: false
       - run: npm install --global corepack@0.36.0
       - run: corepack enable && corepack install --global pnpm@11.25.0
       - run: pnpm install --frozen-lockfile
