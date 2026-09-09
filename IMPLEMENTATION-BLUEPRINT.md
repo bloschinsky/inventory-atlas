@@ -1468,8 +1468,8 @@ As an Admin, I can manage categories and lifecycle statuses with English and Ukr
 
 Acceptance criteria:
 
-- [ ] Stable keys do not change when labels change.
-- [ ] English labels are required; Ukrainian labels are supported.
+- [x] Stable keys do not change when labels change.
+- [x] English labels are required; Ukrainian labels are supported.
 - [ ] Archived entries remain resolvable for historical Items.
 - [ ] Rename produces the required search invalidation event.
 

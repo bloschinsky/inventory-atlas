@@ -56,7 +56,9 @@ export const ModelName = {
   User: 'User',
   Session: 'Session',
   Invitation: 'Invitation',
-  AuditEvent: 'AuditEvent'
+  AuditEvent: 'AuditEvent',
+  Category: 'Category',
+  LifecycleStatus: 'LifecycleStatus'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -164,6 +166,37 @@ export const AuditEventScalarFieldEnum = {
 export type AuditEventScalarFieldEnum = (typeof AuditEventScalarFieldEnum)[keyof typeof AuditEventScalarFieldEnum]
 
 
+export const CategoryScalarFieldEnum = {
+  id: 'id',
+  parentId: 'parentId',
+  key: 'key',
+  labelI18n: 'labelI18n',
+  displayTemplate: 'displayTemplate',
+  displayOrder: 'displayOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  archivedAt: 'archivedAt',
+  version: 'version'
+} as const
+
+export type CategoryScalarFieldEnum = (typeof CategoryScalarFieldEnum)[keyof typeof CategoryScalarFieldEnum]
+
+
+export const LifecycleStatusScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  labelI18n: 'labelI18n',
+  colorToken: 'colorToken',
+  displayOrder: 'displayOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  archivedAt: 'archivedAt',
+  version: 'version'
+} as const
+
+export type LifecycleStatusScalarFieldEnum = (typeof LifecycleStatusScalarFieldEnum)[keyof typeof LifecycleStatusScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -178,6 +211,13 @@ export const NullableJsonNullValueInput = {
 } as const
 
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {

@@ -117,3 +117,39 @@ model AuditEvent {
   @@index([requestId])
   @@map("audit_events")
 }
+
+/// Database label, ordering, archive, version and immutable-key checks remain authoritative.
+model Category {
+  id              String     @id @db.Uuid
+  parentId        String?    @map("parent_id") @db.Uuid
+  key             String     @unique @db.VarChar(64)
+  labelI18n       Json       @map("label_i18n")
+  displayTemplate String?    @map("display_template")
+  displayOrder    Int        @default(0) @map("display_order")
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime   @default(now()) @map("updated_at") @db.Timestamptz(6)
+  archivedAt      DateTime?  @map("archived_at") @db.Timestamptz(6)
+  version         BigInt     @default(1)
+  parent          Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  children        Category[] @relation("CategoryTree")
+
+  @@index([parentId, displayOrder, key], map: "categories_parent_order_idx")
+  @@index([displayOrder, key], map: "categories_active_order_idx", where: raw("(archived_at IS NULL)"))
+  @@map("categories")
+}
+
+/// Database label, ordering, archive, version and immutable-key checks remain authoritative.
+model LifecycleStatus {
+  id           String    @id @db.Uuid
+  key          String    @unique @db.VarChar(64)
+  labelI18n    Json      @map("label_i18n")
+  colorToken   String    @map("color_token") @db.VarChar(64)
+  displayOrder Int       @default(0) @map("display_order")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  archivedAt   DateTime? @map("archived_at") @db.Timestamptz(6)
+  version      BigInt    @default(1)
+
+  @@index([displayOrder, key], map: "lifecycle_statuses_active_order_idx", where: raw("(archived_at IS NULL)"))
+  @@map("lifecycle_statuses")
+}

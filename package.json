@@ -32,7 +32,7 @@
     "test:integration": "vitest run --config vitest.integration.config.js --passWithNoTests",
     "test:e2e": "playwright test",
     "db:migrate": "pnpm --filter @inventory-atlas/backend build && node packages/backend/dist/migrate.js",
-    "db:seed": "node scripts/foundation-command.mjs db:seed db/seeds",
+    "db:seed": "pnpm --filter @inventory-atlas/backend build && node packages/backend/dist/seed.js",
     "db:verify": "pnpm --filter @inventory-atlas/backend build && node packages/backend/dist/verify-schema.js",
     "api:spec": "node scripts/generate-openapi.mjs",
     "contracts:generate": "node scripts/generate-contracts.mjs",

@@ -29,7 +29,16 @@ as an explicitly planned destructive operation. It leaves FND-02 settings intact
 Migration metadata is scoped to the connection's current PostgreSQL schema so
 parallel isolated test schemas cannot be mistaken for one another.
 
-Prisma model/client generation and migrated-schema drift verification remain the
-next unchecked FND-04 task. The CLI license review is resolved under the
-[development-only approval](../../docs/project/dependency-remediation.md). This migration adds no
-bootstrap, sign-in or authorization endpoint and does not complete FND-04A.
+`0003_catalog_dictionaries.mjs` starts CAT-01 with the category tree and lifecycle
+status dictionary. It enforces stable lower-case keys, English-first `en`/`uk`
+label objects, deterministic non-negative ordering, positive versions, archive
+timestamps, semantic lifecycle color tokens, and acyclic category parents.
+Database triggers reject key changes even when a write bypasses the Prisma
+repository. The generated Prisma schema/client is checked against the migrated
+database by the drift suite.
+
+Run `pnpm db:seed` after migration to add the approved lifecycle keys. The seed is
+idempotent: it inserts missing rows and preserves labels, colors, ordering, and
+archive state already edited by an administrator. Rollback drops both dictionary
+tables and their data, so it is limited to disposable databases or a planned
+recovery operation.

@@ -45,3 +45,21 @@ export {
   type SessionSummary,
   type UserSummary,
 } from './auth/index.js';
+export {
+  CatalogDictionaryRepository,
+  DictionaryPolicyError,
+  normalizeDisplayTemplate,
+  normalizeLabels,
+  rejectKeyMutation,
+  semanticColorTokenPattern,
+  stableDictionaryKeyPattern,
+  validateColorToken,
+  validateDisplayOrder,
+  validateExpectedVersion,
+  validateStableKey,
+  type CategoryRecord,
+  type DictionaryPolicyCode,
+  type LifecycleStatusRecord,
+  type LocalizedLabel,
+} from './catalog/index.js';
+export { lifecycleStatusSeeds, runSeeds, seedLifecycleStatuses } from './seed.js';

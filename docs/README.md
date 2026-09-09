@@ -27,6 +27,7 @@ This directory contains supporting product, architecture, API, operations, secur
 - [Stage 1 implementation handoff](project/stage-1-handoff.md)
 - [Module boundary policy](project/module-boundaries.md)
 - [Localization foundation](project/localization.md)
+- [Catalog dictionary foundation](project/catalog-dictionaries.md)
 - [Development setup](operations/development.md)
 - [Transitive dependency license report](project/third-party-licenses.json)
 - [UI facade contracts](frontend/ui-facade-contracts.md)

@@ -71,3 +71,13 @@ export type Invitation = Prisma.InvitationModel
  * Database check constraints and the append-only trigger defined by Kysely remain authoritative.
  */
 export type AuditEvent = Prisma.AuditEventModel
+/**
+ * Model Category
+ * Database label, ordering, archive, version and immutable-key checks remain authoritative.
+ */
+export type Category = Prisma.CategoryModel
+/**
+ * Model LifecycleStatus
+ * Database label, ordering, archive, version and immutable-key checks remain authoritative.
+ */
+export type LifecycleStatus = Prisma.LifecycleStatusModel

@@ -11,7 +11,7 @@ interface FoundationDatabase {
   };
 }
 
-export const expectedSchemaVersion = '0002_auth';
+export const expectedSchemaVersion = '0003_catalog_dictionaries';
 
 export function createDatabase(
   connectionString: string,

@@ -339,9 +339,9 @@ Suggested pull requests:
 
 Tasks:
 
-- [ ] Add migrations, Prisma models, constraints, and indexes for categories and lifecycle statuses.
-- [ ] Seed approved stable lifecycle keys idempotently.
-- [ ] Implement stable-key, bilingual-label, ordering, archive, and version policies.
+- [x] Add migrations, Prisma models, constraints, and indexes for categories and lifecycle statuses.
+- [x] Seed approved stable lifecycle keys idempotently.
+- [x] Implement stable-key, bilingual-label, ordering, archive, and version policies.
 - [ ] Add application services and `/api/v1` Admin endpoints.
 - [ ] Emit audit and search invalidation outbox records for relevant changes.
 - [ ] Build PrimeVue-facade list, create, edit, archive, and validation UI.
@@ -350,8 +350,8 @@ Tasks:
 
 Acceptance criteria (verbatim from the approved blueprint):
 
-- [ ] Stable keys do not change when labels change.
-- [ ] English labels are required; Ukrainian labels are supported.
+- [x] Stable keys do not change when labels change.
+- [x] English labels are required; Ukrainian labels are supported.
 - [ ] Archived entries remain resolvable for historical Items.
 - [ ] Rename produces the required search invalidation event.
 

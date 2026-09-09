@@ -12,6 +12,10 @@ The project follows the version policy in `docs/project/versioning.md`.
 
 ### Added
 
+- Started CAT-01A with constrained category/lifecycle-status tables, immutable
+  stable keys, bilingual labels, optimistic versions, acyclic category parents,
+  idempotent lifecycle seeds, Prisma repositories, and PostgreSQL policy tests.
+
 - Completed FND-05 with English source/fallback resources, complete initial Ukrainian coverage, explicit/stored locale resolution, non-automatic browser suggestions, public and authenticated selectors, persisted user preferences, locale-aware formatting and problem messages, and an MVP coverage gate.
 
 - Completed FND-04C with hashed one-time invitations, the section 16 role/capability policy, last-Owner protection, authentication rate limits, secret-free security audit events, versioned user administration, generated API contracts, and English/Ukrainian browser flows for sign-in, invitations, users, roles, and sessions.
