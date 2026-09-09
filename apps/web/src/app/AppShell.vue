@@ -72,7 +72,7 @@ const links = [
   { to: '/scan', key: 'nav.scan' },
   { to: '/labels', key: 'nav.labels' },
   { to: '/portability', key: 'nav.portability' },
-  { to: '/admin/settings', key: 'nav.admin' },
+  { to: '/admin/categories', key: 'nav.admin' },
 ];
 const localeOptions = computed(() =>
   ['en', 'uk'].map((value) => ({

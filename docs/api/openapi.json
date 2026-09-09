@@ -1,6 +1,20 @@
 {
   "components": {
     "schemas": {
+      "CategoryDto": {
+        "properties": {
+          "archivedAt": { "format": "date-time", "nullable": true, "type": "string" },
+          "displayOrder": { "minimum": 0, "type": "number" },
+          "displayTemplate": { "nullable": true, "type": "string" },
+          "id": { "format": "uuid", "type": "string" },
+          "key": { "example": "tools", "pattern": "^[a-z][a-z0-9_]{0,63}$", "type": "string" },
+          "labels": { "$ref": "#/components/schemas/LocalizedLabelDto" },
+          "parentId": { "format": "uuid", "nullable": true, "type": "string" },
+          "version": { "minimum": 1, "type": "number" }
+        },
+        "required": ["displayOrder", "id", "key", "labels", "version"],
+        "type": "object"
+      },
       "CurrentSessionResponseDto": {
         "properties": {
           "absoluteExpiresAt": { "format": "date-time", "type": "string" },
@@ -95,6 +109,31 @@
           "version": { "example": 8, "minimum": 1, "type": "number" }
         },
         "required": ["displayName", "publicId", "version"],
+        "type": "object"
+      },
+      "LifecycleStatusDto": {
+        "properties": {
+          "archivedAt": { "format": "date-time", "nullable": true, "type": "string" },
+          "colorToken": {
+            "example": "status.info",
+            "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "displayOrder": { "minimum": 0, "type": "number" },
+          "id": { "format": "uuid", "type": "string" },
+          "key": { "example": "stored", "pattern": "^[a-z][a-z0-9_]{0,63}$", "type": "string" },
+          "labels": { "$ref": "#/components/schemas/LocalizedLabelDto" },
+          "version": { "minimum": 1, "type": "number" }
+        },
+        "required": ["colorToken", "displayOrder", "id", "key", "labels", "version"],
+        "type": "object"
+      },
+      "LocalizedLabelDto": {
+        "properties": {
+          "en": { "example": "Tools", "maxLength": 200, "minLength": 1, "type": "string" },
+          "uk": { "example": "Інструменти", "maxLength": 200, "minLength": 1, "type": "string" }
+        },
+        "required": ["en"],
         "type": "object"
       },
       "ProblemDetailsDto": {
@@ -613,6 +652,344 @@
         "tags": ["authentication"]
       }
     },
+    "/api/v1/categories": {
+      "get": {
+        "operationId": "listCategories",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "includeArchived",
+            "required": false,
+            "schema": { "type": "boolean" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": { "$ref": "#/components/schemas/CategoryDto" },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["catalog dictionaries"]
+      },
+      "post": {
+        "operationId": "createCategory",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/CategoryDto" } }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["catalog dictionaries"]
+      }
+    },
+    "/api/v1/categories/{id}": {
+      "delete": {
+        "operationId": "archiveCategory",
+        "parameters": [],
+        "responses": {
+          "204": { "description": "" },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["catalog dictionaries"]
+      },
+      "patch": {
+        "operationId": "updateCategory",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/CategoryDto" } }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["catalog dictionaries"]
+      }
+    },
+    "/api/v1/lifecycle-statuses": {
+      "get": {
+        "operationId": "listLifecycleStatuses",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "includeArchived",
+            "required": false,
+            "schema": { "type": "boolean" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": { "$ref": "#/components/schemas/LifecycleStatusDto" },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["catalog dictionaries"]
+      },
+      "post": {
+        "operationId": "createLifecycleStatus",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LifecycleStatusDto" }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["catalog dictionaries"]
+      }
+    },
+    "/api/v1/lifecycle-statuses/{id}": {
+      "delete": {
+        "operationId": "archiveLifecycleStatus",
+        "parameters": [],
+        "responses": {
+          "204": { "description": "" },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["catalog dictionaries"]
+      },
+      "patch": {
+        "operationId": "updateLifecycleStatus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LifecycleStatusDto" }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["catalog dictionaries"]
+      }
+    },
     "/api/v1/meta": {
       "get": {
         "operationId": "getMetadata",
@@ -684,5 +1061,5 @@
   },
   "servers": [],
   "tags": [],
-  "x-spec-checksum": "b8c7d1274950296a32c41c569f58b1fe2781e91b24e7888be7fe71ffd2f6d6e0"
+  "x-spec-checksum": "fd191f00242f382b33e1d2d207ed5b085d788d39d4385814f0592e81cb1255bb"
 }

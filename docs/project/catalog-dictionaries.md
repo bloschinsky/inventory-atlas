@@ -29,6 +29,20 @@ UUIDs make the initial identities deterministic. `createMany(skipDuplicates)`
 means rerunning the seed adds only missing keys and never overwrites administrator
 changes.
 
-CAT-01B still owns the application services, REST/OpenAPI contracts, authorization,
-and bilingual Admin UI. CAT-01C owns complete Item history resolution plus audit
-and search-invalidation behavior.
+## Admin application and REST surface
+
+CAT-01B adds `CatalogDictionaryService` as the Catalog module's application
+surface. Active dictionary reads require an authenticated viewer; archived reads
+and every mutation require `manageSchema`. Mutations also require the session's
+CSRF token. The `/api/v1/categories` and `/api/v1/lifecycle-statuses` resources
+support ordered list, create, versioned update, and archive operations. The
+normalized OpenAPI contract and generated TypeScript, JavaScript/JSDoc, SDK, and
+Zod artifacts describe the same surface and carry one checksum.
+
+The `/admin/categories` and `/admin/statuses` routes use the shared semantic
+`App*` facade and Vue Query. Both pages display English and Ukrainian labels,
+include archived records, preserve stable keys while editing, validate inputs,
+and invalidate their dictionary query after successful mutations.
+
+CAT-01C still owns complete Item history resolution plus transactional audit and
+search-invalidation behavior.

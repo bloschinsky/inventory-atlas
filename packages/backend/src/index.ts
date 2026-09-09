@@ -47,6 +47,8 @@ export {
 } from './auth/index.js';
 export {
   CatalogDictionaryRepository,
+  CatalogDictionaryAuthorizationError,
+  CatalogDictionaryService,
   DictionaryPolicyError,
   normalizeDisplayTemplate,
   normalizeLabels,

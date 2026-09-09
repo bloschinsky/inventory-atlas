@@ -1,7 +1,13 @@
-import { AuthRateLimiter, SessionError, permissionsFor } from '@inventory-atlas/backend';
+import {
+  AuthRateLimiter,
+  CatalogDictionaryAuthorizationError,
+  SessionError,
+  permissionsFor,
+} from '@inventory-atlas/backend';
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthRuntimePort } from './auth.runtime.js';
 import type { FoundationRuntimePort } from './foundation.runtime.js';
+import type { CatalogRuntimePort } from './catalog.runtime.js';
 import { createApiApplication } from './main.js';
 import { createOpenApiDocument } from './openapi-document.js';
 
@@ -57,7 +63,17 @@ function createAuthRuntime() {
 const authSessions = createAuthRuntime();
 const administration = createAdministrationRuntime();
 const rateLimiter = new AuthRateLimiter('test-secret');
-const runtime: FoundationRuntimePort & AuthRuntimePort = {
+const dictionaries = {
+  listCategories: vi.fn(async () => []),
+  createCategory: vi.fn(),
+  updateCategory: vi.fn(),
+  archiveCategory: vi.fn(),
+  listLifecycleStatuses: vi.fn(async () => []),
+  createLifecycleStatus: vi.fn(),
+  updateLifecycleStatus: vi.fn(),
+  archiveLifecycleStatus: vi.fn(),
+};
+const runtime: FoundationRuntimePort & AuthRuntimePort & CatalogRuntimePort = {
   async readiness() {
     return {
       status: 'ready',
@@ -93,6 +109,9 @@ const runtime: FoundationRuntimePort & AuthRuntimePort = {
   secureSessionCookies() {
     return true;
   },
+  catalogDictionaries() {
+    return dictionaries;
+  },
 };
 
 describe('API composition root', () => {
@@ -109,8 +128,12 @@ describe('API composition root', () => {
 
     expect(operationIds.toSorted()).toEqual([
       'acceptInvitation',
+      'archiveCategory',
+      'archiveLifecycleStatus',
       'archiveUser',
       'createAuthSession',
+      'createCategory',
+      'createLifecycleStatus',
       'deleteAuthSession',
       'getCurrentActor',
       'getFoundationStatus',
@@ -119,11 +142,15 @@ describe('API composition root', () => {
       'getReadiness',
       'issueInvitation',
       'listAuthSessions',
+      'listCategories',
       'listInvitations',
+      'listLifecycleStatuses',
       'listUsers',
       'revokeAuthSession',
       'revokeInvitation',
+      'updateCategory',
       'updateCurrentActorLocale',
+      'updateLifecycleStatus',
       'updateUser',
     ]);
     expect(new Set(operationIds).size).toBe(operationIds.length);
@@ -165,6 +192,66 @@ describe('API composition root', () => {
       'synthetic password',
       expect.objectContaining({ userAgent: 'Synthetic Browser' }),
     );
+    await app.close();
+  });
+
+  it('protects dictionary mutations with CSRF and passes the authenticated actor', async () => {
+    const catalog = { ...dictionaries, createCategory: vi.fn() };
+    catalog.createCategory.mockResolvedValueOnce({
+      id: '0198f40c-92f3-7a12-bc9a-653f97786c2d',
+      parentId: null,
+      key: 'tools',
+      labels: { en: 'Tools', uk: 'Інструменти' },
+      displayTemplate: null,
+      displayOrder: 2,
+      version: 1,
+      archivedAt: null,
+    });
+    const app = await createApiApplication({ ...runtime, catalogDictionaries: () => catalog });
+    await app.init();
+    const cookie = `inventory_atlas_session=${sessionToken}`;
+    const payload = {
+      key: 'tools',
+      labels: { en: 'Tools', uk: 'Інструменти' },
+      parentId: null,
+      displayTemplate: null,
+      displayOrder: 2,
+    };
+
+    const rejected = await app.inject({
+      method: 'POST',
+      url: '/api/v1/categories',
+      headers: { cookie },
+      payload,
+    });
+    expect(rejected.statusCode).toBe(401);
+
+    const accepted = await app.inject({
+      method: 'POST',
+      url: '/api/v1/categories',
+      headers: { cookie, 'x-csrf-token': csrfToken },
+      payload,
+    });
+    expect(accepted.statusCode).toBe(201);
+    expect(accepted.json()).toMatchObject({ key: 'tools', labels: payload.labels, version: 1 });
+    expect(catalog.createCategory).toHaveBeenCalledWith(actor, payload);
+    await app.close();
+  });
+
+  it('maps dictionary authorization failures without exposing the adapter', async () => {
+    const catalog = {
+      ...dictionaries,
+      listLifecycleStatuses: vi.fn().mockRejectedValue(new CatalogDictionaryAuthorizationError()),
+    };
+    const app = await createApiApplication({ ...runtime, catalogDictionaries: () => catalog });
+    await app.init();
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/lifecycle-statuses',
+      headers: { cookie: `inventory_atlas_session=${sessionToken}` },
+    });
+    expect(response.statusCode).toBe(403);
+    expect(response.body).not.toContain('listLifecycleStatuses');
     await app.close();
   });
 
@@ -355,7 +442,7 @@ describe('API composition root', () => {
   });
 
   it('returns actionable component states when readiness fails', async () => {
-    const unreadyRuntime: FoundationRuntimePort & AuthRuntimePort = {
+    const unreadyRuntime: FoundationRuntimePort & AuthRuntimePort & CatalogRuntimePort = {
       ...runtime,
       async readiness() {
         return {

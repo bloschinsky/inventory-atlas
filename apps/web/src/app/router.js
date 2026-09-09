@@ -6,6 +6,7 @@ import InvitationAcceptancePage from '../pages/InvitationAcceptancePage.vue';
 import SessionsPage from '../pages/SessionsPage.vue';
 import SignInPage from '../pages/SignInPage.vue';
 import UsersPage from '../pages/UsersPage.vue';
+import DictionaryPage from '../pages/DictionaryPage.vue';
 
 export const routeRecords = [
   ['/', 'routes.home'],
@@ -27,7 +28,11 @@ export const routeRecords = [
   ['/admin/audit', 'routes.adminAudit'],
 ].map(([path, titleKey]) => ({
   path,
-  component: path === '/admin/users' ? UsersPage : FoundationPage,
+  component: ['/admin/categories', '/admin/statuses'].includes(path)
+    ? DictionaryPage
+    : path === '/admin/users'
+      ? UsersPage
+      : FoundationPage,
   meta: {
     titleKey,
     layout: ['/', '/items/:publicId', '/storage/:publicId'].includes(path)

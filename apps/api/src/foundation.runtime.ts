@@ -2,6 +2,8 @@ import { Logger, type OnApplicationShutdown } from '@nestjs/common';
 import {
   AuthAdministrationService,
   AuthRateLimiter,
+  CatalogDictionaryRepository,
+  CatalogDictionaryService,
   createDatabase,
   createSettingsClient,
   currentSchemaVersion,
@@ -19,6 +21,7 @@ import { access, mkdir } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { AuthRuntimePort } from './auth.runtime.js';
+import type { CatalogRuntimePort } from './catalog.runtime.js';
 
 export const FOUNDATION_RUNTIME = Symbol('FOUNDATION_RUNTIME');
 
@@ -45,11 +48,12 @@ export interface FoundationRuntimePort {
 }
 
 export class FoundationRuntime
-  implements FoundationRuntimePort, AuthRuntimePort, OnApplicationShutdown
+  implements FoundationRuntimePort, AuthRuntimePort, CatalogRuntimePort, OnApplicationShutdown
 {
   private schemaVersion: string | null = null;
   private sessions: SessionService | null = null;
   private administration: AuthAdministrationService | null = null;
+  private dictionaries: CatalogDictionaryService | null = null;
   private readonly rateLimiter: AuthRateLimiter;
 
   private constructor(
@@ -88,6 +92,9 @@ export class FoundationRuntime
         settingsClient,
         configuration.sessionSecret,
         authorizationSettings,
+      );
+      runtime.dictionaries = new CatalogDictionaryService(
+        new CatalogDictionaryRepository(settingsClient),
       );
       await runtime.verifyMedia();
       return runtime;
@@ -161,6 +168,11 @@ export class FoundationRuntime
 
   authRateLimiter(): AuthRateLimiter {
     return this.rateLimiter;
+  }
+
+  catalogDictionaries(): CatalogDictionaryService {
+    if (!this.dictionaries) throw new Error('Catalog dictionaries are not initialized.');
+    return this.dictionaries;
   }
 
   secureSessionCookies(): boolean {

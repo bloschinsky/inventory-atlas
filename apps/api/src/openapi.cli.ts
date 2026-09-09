@@ -5,12 +5,13 @@ import { createApiApplication } from './main.js';
 import { createOpenApiDocument } from './openapi-document.js';
 import type { FoundationRuntimePort } from './foundation.runtime.js';
 import type { AuthRuntimePort } from './auth.runtime.js';
+import type { CatalogRuntimePort } from './catalog.runtime.js';
 
 const output = process.argv[2];
 if (!output) throw new Error('An output path is required.');
 Logger.overrideLogger(false);
 
-const documentationRuntime: FoundationRuntimePort & AuthRuntimePort = {
+const documentationRuntime: FoundationRuntimePort & AuthRuntimePort & CatalogRuntimePort = {
   async readiness() {
     throw new Error('The documentation runtime does not serve requests.');
   },
@@ -37,6 +38,9 @@ const documentationRuntime: FoundationRuntimePort & AuthRuntimePort = {
   },
   secureSessionCookies() {
     return true;
+  },
+  catalogDictionaries() {
+    throw new Error('The documentation runtime does not serve catalog requests.');
   },
 };
 

@@ -98,5 +98,30 @@
     "signOut": "Sign out",
     "unknownDevice": "Unknown device",
     "users": "Users"
+  },
+  "catalog": {
+    "archive": "Archive",
+    "archived": "Archived",
+    "cancel": "Cancel",
+    "colorToken": "Color token",
+    "create": "Create entry",
+    "description": "Manage stable keys, bilingual labels, ordering, and archived entries.",
+    "displayOrder": "Display order",
+    "displayTemplate": "Display-name template",
+    "edit": "Edit",
+    "empty": "No dictionary entries found.",
+    "key": "Stable key",
+    "labelEn": "English label",
+    "labelUk": "Ukrainian label",
+    "noParent": "No parent",
+    "orderValue": "Order: {order}",
+    "parent": "Parent category",
+    "save": "Save",
+    "validation": {
+      "color": "Use a semantic token such as status.info.",
+      "key": "Use lower-case letters, digits, and underscores; start with a letter.",
+      "order": "Enter a non-negative whole number.",
+      "ukrainian": "The Ukrainian label cannot contain only spaces."
+    }
   }
 }

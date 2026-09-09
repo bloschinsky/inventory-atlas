@@ -4,6 +4,10 @@ export {
   type LifecycleStatusRecord,
 } from './dictionary-repository.js';
 export {
+  CatalogDictionaryAuthorizationError,
+  CatalogDictionaryService,
+} from './dictionary-service.js';
+export {
   DictionaryPolicyError,
   normalizeDisplayTemplate,
   normalizeLabels,

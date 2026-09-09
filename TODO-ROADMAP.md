@@ -342,11 +342,11 @@ Tasks:
 - [x] Add migrations, Prisma models, constraints, and indexes for categories and lifecycle statuses.
 - [x] Seed approved stable lifecycle keys idempotently.
 - [x] Implement stable-key, bilingual-label, ordering, archive, and version policies.
-- [ ] Add application services and `/api/v1` Admin endpoints.
+- [x] Add application services and `/api/v1` Admin endpoints.
 - [ ] Emit audit and search invalidation outbox records for relevant changes.
-- [ ] Build PrimeVue-facade list, create, edit, archive, and validation UI.
+- [x] Build PrimeVue-facade list, create, edit, archive, and validation UI.
 - [ ] Preserve historical resolution of archived dictionary entries.
-- [ ] Add English/Ukrainian contract, integration, authorization, and UI tests.
+- [x] Add English/Ukrainian contract, integration, authorization, and UI tests.
 
 Acceptance criteria (verbatim from the approved blueprint):
 

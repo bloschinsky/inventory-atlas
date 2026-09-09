@@ -11,6 +11,7 @@
     "statuses.*",
     "validation.*",
     "problems.*",
-    "auth.*"
+    "auth.*",
+    "catalog.*"
   ]
 }

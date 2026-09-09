@@ -98,6 +98,30 @@ body {
 .record-meta {
   display: block;
 }
+.page-heading,
+.record-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ia-space-3);
+}
+.dictionary-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ia-space-3);
+}
+.dictionary-tabs a {
+  min-height: var(--ia-control-min-height);
+  display: inline-flex;
+  align-items: center;
+}
+.page-heading h1,
+.page-heading p {
+  margin-block: 0 var(--ia-space-2);
+}
+.record-list li.archived {
+  opacity: 0.7;
+}
 .token-result {
   display: grid;
   gap: var(--ia-space-2);
