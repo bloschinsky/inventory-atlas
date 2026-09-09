@@ -12,6 +12,16 @@ The project follows the version policy in `docs/project/versioning.md`.
 
 ### Added
 
+- Started CAT-02A with the Kysely-owned Schema tables: constrained field
+  definitions for the `item` and `storage_node` scopes with optional category
+  applicability, all twelve approved data types, bilingual label/help objects,
+  required/repeatable/searchable/filterable/sortable flags, visibility, unit,
+  default and validation JSON, ordering, archive state and optimistic versions;
+  field options with active-key uniqueness and immutable identity; and the typed
+  scalar `attribute_values` store with one-owner, one-value-group, money-pair,
+  position and per-owner uniqueness checks plus a composite option-ownership
+  foreign key that makes UUID-array multiselect storage impossible.
+
 - Completed CAT-01C with same-transaction dictionary audit records, deduplicated
   `CategoryRenamed` search-rebuild outbox messages, rollback coverage, and
   authenticated historical resolution of archived categories and lifecycle

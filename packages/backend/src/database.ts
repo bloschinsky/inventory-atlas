@@ -11,7 +11,7 @@ interface FoundationDatabase {
   };
 }
 
-export const expectedSchemaVersion = '0004_outbox';
+export const expectedSchemaVersion = '0005_dynamic_schema';
 
 export function createDatabase(
   connectionString: string,

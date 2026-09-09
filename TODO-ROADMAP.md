@@ -369,8 +369,8 @@ Suggested pull requests:
 
 Tasks:
 
-- [ ] Add migrations for field definitions, options, and typed scalar attribute rows.
-- [ ] Add database checks for one owner, one typed value group, money pairs, positions, owner/field/position uniqueness, and multiselect option uniqueness.
+- [x] Add migrations for field definitions, options, and typed scalar attribute rows.
+- [x] Add database checks for one owner, one typed value group, money pairs, positions, owner/field/position uniqueness, and multiselect option uniqueness.
 - [ ] Implement Item and StorageNode scopes with optional category applicability.
 - [ ] Implement all approved data types, validation rules, units, defaults, ordering, visibility, and search/filter/sort flags.
 - [ ] Implement option ownership and archived-option resolution.

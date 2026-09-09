@@ -49,3 +49,42 @@ and retry metadata, plus pending and aggregate access indexes. Prisma-owned sour
 transactions may only insert through the narrow parameterized `OutboxPort`; the
 Prisma model is ignored for generated CRUD access. Job claiming and outbox
 dispatch remain part of the shared Jobs workstream.
+
+`0005_dynamic_schema.mjs` starts CAT-02A with the Schema module tables:
+`field_definitions`, `field_options`, and the typed scalar `attribute_values`
+store. Definitions carry a stable lower-case key, `item`/`storage_node` scope,
+optional category applicability, English-first bilingual label and help objects,
+one of the twelve approved data types, required/repeatable/searchable/filterable/
+sortable flags, `public`/`authenticated`/`private` visibility, unit, default and
+validation JSON objects, ordering, archive timestamp, and an optimistic version.
+Active keys are unique per `(scope, category_id, key)` through two partial unique
+indexes, one for category-scoped and one for scope-wide definitions. The database
+rejects `repeatable = true` for `select` and `multiselect`, and a trigger rejects
+key or scope changes even when a write bypasses the repository.
+
+Options are children of their definition: they have no independent version, and
+the parent definition version governs optimistic concurrency for option writes.
+Active option keys are unique per definition, and a trigger keeps the key and
+owner field immutable. Archived options remain resolvable for historical values.
+
+`attribute_values` stores exactly one owner (`item_id` or `storage_node_id`),
+one populated typed value group, a required non-negative `position`, and a money
+amount/currency pair that is set or null together. Positions are unique per
+`(owner, field_definition_id, position)` and option rows are unique per
+`(owner, field_definition_id, value_option_id)`, both through per-owner partial
+unique indexes. Option ownership is enforced declaratively by a composite
+foreign key from `(value_option_id, field_definition_id)` to
+`field_options (id, field_definition_id)`, so a wrong-field option cannot be
+stored even by direct SQL. Multiselect therefore persists as ordered scalar
+option rows; no UUID array column exists.
+
+`item_id`, `storage_node_id`, `value_reference_item_id` and
+`value_reference_node_id` are indexed but receive their real foreign keys in the
+migrations that create `items` (CAT-03) and `storage_nodes` (STO-01). Those
+tables cannot exist earlier because both stories depend on this schema. The
+CAT-02 integration suite asserts the foreign keys as soon as the owner tables
+appear, so a later migration cannot forget them.
+
+Rollback drops the three tables and their data; use it only on disposable
+databases or as a planned destructive operation. It leaves the CAT-01
+dictionaries intact.

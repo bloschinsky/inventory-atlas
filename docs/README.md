@@ -28,6 +28,7 @@ This directory contains supporting product, architecture, API, operations, secur
 - [Module boundary policy](project/module-boundaries.md)
 - [Localization foundation](project/localization.md)
 - [Catalog dictionary foundation](project/catalog-dictionaries.md)
+- [Dynamic field schema and typed EAV](project/dynamic-schema.md)
 - [Development setup](operations/development.md)
 - [Transitive dependency license report](project/third-party-licenses.json)
 - [UI facade contracts](frontend/ui-facade-contracts.md)

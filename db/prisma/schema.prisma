@@ -120,18 +120,19 @@ model AuditEvent {
 
 /// Database label, ordering, archive, version and immutable-key checks remain authoritative.
 model Category {
-  id              String     @id @db.Uuid
-  parentId        String?    @map("parent_id") @db.Uuid
-  key             String     @unique @db.VarChar(64)
-  labelI18n       Json       @map("label_i18n")
-  displayTemplate String?    @map("display_template")
-  displayOrder    Int        @default(0) @map("display_order")
-  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime   @default(now()) @map("updated_at") @db.Timestamptz(6)
-  archivedAt      DateTime?  @map("archived_at") @db.Timestamptz(6)
-  version         BigInt     @default(1)
-  parent          Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  children        Category[] @relation("CategoryTree")
+  id               String            @id @db.Uuid
+  parentId         String?           @map("parent_id") @db.Uuid
+  key              String            @unique @db.VarChar(64)
+  labelI18n        Json              @map("label_i18n")
+  displayTemplate  String?           @map("display_template")
+  displayOrder     Int               @default(0) @map("display_order")
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime          @default(now()) @map("updated_at") @db.Timestamptz(6)
+  archivedAt       DateTime?         @map("archived_at") @db.Timestamptz(6)
+  version          BigInt            @default(1)
+  parent           Category?         @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  children         Category[]        @relation("CategoryTree")
+  fieldDefinitions FieldDefinition[]
 
   @@index([parentId, displayOrder, key], map: "categories_parent_order_idx")
   @@index([displayOrder, key], map: "categories_active_order_idx", where: raw("(archived_at IS NULL)"))
@@ -173,4 +174,93 @@ model Outbox {
   @@index([aggregateType, aggregateId, createdAt], map: "outbox_aggregate_idx")
   @@map("outbox")
   @@ignore
+}
+
+/// Database check constraints, partial unique keys and the immutable key/scope trigger defined
+/// by the Kysely migration remain authoritative.
+model AttributeValue {
+  id                   String          @id @db.Uuid
+  fieldDefinitionId    String          @map("field_definition_id") @db.Uuid
+  itemId               String?         @map("item_id") @db.Uuid
+  storageNodeId        String?         @map("storage_node_id") @db.Uuid
+  position             Int
+  valueText            String?         @map("value_text")
+  valueNumber          Decimal?        @map("value_number") @db.Decimal(30, 10)
+  valueBoolean         Boolean?        @map("value_boolean")
+  valueDate            DateTime?       @map("value_date") @db.Date
+  valueDatetime        DateTime?       @map("value_datetime") @db.Timestamptz(6)
+  valueOptionId        String?         @map("value_option_id") @db.Uuid
+  valueMoneyAmount     Decimal?        @map("value_money_amount") @db.Decimal(20, 4)
+  valueMoneyCurrency   String?         @map("value_money_currency") @db.Char(3)
+  valueReferenceItemId String?         @map("value_reference_item_id") @db.Uuid
+  valueReferenceNodeId String?         @map("value_reference_node_id") @db.Uuid
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime        @default(now()) @map("updated_at") @db.Timestamptz(6)
+  definition           FieldDefinition @relation(fields: [fieldDefinitionId], references: [id], onUpdate: NoAction)
+  option               FieldOption?    @relation(fields: [valueOptionId, fieldDefinitionId], references: [id, fieldDefinitionId], onUpdate: NoAction, map: "attribute_values_option_fk")
+
+  @@unique([itemId, fieldDefinitionId, valueOptionId], map: "attribute_values_item_option_idx", where: raw("((item_id IS NOT NULL) AND (value_option_id IS NOT NULL))"))
+  @@unique([itemId, fieldDefinitionId, position], map: "attribute_values_item_position_idx", where: raw("(item_id IS NOT NULL)"))
+  @@unique([storageNodeId, fieldDefinitionId, valueOptionId], map: "attribute_values_node_option_idx", where: raw("((storage_node_id IS NOT NULL) AND (value_option_id IS NOT NULL))"))
+  @@unique([storageNodeId, fieldDefinitionId, position], map: "attribute_values_node_position_idx", where: raw("(storage_node_id IS NOT NULL)"))
+  @@index([fieldDefinitionId, position], map: "attribute_values_definition_idx")
+  @@index([valueOptionId], map: "attribute_values_option_idx", where: raw("(value_option_id IS NOT NULL)"))
+  @@index([valueReferenceItemId], map: "attribute_values_reference_item_idx", where: raw("(value_reference_item_id IS NOT NULL)"))
+  @@index([valueReferenceNodeId], map: "attribute_values_reference_node_idx", where: raw("(value_reference_node_id IS NOT NULL)"))
+  @@map("attribute_values")
+}
+
+/// Database check constraints, partial unique keys and the immutable key/scope trigger defined
+/// by the Kysely migration remain authoritative.
+model FieldDefinition {
+  id               String           @id @db.Uuid
+  key              String           @db.VarChar(64)
+  scope            String           @db.VarChar(16)
+  categoryId       String?          @map("category_id") @db.Uuid
+  labelI18n        Json             @map("label_i18n")
+  helpI18n         Json?            @map("help_i18n")
+  dataType         String           @map("data_type") @db.VarChar(16)
+  required         Boolean          @default(false)
+  repeatable       Boolean          @default(false)
+  searchable       Boolean          @default(false)
+  filterable       Boolean          @default(false)
+  sortable         Boolean          @default(false)
+  visibility       String           @default("authenticated") @db.VarChar(16)
+  unit             String?          @db.VarChar(32)
+  defaultValueJson Json?            @map("default_value_json")
+  validationJson   Json             @default("{}") @map("validation_json")
+  displayOrder     Int              @default(0) @map("display_order")
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime         @default(now()) @map("updated_at") @db.Timestamptz(6)
+  archivedAt       DateTime?        @map("archived_at") @db.Timestamptz(6)
+  version          BigInt           @default(1)
+  attributeValues  AttributeValue[]
+  category         Category?        @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  options          FieldOption[]
+
+  @@unique([scope, categoryId, key], map: "field_definitions_category_key_idx", where: raw("((archived_at IS NULL) AND (category_id IS NOT NULL))"))
+  @@unique([scope, key], map: "field_definitions_scope_key_idx", where: raw("((archived_at IS NULL) AND (category_id IS NULL))"))
+  @@index([categoryId], map: "field_definitions_category_idx")
+  @@index([scope, categoryId, displayOrder, key], map: "field_definitions_scope_order_idx", where: raw("(archived_at IS NULL)"))
+  @@map("field_definitions")
+}
+
+/// Database check constraints, the active-key partial unique index and the immutable
+/// key/owner trigger defined by the Kysely migration remain authoritative.
+model FieldOption {
+  id                String           @id @db.Uuid
+  fieldDefinitionId String           @map("field_definition_id") @db.Uuid
+  key               String           @db.VarChar(64)
+  labelI18n         Json             @map("label_i18n")
+  displayOrder      Int              @default(0) @map("display_order")
+  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime         @default(now()) @map("updated_at") @db.Timestamptz(6)
+  archivedAt        DateTime?        @map("archived_at") @db.Timestamptz(6)
+  attributeValues   AttributeValue[]
+  definition        FieldDefinition  @relation(fields: [fieldDefinitionId], references: [id], onUpdate: NoAction)
+
+  @@unique([fieldDefinitionId, key], map: "field_options_active_key_idx", where: raw("(archived_at IS NULL)"))
+  @@unique([id, fieldDefinitionId], map: "field_options_identity_key")
+  @@index([fieldDefinitionId, displayOrder, key], map: "field_options_order_idx")
+  @@map("field_options")
 }

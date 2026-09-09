@@ -57,3 +57,21 @@ export type Category = Prisma.CategoryModel
  * Database label, ordering, archive, version and immutable-key checks remain authoritative.
  */
 export type LifecycleStatus = Prisma.LifecycleStatusModel
+/**
+ * Model AttributeValue
+ * Database check constraints, partial unique keys and the immutable key/scope trigger defined
+ * by the Kysely migration remain authoritative.
+ */
+export type AttributeValue = Prisma.AttributeValueModel
+/**
+ * Model FieldDefinition
+ * Database check constraints, partial unique keys and the immutable key/scope trigger defined
+ * by the Kysely migration remain authoritative.
+ */
+export type FieldDefinition = Prisma.FieldDefinitionModel
+/**
+ * Model FieldOption
+ * Database check constraints, the active-key partial unique index and the immutable
+ * key/owner trigger defined by the Kysely migration remain authoritative.
+ */
+export type FieldOption = Prisma.FieldOptionModel

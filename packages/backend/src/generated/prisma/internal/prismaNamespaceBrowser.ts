@@ -58,7 +58,10 @@ export const ModelName = {
   Invitation: 'Invitation',
   AuditEvent: 'AuditEvent',
   Category: 'Category',
-  LifecycleStatus: 'LifecycleStatus'
+  LifecycleStatus: 'LifecycleStatus',
+  AttributeValue: 'AttributeValue',
+  FieldDefinition: 'FieldDefinition',
+  FieldOption: 'FieldOption'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -195,6 +198,70 @@ export const LifecycleStatusScalarFieldEnum = {
 } as const
 
 export type LifecycleStatusScalarFieldEnum = (typeof LifecycleStatusScalarFieldEnum)[keyof typeof LifecycleStatusScalarFieldEnum]
+
+
+export const AttributeValueScalarFieldEnum = {
+  id: 'id',
+  fieldDefinitionId: 'fieldDefinitionId',
+  itemId: 'itemId',
+  storageNodeId: 'storageNodeId',
+  position: 'position',
+  valueText: 'valueText',
+  valueNumber: 'valueNumber',
+  valueBoolean: 'valueBoolean',
+  valueDate: 'valueDate',
+  valueDatetime: 'valueDatetime',
+  valueOptionId: 'valueOptionId',
+  valueMoneyAmount: 'valueMoneyAmount',
+  valueMoneyCurrency: 'valueMoneyCurrency',
+  valueReferenceItemId: 'valueReferenceItemId',
+  valueReferenceNodeId: 'valueReferenceNodeId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AttributeValueScalarFieldEnum = (typeof AttributeValueScalarFieldEnum)[keyof typeof AttributeValueScalarFieldEnum]
+
+
+export const FieldDefinitionScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  scope: 'scope',
+  categoryId: 'categoryId',
+  labelI18n: 'labelI18n',
+  helpI18n: 'helpI18n',
+  dataType: 'dataType',
+  required: 'required',
+  repeatable: 'repeatable',
+  searchable: 'searchable',
+  filterable: 'filterable',
+  sortable: 'sortable',
+  visibility: 'visibility',
+  unit: 'unit',
+  defaultValueJson: 'defaultValueJson',
+  validationJson: 'validationJson',
+  displayOrder: 'displayOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  archivedAt: 'archivedAt',
+  version: 'version'
+} as const
+
+export type FieldDefinitionScalarFieldEnum = (typeof FieldDefinitionScalarFieldEnum)[keyof typeof FieldDefinitionScalarFieldEnum]
+
+
+export const FieldOptionScalarFieldEnum = {
+  id: 'id',
+  fieldDefinitionId: 'fieldDefinitionId',
+  key: 'key',
+  labelI18n: 'labelI18n',
+  displayOrder: 'displayOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  archivedAt: 'archivedAt'
+} as const
+
+export type FieldOptionScalarFieldEnum = (typeof FieldOptionScalarFieldEnum)[keyof typeof FieldOptionScalarFieldEnum]
 
 
 export const SortOrder = {
