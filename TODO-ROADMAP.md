@@ -418,9 +418,9 @@ Tasks:
 - [ ] Resolve a destination path through `SearchProjectionPort` under the shared root lock when applicable.
 - [x] Write safe audit, movement, and outbox records through transaction-aware ports.
 - [x] Return stable field-key validation errors and the new ETag/version.
-- [ ] Build category-driven mobile-first form controls using the UI facade.
-- [ ] Build the Item card with core fields, dynamic values, breadcrumb policy, and placeholder media.
-- [ ] Add atomic rollback, duplicate-request, public-ID, localization, authorization, and E2E tests.
+- [x] Build category-driven mobile-first form controls using the UI facade.
+- [x] Build the Item card with core fields, dynamic values, breadcrumb policy, and placeholder media.
+- [x] Add atomic rollback, duplicate-request, public-ID, localization, authorization, and E2E tests.
 
 Acceptance criteria (verbatim from the approved blueprint):
 

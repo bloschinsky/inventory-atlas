@@ -4,11 +4,22 @@ export const schemaKeys = {
   fields: /** @type {const} */ (['schema', 'field-definitions']),
   /** @param {string} scope */
   fieldsForScope: (scope) => /** @type {const} */ (['schema', 'field-definitions', scope]),
+  /** @param {string} categoryId */
+  fieldsForCategory: (categoryId) =>
+    /** @type {const} */ (['schema', 'field-definitions', 'item', categoryId]),
 };
 
-/** @param {'item'|'storage_node'} scope */
-export function listFieldDefinitions(scope) {
-  return apiRequest(`/field-definitions?scope=${scope}&includeArchived=true`);
+/**
+ * @param {'item'|'storage_node'} scope
+ * @param {{ categoryId?: string, includeArchived?: boolean }} [filter]
+ */
+export function listFieldDefinitions(scope, filter = {}) {
+  const query = new URLSearchParams({
+    scope,
+    includeArchived: String(filter.includeArchived ?? true),
+  });
+  if (filter.categoryId) query.set('categoryId', filter.categoryId);
+  return apiRequest(`/field-definitions?${query.toString()}`);
 }
 
 /** @param {Record<string, unknown>} input @param {string} csrfToken */

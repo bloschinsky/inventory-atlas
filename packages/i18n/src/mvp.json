@@ -13,6 +13,7 @@
     "problems.*",
     "auth.*",
     "catalog.*",
+    "items.*",
     "schema.*"
   ]
 }

@@ -8,6 +8,8 @@ import SignInPage from '../pages/SignInPage.vue';
 import UsersPage from '../pages/UsersPage.vue';
 import DictionaryPage from '../pages/DictionaryPage.vue';
 import FieldDesignerPage from '../pages/FieldDesignerPage.vue';
+import ItemsPage from '../pages/ItemsPage.vue';
+import ItemCreatePage from '../pages/ItemCreatePage.vue';
 
 export const routeRecords = [
   ['/', 'routes.home'],
@@ -29,13 +31,18 @@ export const routeRecords = [
   ['/admin/audit', 'routes.adminAudit'],
 ].map(([path, titleKey]) => ({
   path,
-  component: ['/admin/categories', '/admin/statuses'].includes(path)
-    ? DictionaryPage
-    : path === '/admin/fields'
-      ? FieldDesignerPage
-      : path === '/admin/users'
-        ? UsersPage
-        : FoundationPage,
+  component:
+    path === '/items'
+      ? ItemsPage
+      : path === '/items/new'
+        ? ItemCreatePage
+        : ['/admin/categories', '/admin/statuses'].includes(path)
+          ? DictionaryPage
+          : path === '/admin/fields'
+            ? FieldDesignerPage
+            : path === '/admin/users'
+              ? UsersPage
+              : FoundationPage,
   meta: {
     titleKey,
     layout: ['/', '/items/:publicId', '/storage/:publicId'].includes(path)

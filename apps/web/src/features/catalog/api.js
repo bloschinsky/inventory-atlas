@@ -5,9 +5,9 @@ export const catalogKeys = {
   statuses: ['catalog', 'lifecycle-statuses'],
 };
 
-/** @param {'categories'|'lifecycle-statuses'} kind */
-export function listDictionary(kind) {
-  return apiRequest(`/${kind}?includeArchived=true`);
+/** @param {'categories'|'lifecycle-statuses'} kind @param {boolean} [includeArchived] */
+export function listDictionary(kind, includeArchived = true) {
+  return apiRequest(`/${kind}?includeArchived=${String(includeArchived)}`);
 }
 
 /** @param {'categories'|'lifecycle-statuses'} kind @param {Record<string, unknown>} input @param {string} csrfToken */

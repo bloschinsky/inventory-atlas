@@ -126,6 +126,43 @@
       "ukrainian": "The Ukrainian label cannot contain only spaces."
     }
   },
+  "items": {
+    "addValue": "Add another value",
+    "attributes": "Attributes",
+    "card": "Item card",
+    "category": "Category",
+    "coreFields": "Item details",
+    "create": "Create item",
+    "createAnother": "Create another item",
+    "createDescription": "Choose a category to load its fields, then enter the item details.",
+    "created": "The item was created and is ready to view.",
+    "description": "Description",
+    "displayName": "Display name",
+    "lifecycleStatus": "Lifecycle status",
+    "listPending": "Item search and browsing arrive in Stage 4. You can create a new item now.",
+    "location": "Storage location",
+    "new": "New item",
+    "noAttributes": "This category has no additional fields.",
+    "noLocation": "Not assigned to a storage location",
+    "placeholderMedia": "Placeholder image for {category}",
+    "publicId": "Public ID",
+    "referenceItem": "Item",
+    "referenceStorage": "Storage location",
+    "referenceType": "Reference type",
+    "remove": "Remove",
+    "removeValue": "Remove value for {field}",
+    "tags": "Tags",
+    "tagsHint": "Separate tags with commas",
+    "unknownCategory": "Unknown category",
+    "unknownStatus": "Unknown status",
+    "visibility": "Visibility",
+    "visibilities": {
+      "authenticated": "Authenticated users",
+      "private": "Owner and administrators",
+      "public": "Public",
+      "unlisted": "Unlisted"
+    }
+  },
   "schema": {
     "addOption": "Add option",
     "applicability": "Applies to",
