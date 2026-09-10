@@ -25,9 +25,11 @@ The twelve approved `data_type` values map to exactly one typed value slot:
 
 `integer` and `decimal` are not approved data types; both are expressed as
 `number` with `validation.integer`. The Stage-0 fixture
-`db/fixtures/catalog/categories-fields.en-uk.json` still uses the pre-blueprint
-`integer`/`decimal`/`publicVisibility` vocabulary and is not a contract source;
-the blueprint outranks it in the source-of-truth order.
+`db/fixtures/catalog/categories-fields.en-uk.json` uses this vocabulary
+throughout: approved data types, three-value `visibility`, a plain-text `unit`,
+one optional `appliesToCategory`, `displayOrder` for ordering, and the seeded
+lifecycle keys. No field in it is `private` yet; SRCH-03 adds the private-value
+case with the search-privacy suite that needs it.
 
 ## Definition rules
 

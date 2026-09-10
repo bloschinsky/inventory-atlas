@@ -1,176 +1,220 @@
 {
   "$schema": "https://inventory-atlas.local/fixtures/catalog-1.json",
-  "fixtureVersion": "1.0.0",
-  "description": "Representative bilingual catalog and typed-field fixtures for CAT-01 and CAT-02. English is the source locale; Ukrainian is complete for every user-facing label. Stable keys never change when labels change.",
+  "fixtureVersion": "1.1.0",
+  "description": "Representative bilingual catalog and typed-field fixtures for CAT-01 and CAT-02. English is the source locale; Ukrainian is complete for every user-facing label. Stable keys never change when labels change. Every field vocabulary term matches approved blueprint section 8.5: the twelve approved data types, three-value visibility, a plain-text unit, one optional category applicability, and displayOrder for ordering (position is reserved for attribute-value multiplicity).",
   "locales": ["en", "uk"],
   "categories": [
     {
       "key": "electronics",
-      "position": 1,
+      "displayOrder": 1,
       "labels": { "en": "Electronics", "uk": "Електроніка" },
       "placeholderMediaKey": "category.electronics"
     },
     {
       "key": "books",
-      "position": 2,
+      "displayOrder": 2,
       "labels": { "en": "Books", "uk": "Книги" },
       "placeholderMediaKey": "category.books"
     },
     {
       "key": "tools",
-      "position": 3,
+      "displayOrder": 3,
       "labels": { "en": "Tools", "uk": "Інструменти" },
       "placeholderMediaKey": "category.tools"
     },
     {
       "key": "documents",
-      "position": 4,
+      "displayOrder": 4,
       "labels": { "en": "Documents", "uk": "Документи" },
       "placeholderMediaKey": "category.documents",
       "archived": true,
       "archivedNote": "Archived entry retained so historical Items still resolve, per CAT-01 acceptance criteria."
     }
   ],
+  "lifecycleStatusNote": "The approved stable keys seeded by db:seed. Labels, color tokens and ordering match packages/backend/src/seed.ts so the fixture and the seed cannot drift.",
   "lifecycleStatuses": [
-    { "key": "active", "position": 1, "labels": { "en": "Active", "uk": "Активний" } },
-    { "key": "stored", "position": 2, "labels": { "en": "Stored", "uk": "На зберіганні" } },
-    { "key": "loaned", "position": 3, "labels": { "en": "Loaned", "uk": "Позичений" } },
-    { "key": "disposed", "position": 4, "labels": { "en": "Disposed", "uk": "Утилізований" } }
+    {
+      "key": "stored",
+      "displayOrder": 10,
+      "colorToken": "status.neutral",
+      "labels": { "en": "Stored", "uk": "На зберіганні" }
+    },
+    {
+      "key": "reserved",
+      "displayOrder": 20,
+      "colorToken": "status.info",
+      "labels": { "en": "Reserved", "uk": "Зарезервовано" }
+    },
+    {
+      "key": "lent",
+      "displayOrder": 30,
+      "colorToken": "status.warning",
+      "labels": { "en": "Lent", "uk": "Позичено" }
+    },
+    {
+      "key": "for_sale",
+      "displayOrder": 40,
+      "colorToken": "status.info",
+      "labels": { "en": "For sale", "uk": "На продаж" }
+    },
+    {
+      "key": "sold",
+      "displayOrder": 50,
+      "colorToken": "status.success",
+      "labels": { "en": "Sold", "uk": "Продано" }
+    },
+    {
+      "key": "lost",
+      "displayOrder": 60,
+      "colorToken": "status.danger",
+      "labels": { "en": "Lost", "uk": "Втрачено" }
+    },
+    {
+      "key": "archived",
+      "displayOrder": 70,
+      "colorToken": "status.muted",
+      "labels": { "en": "Archived", "uk": "Архівовано" }
+    }
   ],
   "fieldDefinitions": [
     {
       "key": "serial_number",
       "scope": "item",
       "type": "text",
-      "position": 1,
+      "displayOrder": 1,
       "labels": { "en": "Serial number", "uk": "Серійний номер" },
-      "appliesToCategories": ["electronics"],
+      "appliesToCategory": "electronics",
       "required": false,
       "repeatable": false,
       "flags": { "searchable": true, "filterable": true, "sortable": false },
-      "publicVisibility": false
+      "visibility": "authenticated"
     },
     {
       "key": "author",
       "scope": "item",
       "type": "text",
-      "position": 2,
+      "displayOrder": 2,
       "labels": { "en": "Author", "uk": "Автор" },
-      "appliesToCategories": ["books"],
+      "appliesToCategory": "books",
       "required": false,
       "repeatable": true,
       "flags": { "searchable": true, "filterable": true, "sortable": true },
-      "publicVisibility": true
+      "visibility": "public"
     },
     {
       "key": "quantity",
       "scope": "item",
-      "type": "integer",
-      "position": 3,
+      "type": "number",
+      "displayOrder": 3,
       "labels": { "en": "Quantity", "uk": "Кількість" },
       "required": true,
       "repeatable": false,
-      "validation": { "min": 0, "max": 100000 },
+      "validation": { "min": 0, "max": 100000, "integer": true },
       "flags": { "searchable": false, "filterable": true, "sortable": true },
-      "publicVisibility": true
+      "visibility": "public"
     },
     {
       "key": "weight",
       "scope": "item",
-      "type": "decimal",
-      "position": 4,
+      "type": "number",
+      "displayOrder": 4,
       "labels": { "en": "Weight", "uk": "Вага" },
-      "unit": { "en": "kg", "uk": "кг" },
+      "unit": "kg",
       "required": false,
       "repeatable": false,
       "validation": { "min": 0 },
       "flags": { "searchable": false, "filterable": true, "sortable": true },
-      "publicVisibility": true
+      "visibility": "public"
     },
     {
       "key": "purchase_price",
       "scope": "item",
       "type": "money",
-      "position": 5,
+      "displayOrder": 5,
       "labels": { "en": "Purchase price", "uk": "Ціна придбання" },
       "required": false,
       "repeatable": false,
       "flags": { "searchable": false, "filterable": true, "sortable": true },
-      "publicVisibility": false
+      "visibility": "authenticated"
     },
     {
       "key": "purchased_at",
       "scope": "item",
       "type": "date",
-      "position": 6,
+      "displayOrder": 6,
       "labels": { "en": "Purchased on", "uk": "Дата придбання" },
       "required": false,
       "repeatable": false,
       "flags": { "searchable": false, "filterable": true, "sortable": true },
-      "publicVisibility": false
+      "visibility": "authenticated"
     },
     {
       "key": "is_fragile",
       "scope": "item",
       "type": "boolean",
-      "position": 7,
+      "displayOrder": 7,
       "labels": { "en": "Fragile", "uk": "Крихке" },
       "required": false,
       "repeatable": false,
       "flags": { "searchable": false, "filterable": true, "sortable": false },
-      "publicVisibility": true
+      "visibility": "public"
     },
     {
       "key": "condition",
       "scope": "item",
       "type": "select",
-      "position": 8,
+      "displayOrder": 8,
       "labels": { "en": "Condition", "uk": "Стан" },
       "required": false,
       "repeatable": false,
       "flags": { "searchable": true, "filterable": true, "sortable": false },
-      "publicVisibility": true,
+      "visibility": "public",
       "options": [
-        { "key": "new", "position": 1, "labels": { "en": "New", "uk": "Новий" } },
-        { "key": "used", "position": 2, "labels": { "en": "Used", "uk": "Вживаний" } },
-        { "key": "broken", "position": 3, "labels": { "en": "Broken", "uk": "Несправний" }, "archived": true }
+        { "key": "new", "displayOrder": 1, "labels": { "en": "New", "uk": "Новий" } },
+        { "key": "used", "displayOrder": 2, "labels": { "en": "Used", "uk": "Вживаний" } },
+        {
+          "key": "broken",
+          "displayOrder": 3,
+          "labels": { "en": "Broken", "uk": "Несправний" },
+          "archived": true
+        }
       ]
     },
     {
       "key": "materials",
       "scope": "item",
       "type": "multiselect",
-      "position": 9,
+      "displayOrder": 9,
       "labels": { "en": "Materials", "uk": "Матеріали" },
       "required": false,
       "repeatable": false,
       "flags": { "searchable": true, "filterable": true, "sortable": false },
-      "publicVisibility": true,
+      "visibility": "public",
       "options": [
-        { "key": "metal", "position": 1, "labels": { "en": "Metal", "uk": "Метал" } },
-        { "key": "plastic", "position": 2, "labels": { "en": "Plastic", "uk": "Пластик" } },
-        { "key": "wood", "position": 3, "labels": { "en": "Wood", "uk": "Дерево" } }
+        { "key": "metal", "displayOrder": 1, "labels": { "en": "Metal", "uk": "Метал" } },
+        { "key": "plastic", "displayOrder": 2, "labels": { "en": "Plastic", "uk": "Пластик" } },
+        { "key": "wood", "displayOrder": 3, "labels": { "en": "Wood", "uk": "Дерево" } }
       ],
       "note": "multiselect and select reject repeatable = true (CAT-02). Persisted as ordered scalar value_option_id rows only, never a UUID array."
     },
     {
       "key": "shelf_capacity",
       "scope": "storage_node",
-      "type": "integer",
-      "position": 1,
+      "type": "number",
+      "displayOrder": 1,
       "labels": { "en": "Shelf capacity", "uk": "Місткість полиці" },
       "required": false,
       "repeatable": false,
-      "validation": { "min": 0 },
+      "validation": { "min": 0, "integer": true },
       "flags": { "searchable": false, "filterable": true, "sortable": true },
-      "publicVisibility": false
+      "visibility": "authenticated"
     }
   ],
   "sampleItems": [
     {
       "publicIdPlaceholder": "item-router",
       "category": "electronics",
-      "lifecycleStatus": "active",
+      "lifecycleStatus": "stored",
       "core": { "title": { "en": "Wi-Fi router", "uk": "Wi-Fi роутер" } },
       "attributes": {
         "serial_number": "SN-000-DEMO",
@@ -184,7 +228,7 @@
     {
       "publicIdPlaceholder": "item-novel",
       "category": "books",
-      "lifecycleStatus": "stored",
+      "lifecycleStatus": "lent",
       "core": { "title": { "en": "Kobzar", "uk": "Кобзар" } },
       "attributes": {
         "author": ["Taras Shevchenko"],

@@ -21,6 +21,11 @@ inputs, not new behavior.
   Ukrainian value, matching the required MVP locale.
 - Stable keys (`key`, `stableKey`, `publicId`) never change when labels change,
   as required by CAT-01/CAT-03 acceptance criteria.
+- Catalog and field fixtures use approved schema vocabulary only: the twelve
+  blueprint data types, `public`/`authenticated`/`private` visibility, a
+  plain-text `unit`, one optional `appliesToCategory`, and `displayOrder` for
+  ordering. `position` stays reserved for attribute-value multiplicity. Lifecycle
+  keys, labels, color tokens and ordering mirror the `db:seed` dataset.
 - Identifiers in JSON fixtures are stable, human-readable placeholders. Stories
   that load a fixture map these placeholders to real UUID public IDs and
   lowercase UUID-hex `ltree` labels; the fixtures never hardcode a generated

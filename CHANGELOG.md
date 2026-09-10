@@ -8,6 +8,12 @@ The project follows the version policy in `docs/project/versioning.md`.
 
 ### Changed
 
+- Aligned the Stage-0 catalog fixture with approved schema vocabulary: `integer`
+  and `decimal` became `number` with `validation.integer`, `publicVisibility`
+  became three-value `visibility`, `unit` became plain text, the category list
+  became one optional `appliesToCategory`, ordering moved from `position` to
+  `displayOrder`, and the lifecycle statuses now mirror the seeded keys.
+
 - Approved the exact development-only Prisma Studio/elkjs license exception and restored Prisma CLI tooling. Patched YAML/esbuild and newly introduced CLI dependency advisories, added CI security/license/tooling gates, and separated backend production dependencies from build tooling with an image-content check.
 
 ### Added
