@@ -1,6 +1,7 @@
 import {
   AuthRateLimiter,
   CatalogDictionaryAuthorizationError,
+  ItemVersionConflictError,
   SchemaAuthorizationError,
   SchemaPolicyError,
   SessionError,
@@ -142,16 +143,42 @@ function createSchemaRuntime() {
   };
 }
 const schemaFields = createSchemaRuntime();
+const itemPublicId = '0198f40c-92f3-7a12-bc9a-653f97786c40';
 const catalogItems = {
   create: vi.fn(async () => ({
     replayed: false as const,
     status: 201 as const,
     item: {
-      publicId: '0198f40c-92f3-7a12-bc9a-653f97786c40',
+      publicId: itemPublicId,
       slug: 'cordless-drill',
       displayName: 'Cordless drill',
       version: 1,
     },
+  })),
+  get: vi.fn(async () => ({
+    publicId: itemPublicId,
+    slug: 'cordless-drill',
+    displayName: 'Cordless drill',
+    description: null,
+    categoryId: '0198f40c-92f3-7a12-bc9a-653f97786c41',
+    lifecycleStatusId: '0198f40c-92f3-7a12-bc9a-653f97786c42',
+    storageNodeId: null,
+    visibility: 'authenticated' as const,
+    version: 3,
+    tags: ['workshop'],
+    attributes: { serial_number: 'SN-42' },
+    updatedAt: '2026-09-10T12:00:00.000Z',
+  })),
+  update: vi.fn(async () => ({
+    replayed: false,
+    status: 200,
+    item: {
+      publicId: itemPublicId,
+      slug: 'cordless-drill',
+      displayName: 'Cordless drill',
+      version: 4,
+    },
+    invalidators: ['AttributeChanged' as const],
   })),
 };
 const runtime: FoundationRuntimePort &
@@ -233,6 +260,7 @@ describe('API composition root', () => {
       'deleteAuthSession',
       'getCurrentActor',
       'getFoundationStatus',
+      'getItem',
       'getLiveness',
       'getMetadata',
       'getReadiness',
@@ -250,6 +278,7 @@ describe('API composition root', () => {
       'updateCurrentActorLocale',
       'updateFieldDefinition',
       'updateFieldOption',
+      'updateItem',
       'updateLifecycleStatus',
       'updateUser',
     ]);
@@ -258,10 +287,116 @@ describe('API composition root', () => {
       CursorPageDto: expect.any(Object),
       CreatedItemDto: expect.any(Object),
       CreateItemRequestDto: expect.any(Object),
+      ItemDetailDto: expect.any(Object),
       ItemMutationRequestDto: expect.any(Object),
       ItemPageResponseDto: expect.any(Object),
       ProblemDetailsDto: expect.any(Object),
+      UpdatedItemDto: expect.any(Object),
+      UpdateItemRequestDto: expect.any(Object),
       VersionConflictProblemDto: expect.any(Object),
+    });
+    await app.close();
+  });
+
+  it('reads an Item card with its current ETag', async () => {
+    const app = await createApiApplication(runtime);
+    await app.init();
+    const response = await app.inject({
+      method: 'GET',
+      url: `/api/v1/items/${itemPublicId}`,
+      headers: { cookie: `inventory_atlas_session=${sessionToken}` },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.headers.etag).toBe('"3"');
+    expect(response.json()).toMatchObject({ publicId: itemPublicId, version: 3 });
+    const malformed = await app.inject({
+      method: 'GET',
+      url: '/api/v1/items/not-a-uuid',
+      headers: { cookie: `inventory_atlas_session=${sessionToken}` },
+    });
+    expect(malformed.statusCode).toBe(400);
+    await app.close();
+  });
+
+  it('requires an expected version and forwards If-Match to the Item update', async () => {
+    catalogItems.update.mockClear();
+    const app = await createApiApplication(runtime);
+    await app.init();
+    const headers = {
+      cookie: `inventory_atlas_session=${sessionToken}`,
+      'x-csrf-token': csrfToken,
+      'x-request-id': 'request-update-item',
+    };
+    const missing = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/items/${itemPublicId}`,
+      headers,
+      payload: { displayName: 'Cordless drill' },
+    });
+    expect(missing.statusCode).toBe(400);
+    expect(missing.json()).toMatchObject({ code: 'VALIDATION_FAILED' });
+    expect(catalogItems.update).not.toHaveBeenCalled();
+
+    const mismatched = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/items/${itemPublicId}`,
+      headers: { ...headers, 'if-match': '"9"' },
+      payload: { expectedVersion: 3, displayName: 'Cordless drill' },
+    });
+    expect(mismatched.statusCode).toBe(400);
+    expect(mismatched.json()).toMatchObject({
+      fieldErrors: [{ field: 'expectedVersion', messages: ['IF_MATCH_MISMATCH'] }],
+    });
+    expect(catalogItems.update).not.toHaveBeenCalled();
+
+    const accepted = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/items/${itemPublicId}`,
+      headers: { ...headers, 'if-match': 'W/"3"' },
+      payload: { displayName: 'Cordless drill mk2' },
+    });
+    expect(accepted.statusCode).toBe(200);
+    expect(accepted.headers.etag).toBe('"4"');
+    expect(accepted.json()).toMatchObject({ version: 4, invalidators: ['AttributeChanged'] });
+    expect(catalogItems.update).toHaveBeenCalledWith(
+      expect.objectContaining({ role: 'owner' }),
+      itemPublicId,
+      3,
+      { displayName: 'Cordless drill mk2' },
+      expect.objectContaining({ requestId: 'request-update-item' }),
+    );
+    await app.close();
+  });
+
+  it('answers a stale expected version with the current version and a safe diff', async () => {
+    catalogItems.update.mockClear();
+    catalogItems.update.mockRejectedValueOnce(
+      new ItemVersionConflictError(7, {
+        displayName: { current: 'Cordless drill (workshop)', submitted: 'Cordless drill mk2' },
+      }),
+    );
+    const app = await createApiApplication(runtime);
+    await app.init();
+    const response = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/items/${itemPublicId}`,
+      headers: {
+        cookie: `inventory_atlas_session=${sessionToken}`,
+        'x-csrf-token': csrfToken,
+        'if-match': '"3"',
+        'x-request-id': 'request-conflict',
+      },
+      payload: { displayName: 'Cordless drill mk2' },
+    });
+    expect(response.statusCode).toBe(409);
+    expect(response.headers.etag).toBeUndefined();
+    expect(response.json()).toMatchObject({
+      code: 'ITEM_VERSION_CONFLICT',
+      currentVersion: 7,
+      requestId: 'request-conflict',
+      safeDiff: {
+        displayName: { current: 'Cordless drill (workshop)', submitted: 'Cordless drill mk2' },
+      },
     });
     await app.close();
   });

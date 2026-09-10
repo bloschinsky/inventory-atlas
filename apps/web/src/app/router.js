@@ -10,6 +10,24 @@ import DictionaryPage from '../pages/DictionaryPage.vue';
 import FieldDesignerPage from '../pages/FieldDesignerPage.vue';
 import ItemsPage from '../pages/ItemsPage.vue';
 import ItemCreatePage from '../pages/ItemCreatePage.vue';
+import ItemEditPage from '../pages/ItemEditPage.vue';
+
+const routeComponents = {
+  '/items': ItemsPage,
+  '/items/new': ItemCreatePage,
+  '/items/:publicId/edit': ItemEditPage,
+  '/admin/categories': DictionaryPage,
+  '/admin/statuses': DictionaryPage,
+  '/admin/fields': FieldDesignerPage,
+  '/admin/users': UsersPage,
+};
+
+/** Routes without a delivered page fall back to the foundation placeholder. @param {string} path */
+function componentFor(path) {
+  return Object.hasOwn(routeComponents, path)
+    ? routeComponents[/** @type {keyof typeof routeComponents} */ (path)]
+    : FoundationPage;
+}
 
 export const routeRecords = [
   ['/', 'routes.home'],
@@ -31,18 +49,7 @@ export const routeRecords = [
   ['/admin/audit', 'routes.adminAudit'],
 ].map(([path, titleKey]) => ({
   path,
-  component:
-    path === '/items'
-      ? ItemsPage
-      : path === '/items/new'
-        ? ItemCreatePage
-        : ['/admin/categories', '/admin/statuses'].includes(path)
-          ? DictionaryPage
-          : path === '/admin/fields'
-            ? FieldDesignerPage
-            : path === '/admin/users'
-              ? UsersPage
-              : FoundationPage,
+  component: componentFor(path),
   meta: {
     titleKey,
     layout: ['/', '/items/:publicId', '/storage/:publicId'].includes(path)

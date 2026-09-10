@@ -365,6 +365,42 @@
         "required": ["email", "expiresAt", "id", "role", "token", "version"],
         "type": "object"
       },
+      "ItemDetailDto": {
+        "properties": {
+          "attributes": {
+            "additionalProperties": true,
+            "description": "Attribute values the actor may read, keyed by stable field key.",
+            "type": "object"
+          },
+          "categoryId": { "format": "uuid", "type": "string" },
+          "description": { "nullable": true, "type": "string" },
+          "displayName": { "type": "string" },
+          "lifecycleStatusId": { "format": "uuid", "type": "string" },
+          "publicId": { "format": "uuid", "type": "string" },
+          "slug": { "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "type": "string" },
+          "storageNodeId": { "format": "uuid", "nullable": true, "type": "string" },
+          "tags": { "items": { "type": "string" }, "type": "array" },
+          "updatedAt": { "format": "date-time", "type": "string" },
+          "version": { "minimum": 1, "type": "number" },
+          "visibility": {
+            "enum": ["authenticated", "private", "public", "unlisted"],
+            "type": "string"
+          }
+        },
+        "required": [
+          "attributes",
+          "categoryId",
+          "displayName",
+          "lifecycleStatusId",
+          "publicId",
+          "slug",
+          "tags",
+          "updatedAt",
+          "version",
+          "visibility"
+        ],
+        "type": "object"
+      },
       "ItemMutationRequestDto": {
         "properties": {
           "categoryId": {
@@ -554,6 +590,24 @@
         ],
         "type": "object"
       },
+      "UpdatedItemDto": {
+        "properties": {
+          "displayName": { "type": "string" },
+          "invalidators": {
+            "description": "Search invalidation registry events this update fired.",
+            "items": {
+              "enum": ["AttributeChanged", "ItemCreated", "ItemVisibilityChanged"],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "publicId": { "format": "uuid", "type": "string" },
+          "slug": { "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "type": "string" },
+          "version": { "minimum": 1, "type": "number" }
+        },
+        "required": ["displayName", "invalidators", "publicId", "slug", "version"],
+        "type": "object"
+      },
       "UpdateFieldDefinitionDto": {
         "properties": {
           "categoryId": { "format": "uuid", "nullable": true, "type": "string" },
@@ -616,6 +670,42 @@
         "required": ["expectedVersion"],
         "type": "object"
       },
+      "UpdateItemRequestDto": {
+        "properties": {
+          "attributes": {
+            "additionalProperties": true,
+            "description": "Submitted attribute values keyed by stable field key. Absent keys are kept.",
+            "type": "object"
+          },
+          "categoryId": { "format": "uuid", "type": "string" },
+          "description": { "maxLength": 10000, "nullable": true, "type": "string" },
+          "displayName": {
+            "example": "Cordless drill",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "expectedVersion": {
+            "description": "Known aggregate version; must equal the current Item version.",
+            "example": 3,
+            "minimum": 1,
+            "type": "number"
+          },
+          "lifecycleStatusId": { "format": "uuid", "type": "string" },
+          "storageNodeId": { "format": "uuid", "nullable": true, "type": "string" },
+          "tags": {
+            "items": { "maxLength": 100, "minLength": 1, "type": "string" },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "visibility": {
+            "enum": ["authenticated", "private", "public", "unlisted"],
+            "type": "string"
+          }
+        },
+        "required": ["expectedVersion"],
+        "type": "object"
+      },
       "UpdateLocaleRequestDto": {
         "properties": { "locale": { "enum": ["en", "uk"], "type": "string" } },
         "required": ["locale"],
@@ -670,8 +760,13 @@
           },
           "safeDiff": {
             "additionalProperties": true,
-            "description": "Visibility-safe fields that changed since the submitted version.",
-            "example": { "displayName": "Cordless drill (workshop)" },
+            "description": "Visibility-safe fields that differ between the stored Item and the rejected submission. Each entry carries the current and submitted value; fields the actor cannot view are never included.",
+            "example": {
+              "displayName": {
+                "current": "Cordless drill (workshop)",
+                "submitted": "Cordless drill"
+              }
+            },
             "type": "object"
           },
           "status": { "example": 400, "maximum": 599, "minimum": 400, "type": "number" },
@@ -1758,6 +1853,135 @@
         "tags": ["items"]
       }
     },
+    "/api/v1/items/{publicId}": {
+      "get": {
+        "operationId": "getItem",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "publicId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ItemDetailDto" } }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["items"]
+      },
+      "patch": {
+        "operationId": "updateItem",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "description": "Expected aggregate version. Required unless the body carries `expectedVersion`; both must agree when both are present.",
+            "in": "header",
+            "name": "If-Match",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "in": "path",
+            "name": "publicId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateItemRequestDto" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/UpdatedItemDto" } }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VersionConflictProblemDto" }
+              }
+            },
+            "description": ""
+          },
+          "503": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["items"]
+      }
+    },
     "/api/v1/lifecycle-statuses": {
       "get": {
         "operationId": "listLifecycleStatuses",
@@ -2000,5 +2224,5 @@
   },
   "servers": [],
   "tags": [],
-  "x-spec-checksum": "c65df7d6d971bb8bd6995f72766ddb4360c34031dcf5c82b075cdb25f361e090"
+  "x-spec-checksum": "403035a27d9f5f523a28d7360b8c92afc432e8dfa6782a86eba943c75e597b3b"
 }

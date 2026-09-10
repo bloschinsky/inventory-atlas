@@ -33,12 +33,22 @@ export interface CreateItemCoreInput {
   slug?: string;
 }
 
+export interface UpdateItemCoreInput {
+  categoryId?: string;
+  lifecycleStatusId?: string;
+  displayName?: string;
+  description?: string | null;
+  visibility?: ItemVisibility;
+  storageNodeId?: string | null;
+}
+
 export type ItemPolicyCode =
   | 'ITEM_DISPLAY_NAME_REQUIRED'
   | 'ITEM_CATEGORY_INVALID'
   | 'ITEM_LIFECYCLE_STATUS_INVALID'
   | 'ITEM_STORAGE_DESTINATION_UNAVAILABLE'
-  | 'ITEM_VISIBILITY_INVALID';
+  | 'ITEM_VISIBILITY_INVALID'
+  | 'ITEM_EXPECTED_VERSION_INVALID';
 
 export class ItemPolicyError extends Error {
   constructor(
@@ -131,9 +141,88 @@ export class ItemRepository {
     return toItemCoreRecord(row);
   }
 
-  async findByPublicId(publicId: string): Promise<ItemCoreRecord | null> {
-    const row = await this.prisma.item.findUnique({ where: { publicId } });
+  async findByPublicId(
+    publicId: string,
+    transaction?: ItemTransaction,
+  ): Promise<ItemCoreRecord | null> {
+    const row = transaction
+      ? await transaction.item.findUnique({ where: { publicId } })
+      : await this.prisma.item.findUnique({ where: { publicId } });
     return row ? toItemCoreRecord(row) : null;
+  }
+
+  /**
+   * Compare-and-swap on the aggregate version. The row is rewritten only when the caller's
+   * expected version still matches, so a concurrent editor can never be overwritten silently.
+   * A stale expected version, a missing Item, or an archived Item all return `null`; the caller
+   * re-reads the current row to build the conflict payload.
+   */
+  async updateCore(
+    transaction: ItemTransaction,
+    id: string,
+    expectedVersion: number,
+    input: UpdateItemCoreInput,
+    updatedAt: Date,
+  ): Promise<ItemCoreRecord | null> {
+    const data: Prisma.ItemUncheckedUpdateManyInput = {
+      updatedAt,
+      version: { increment: 1 },
+    };
+    if (input.categoryId !== undefined) data.categoryId = input.categoryId;
+    if (input.lifecycleStatusId !== undefined) data.lifecycleStatusId = input.lifecycleStatusId;
+    if (input.displayName !== undefined) {
+      const displayName = input.displayName.trim();
+      if (!displayName)
+        throw new ItemPolicyError(
+          'ITEM_DISPLAY_NAME_REQUIRED',
+          'displayName',
+          'Item display name is required.',
+        );
+      data.displayName = displayName;
+    }
+    if (input.description !== undefined) data.description = input.description?.trim() || null;
+    if (input.visibility !== undefined) data.visibility = normalizeItemVisibility(input.visibility);
+    if (input.storageNodeId !== undefined) data.storageNodeId = input.storageNodeId;
+    if (data.categoryId !== undefined || data.lifecycleStatusId !== undefined)
+      await this.requireActiveDictionaries(transaction, input);
+    const [row] = await transaction.item.updateManyAndReturn({
+      where: { id, version: BigInt(expectedVersion), archivedAt: null },
+      data,
+    });
+    return row ? toItemCoreRecord(row) : null;
+  }
+
+  async listTagNames(transaction: ItemTransaction, itemId: string): Promise<string[]> {
+    const rows = await transaction.itemTag.findMany({
+      where: { itemId },
+      include: { tag: true },
+      orderBy: { tag: { nameNormalized: 'asc' } },
+    });
+    return rows.map((row) => row.tag.name);
+  }
+
+  private async requireActiveDictionaries(
+    transaction: ItemTransaction,
+    input: UpdateItemCoreInput,
+  ): Promise<void> {
+    if (input.categoryId !== undefined) {
+      const category = await transaction.category.findFirst({
+        where: { id: input.categoryId, archivedAt: null },
+      });
+      if (!category)
+        throw new ItemPolicyError('ITEM_CATEGORY_INVALID', 'categoryId', 'Category is not active.');
+    }
+    if (input.lifecycleStatusId !== undefined) {
+      const lifecycleStatus = await transaction.lifecycleStatus.findFirst({
+        where: { id: input.lifecycleStatusId, archivedAt: null },
+      });
+      if (!lifecycleStatus)
+        throw new ItemPolicyError(
+          'ITEM_LIFECYCLE_STATUS_INVALID',
+          'lifecycleStatusId',
+          'Lifecycle status is not active.',
+        );
+    }
   }
 
   async replaceTags(

@@ -72,7 +72,10 @@ function harness() {
       },
     ]),
   };
-  const attributeValues: AttributeValuePort = { replace: vi.fn(async () => undefined) };
+  const attributeValues: AttributeValuePort = {
+    replace: vi.fn(async () => undefined),
+    read: vi.fn(async () => []),
+  };
   const service = new FieldDefinitionService(
     repository as unknown as FieldDefinitionRepository,
     attributeValues,

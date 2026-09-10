@@ -18,6 +18,19 @@ The project follows the version policy in `docs/project/versioning.md`.
 
 ### Added
 
+- Completed CAT-04 with versioned Item editing: `PATCH /api/v1/items/{publicId}`
+  enforces `If-Match` or `expectedVersion` through a compare-and-swap on the
+  aggregate version, `GET /api/v1/items/{publicId}` serves the visibility-aware
+  card the edit workflow reads, and both answer with an `ETag`. The update holds
+  one Prisma transaction for the source row, typed values, the synchronous
+  `item_search` projection, audit, movement, outbox and optional idempotency
+  completion. A rejected edit returns `ITEM_VERSION_CONFLICT` with the current
+  version and a diff limited to fields the actor may view, and a value whose
+  private definition the actor cannot see is preserved rather than erased. The
+  Item-scoped rows of the search invalidation registry moved into an explicit
+  planner, and `/items/:publicId/edit` renders the compare, reload and discard
+  workflow so a conflicted edit is never silently overwritten.
+
 - Completed CAT-02C with the `/api/v1/field-definitions` REST surface, contract
   request bodies and path parameters, versioned option management through the
   parent definition, a conversion-preview endpoint, mass-reindex warnings on

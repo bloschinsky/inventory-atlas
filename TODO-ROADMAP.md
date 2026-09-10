@@ -444,21 +444,23 @@ Suggested pull requests:
 
 Tasks:
 
-- [ ] Require `If-Match` or expected version for Item update endpoints.
-- [ ] Increment Item version on every core or attribute aggregate mutation.
-- [ ] Build a safe diff that excludes fields the actor cannot view.
-- [ ] Reuse the Item transaction ports for projection, audit, movement, idempotency, and outbox writes.
-- [ ] Register all update invalidator events required by the projection registry.
-- [ ] Return the current version and stable conflict problem code.
-- [ ] Build UI handling to reload, compare, or abandon a conflicted edit without silent overwrite.
-- [ ] Add concurrent-edit, rollback, visibility, and retry tests.
+- [x] Require `If-Match` or expected version for Item update endpoints.
+- [x] Increment Item version on every core or attribute aggregate mutation.
+- [x] Build a safe diff that excludes fields the actor cannot view.
+- [x] Reuse the Item transaction ports for projection, audit, movement, idempotency, and outbox writes.
+- [x] Register all update invalidator events required by the projection registry.
+- [x] Return the current version and stable conflict problem code.
+- [x] Build UI handling to reload, compare, or abandon a conflicted edit without silent overwrite.
+- [x] Add concurrent-edit, rollback, visibility, and retry tests.
+
+Implementation evidence: [Item editing with optimistic concurrency](docs/project/item-editing.md).
 
 Acceptance criteria (verbatim from the approved blueprint):
 
-- [ ] Item version increments for core or attribute changes.
-- [ ] `If-Match`/expected version is enforced.
-- [ ] Conflict contains current version and safe diff.
-- [ ] Source, projection, audit, and outbox share one Prisma transaction.
+- [x] Item version increments for core or attribute changes.
+- [x] `If-Match`/expected version is enforced.
+- [x] Conflict contains current version and safe diff.
+- [x] Source, projection, audit, and outbox share one Prisma transaction.
 
 ### CAT-05 Render display names
 
@@ -1166,8 +1168,8 @@ Every mandatory test from blueprint section 20.2 has an explicit delivery owner.
 | [ ] | Update `path`, `depth`, and `tree_root_id` for every descendant on cross-root move. | STO-02 |
 | [ ] | Rename a container and synchronously update breadcrumbs for all nested Items. | STO-01 + SRCH-01 |
 | [ ] | Keep allowed catalog rows visible while vector rebuild marks them stale. | SRCH-01 |
-| [ ] | Create/update an Item through Prisma and atomically write projection/outbox through ports in the same transaction. | CAT-03 + CAT-04 |
-| [ ] | Roll back source, projection, and outbox together when either port fails. | CAT-03 + CAT-04 |
+| [x] | Create/update an Item through Prisma and atomically write projection/outbox through ports in the same transaction. | CAT-03 + CAT-04 |
+| [x] | Roll back source, projection, and outbox together when either port fails. | CAT-03 + CAT-04 |
 | [ ] | Move a node through Kysely with no Prisma client query inside the transaction; movement, audit, projection, and outbox ports use the supplied Kysely handle. | STO-02 |
 | [ ] | Move an Item through Prisma and atomically update destination, movement history, audit, projection, and outbox through Prisma-aware ports. | STO-03 |
 | [ ] | Reject an archived/missing Item destination when the projection path-resolution statement finds no writable node, rolling back the entire Prisma transaction. | STO-03 |

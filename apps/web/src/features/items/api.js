@@ -18,3 +18,33 @@ export function createItem(input, csrfToken, idempotencyKey) {
     { csrfToken },
   );
 }
+
+/** @param {string} publicId */
+export function getItem(publicId) {
+  return apiRequest(`/items/${publicId}`);
+}
+
+/**
+ * Versioned Item update. The known version travels as `If-Match` and in the body, so the server
+ * rejects a stale edit with a conflict instead of overwriting a concurrent one.
+ * @param {string} publicId
+ * @param {number} expectedVersion
+ * @param {Record<string, unknown>} input
+ * @param {string} csrfToken
+ * @param {string} [idempotencyKey]
+ */
+export function updateItem(publicId, expectedVersion, input, csrfToken, idempotencyKey) {
+  return apiRequest(
+    `/items/${publicId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'If-Match': `"${expectedVersion}"`,
+        ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
+      },
+      body: JSON.stringify({ ...input, expectedVersion }),
+    },
+    { csrfToken },
+  );
+}

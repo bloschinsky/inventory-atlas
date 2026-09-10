@@ -1504,10 +1504,10 @@ As an Editor, I receive a conflict instead of silently overwriting another edit.
 
 Acceptance criteria:
 
-- [ ] Item version increments for core or attribute changes.
-- [ ] `If-Match`/expected version is enforced.
-- [ ] Conflict contains current version and safe diff.
-- [ ] Source, projection, audit, and outbox share one Prisma transaction.
+- [x] Item version increments for core or attribute changes.
+- [x] `If-Match`/expected version is enforced.
+- [x] Conflict contains current version and safe diff.
+- [x] Source, projection, audit, and outbox share one Prisma transaction.
 
 #### CAT-05 Render display names
 

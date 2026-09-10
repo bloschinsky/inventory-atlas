@@ -17,7 +17,7 @@ import { TransactionalAttributeValuePort } from '../schema/attribute-value-port.
 import { FieldDefinitionRepository } from '../schema/field-definition-repository.js';
 import { createSettingsClient } from '../settings.repository.js';
 import { ItemRepository } from './item-repository.js';
-import { ItemService } from './item-service.js';
+import { ItemService, ItemVersionConflictError, type CreatedItem } from './item-service.js';
 
 const integrationDatabaseUrl = process.env.INTEGRATION_DATABASE_URL;
 const suite = integrationDatabaseUrl ? describe : describe.skip;
@@ -31,6 +31,17 @@ let service: ItemService;
 let actor: SessionActor;
 let categoryId: string;
 let lifecycleStatusId: string;
+
+const updateSchema = `item_update_${randomUUID().replaceAll('-', '')}`;
+let updateAdminPool: Pool;
+let updatePool: Pool;
+let updateDatabase: ReturnType<typeof createDatabase>;
+let updatePrisma: ReturnType<typeof createSettingsClient>;
+let updateService: ItemService;
+let editor: SessionActor;
+let admin: SessionActor;
+let updateCategoryId: string;
+let updateStatusId: string;
 
 suite('CAT-03B atomic Item creation', () => {
   beforeAll(async () => {
@@ -308,6 +319,421 @@ function createService(outbox: OutboxPort = new TransactionalOutboxPort()): Item
     new ItemRepository(prisma, randomUUID, () => instant),
     new IdempotencyRepository(database, () => instant),
     new FieldDefinitionRepository(prisma, () => instant),
+    {
+      attributes: new TransactionalAttributeValuePort(),
+      audit: new TransactionalAuditPort(),
+      idempotency: new TransactionalIdempotencyPort(),
+      movements: new TransactionalMovementHistoryPort(),
+      outbox,
+      search: new TransactionalSearchProjectionPort(),
+    },
+    () => instant,
+  );
+}
+
+suite('CAT-04 Item edit with optimistic concurrency', () => {
+  beforeAll(async () => {
+    const parsed = new URL(integrationDatabaseUrl!);
+    updateAdminPool = new Pool({ connectionString: parsed.toString(), max: 1 });
+    await updateAdminPool.query(`create schema "${updateSchema}"`);
+    parsed.searchParams.set('options', `-c search_path=${updateSchema}`);
+    parsed.searchParams.set('schema', updateSchema);
+    const schemaUrl = parsed.toString();
+    await migrateToLatest(
+      schemaUrl,
+      fileURLToPath(new URL('../../../../db/migrations', import.meta.url)),
+    );
+    updatePool = new Pool({ connectionString: schemaUrl, max: 2 });
+    updateDatabase = createDatabase(schemaUrl, 2);
+    updatePrisma = createSettingsClient(schemaUrl, 4);
+    const editorId = randomUUID();
+    const adminId = randomUUID();
+    await updatePrisma.user.createMany({
+      data: [
+        {
+          id: editorId,
+          emailNormalized: 'editor@example.test',
+          displayName: 'Synthetic Editor',
+          passwordHash: '$argon2id$synthetic',
+          role: 'editor',
+        },
+        {
+          id: adminId,
+          emailNormalized: 'admin@example.test',
+          displayName: 'Synthetic Admin',
+          passwordHash: '$argon2id$synthetic',
+          role: 'admin',
+        },
+      ],
+    });
+    editor = {
+      id: editorId,
+      email: 'editor@example.test',
+      displayName: 'Synthetic Editor',
+      locale: 'en',
+      role: 'editor',
+      permissions: permissionsFor('editor'),
+    };
+    admin = {
+      id: adminId,
+      email: 'admin@example.test',
+      displayName: 'Synthetic Admin',
+      locale: 'en',
+      role: 'admin',
+      permissions: permissionsFor('admin'),
+    };
+    updateCategoryId = (
+      await updatePrisma.category.create({
+        data: {
+          id: randomUUID(),
+          key: 'tools',
+          labelI18n: { en: 'Tools', uk: 'Інструменти' },
+          createdAt: instant,
+          updatedAt: instant,
+        },
+      })
+    ).id;
+    updateStatusId = (
+      await updatePrisma.lifecycleStatus.create({
+        data: {
+          id: randomUUID(),
+          key: 'stored',
+          labelI18n: { en: 'Stored', uk: 'Зберігається' },
+          colorToken: 'status.info',
+          createdAt: instant,
+          updatedAt: instant,
+        },
+      })
+    ).id;
+    await updatePrisma.fieldDefinition.createMany({
+      data: [
+        {
+          id: randomUUID(),
+          key: 'serial_number',
+          scope: 'item',
+          categoryId: updateCategoryId,
+          labelI18n: { en: 'Serial number', uk: 'Серійний номер' },
+          dataType: 'text',
+          required: true,
+          searchable: true,
+          visibility: 'public',
+          createdAt: instant,
+          updatedAt: instant,
+        },
+        {
+          id: randomUUID(),
+          key: 'owner_note',
+          scope: 'item',
+          categoryId: updateCategoryId,
+          labelI18n: { en: 'Owner note', uk: 'Нотатка власника' },
+          dataType: 'text',
+          searchable: true,
+          visibility: 'private',
+          createdAt: instant,
+          updatedAt: instant,
+        },
+      ],
+    });
+    updateService = createUpdateService();
+  });
+
+  afterAll(async () => {
+    await updateDatabase?.destroy();
+    await updatePool?.end();
+    await updatePrisma?.$disconnect();
+    if (updateAdminPool) {
+      await updateAdminPool.query(`drop schema "${updateSchema}" cascade`);
+      await updateAdminPool.end();
+    }
+  });
+
+  it('increments the version and commits source, projection, audit and outbox together', async () => {
+    const created = await createSubject('increment', 'Дриль', 'SN-1');
+    const outcome = await updateService.update(
+      admin,
+      created.publicId,
+      created.version,
+      { displayName: 'Дриль 2', attributes: { serial_number: 'SN-2' } },
+      { requestId: 'request-update', correlationId: 'correlation-update' },
+    );
+
+    expect(outcome).toMatchObject({
+      replayed: false,
+      status: 200,
+      item: { displayName: 'Дриль 2', version: created.version + 1 },
+      invalidators: ['AttributeChanged'],
+    });
+    const row = (
+      await updatePool.query('select version, display_name from items where public_id = $1', [
+        created.publicId,
+      ])
+    ).rows[0];
+    expect(Number(row.version)).toBe(2);
+    expect(row.display_name).toBe('Дриль 2');
+    const projection = (
+      await updatePool.query(
+        `select display_name, attrs, public_attrs from item_search
+           where item_id = (select id from items where public_id = $1)`,
+        [created.publicId],
+      )
+    ).rows[0];
+    expect(projection).toMatchObject({
+      display_name: 'Дриль 2',
+      attrs: { serial_number: 'SN-2' },
+      public_attrs: {},
+    });
+    expect(
+      (
+        await updatePool.query(
+          "select topic, payload_json from outbox where topic = 'catalog.item-updated.v1'",
+        )
+      ).rows,
+    ).toContainEqual({
+      topic: 'catalog.item-updated.v1',
+      payload_json: {
+        publicId: created.publicId,
+        version: 2,
+        invalidators: ['AttributeChanged'],
+      },
+    });
+    const audit = (
+      await updatePool.query(
+        "select before_json, after_json from audit_events where action = 'item.updated'",
+      )
+    ).rows[0];
+    expect(audit.before_json).toMatchObject({ version: 1 });
+    expect(audit.after_json).toMatchObject({ version: 2, attributeKeys: ['serial_number'] });
+    expect(JSON.stringify(audit)).not.toContain('SN-2');
+  });
+
+  it('increments the version when only an attribute changes', async () => {
+    const created = await createSubject('attribute-only', 'Ключ', 'SN-A');
+    const outcome = await updateService.update(admin, created.publicId, created.version, {
+      attributes: { serial_number: 'SN-B' },
+    });
+    expect(outcome.item.version).toBe(created.version + 1);
+    expect(outcome.invalidators).toEqual(['AttributeChanged']);
+  });
+
+  it('registers ItemVisibilityChanged and clears the public projection', async () => {
+    const created = await createSubject('visibility', 'Видимість', 'SN-V', 'public');
+    const outcome = await updateService.update(admin, created.publicId, created.version, {
+      visibility: 'private',
+    });
+    expect(outcome.invalidators).toEqual(['ItemVisibilityChanged']);
+    const projection = (
+      await updatePool.query(
+        `select visibility, attrs, public_attrs, public_search_vector::text as public_vector
+           from item_search where item_id = (select id from items where public_id = $1)`,
+        [created.publicId],
+      )
+    ).rows[0];
+    expect(projection).toMatchObject({ visibility: 'private', attrs: {}, public_attrs: {} });
+    expect(projection.public_vector).toBe('');
+  });
+
+  it('rejects a stale expected version with the current version and a safe diff', async () => {
+    const created = await createSubject('conflict', 'Конфлікт', 'SN-C');
+    await updateService.update(admin, created.publicId, created.version, {
+      displayName: 'Concurrent winner',
+    });
+
+    const conflict = await updateService
+      .update(admin, created.publicId, created.version, {
+        displayName: 'Late loser',
+        attributes: { serial_number: 'SN-LATE' },
+      })
+      .catch((error: unknown) => error);
+
+    expect(conflict).toBeInstanceOf(ItemVersionConflictError);
+    expect(conflict).toMatchObject({
+      code: 'ITEM_VERSION_CONFLICT',
+      currentVersion: created.version + 1,
+      safeDiff: {
+        displayName: { current: 'Concurrent winner', submitted: 'Late loser' },
+        'attributes.serial_number': { current: 'SN-C', submitted: 'SN-LATE' },
+      },
+    });
+    expect(
+      (
+        await updatePool.query('select display_name from items where public_id = $1', [
+          created.publicId,
+        ])
+      ).rows[0].display_name,
+    ).toBe('Concurrent winner');
+  });
+
+  it('excludes a private field from the conflict diff of an actor who cannot view it', async () => {
+    const created = await createSubject('private-diff', 'Приватне', 'SN-P');
+    await updateService.update(admin, created.publicId, created.version, {
+      attributes: { serial_number: 'SN-P', owner_note: 'private shelf detail' },
+    });
+
+    const conflict = await updateService
+      .update(editor, created.publicId, created.version, {
+        displayName: 'Editor rename',
+        attributes: { serial_number: 'SN-EDITOR' },
+      })
+      .catch((error: unknown) => error);
+
+    expect(conflict).toBeInstanceOf(ItemVersionConflictError);
+    const safeDiff = (conflict as ItemVersionConflictError).safeDiff;
+    expect(safeDiff).toHaveProperty('attributes.serial_number');
+    expect(safeDiff).not.toHaveProperty('attributes.owner_note');
+    expect(JSON.stringify(safeDiff)).not.toContain('private shelf detail');
+  });
+
+  it('keeps a private value an Editor cannot see instead of erasing it', async () => {
+    const created = await createSubject('private-keep', 'Збереження', 'SN-K');
+    const withPrivate = await updateService.update(admin, created.publicId, created.version, {
+      attributes: { serial_number: 'SN-K', owner_note: 'private shelf detail' },
+    });
+
+    await updateService.update(editor, created.publicId, withPrivate.item.version, {
+      attributes: { serial_number: 'SN-K2' },
+    });
+
+    const stored = (
+      await updatePool.query(
+        `select definition.key, value.value_text from attribute_values value
+           join field_definitions definition on definition.id = value.field_definition_id
+           where value.item_id = (select id from items where public_id = $1)
+           order by definition.key`,
+        [created.publicId],
+      )
+    ).rows;
+    expect(stored).toEqual([
+      { key: 'owner_note', value_text: 'private shelf detail' },
+      { key: 'serial_number', value_text: 'SN-K2' },
+    ]);
+    const detail = await updateService.get(editor, created.publicId);
+    expect(detail.attributes).toEqual({ serial_number: 'SN-K2' });
+    expect(await updateService.get(admin, created.publicId)).toMatchObject({
+      attributes: { serial_number: 'SN-K2', owner_note: 'private shelf detail' },
+    });
+  });
+
+  it('rolls the whole update back when a transaction-aware port fails', async () => {
+    const created = await createSubject('rollback', 'Відкат', 'SN-R');
+    const failingOutbox: OutboxPort = {
+      async enqueue() {
+        throw new Error('synthetic outbox failure');
+      },
+    };
+    await expect(
+      createUpdateService(failingOutbox).update(admin, created.publicId, created.version, {
+        displayName: 'Never committed',
+        attributes: { serial_number: 'SN-ROLLBACK' },
+      }),
+    ).rejects.toThrow('synthetic outbox failure');
+
+    const row = (
+      await updatePool.query('select version, display_name from items where public_id = $1', [
+        created.publicId,
+      ])
+    ).rows[0];
+    expect(Number(row.version)).toBe(created.version);
+    expect(row.display_name).toBe('Відкат');
+    expect(
+      (
+        await updatePool.query(
+          `select value_text from attribute_values
+             where item_id = (select id from items where public_id = $1)`,
+          [created.publicId],
+        )
+      ).rows,
+    ).toEqual([{ value_text: 'SN-R' }]);
+  });
+
+  it('replays a retried idempotent update instead of incrementing the version twice', async () => {
+    const created = await createSubject('retry', 'Повтор', 'SN-RETRY');
+    const change = { displayName: 'Повтор 2' };
+    const first = await updateService.update(admin, created.publicId, created.version, change, {
+      idempotencyKey: 'update-retry',
+    });
+    const replay = await updateService.update(admin, created.publicId, created.version, change, {
+      idempotencyKey: 'update-retry',
+    });
+
+    expect(first).toMatchObject({ replayed: false, status: 200 });
+    expect(replay).toMatchObject({ replayed: true, status: 200, item: first.item });
+    expect(
+      Number(
+        (
+          await updatePool.query('select version from items where public_id = $1', [
+            created.publicId,
+          ])
+        ).rows[0].version,
+      ),
+    ).toBe(created.version + 1);
+    await expect(
+      updateService.update(
+        admin,
+        created.publicId,
+        created.version,
+        { displayName: 'Different' },
+        { idempotencyKey: 'update-retry' },
+      ),
+    ).rejects.toMatchObject({ code: 'ITEM_IDEMPOTENCY_CONFLICT' });
+  });
+
+  it('refuses a Viewer and reports an unknown Item without leaking its existence', async () => {
+    const created = await createSubject('authorization', 'Дозволи', 'SN-Z');
+    const viewer: SessionActor = {
+      ...editor,
+      role: 'viewer',
+      permissions: permissionsFor('viewer'),
+    };
+    await expect(
+      updateService.update(viewer, created.publicId, created.version, { displayName: 'Nope' }),
+    ).rejects.toMatchObject({ code: 'ITEM_UPDATE_FORBIDDEN' });
+    await expect(
+      updateService.update(admin, randomUUID(), 1, { displayName: 'Nope' }),
+    ).rejects.toMatchObject({ code: 'ITEM_NOT_FOUND' });
+    await expect(
+      updateService.update(admin, created.publicId, 0, { displayName: 'Nope' }),
+    ).rejects.toMatchObject({ code: 'ITEM_EXPECTED_VERSION_INVALID' });
+  });
+
+  it('hides a private Item from an actor without viewPrivateFields', async () => {
+    const created = await createSubject('private-item', 'Прихований', 'SN-H');
+    await updateService.update(admin, created.publicId, created.version, {
+      visibility: 'private',
+    });
+    await expect(updateService.get(editor, created.publicId)).rejects.toMatchObject({
+      code: 'ITEM_NOT_FOUND',
+    });
+    expect(await updateService.get(admin, created.publicId)).toMatchObject({
+      visibility: 'private',
+    });
+  });
+});
+
+async function createSubject(
+  key: string,
+  displayName: string,
+  serialNumber: string,
+  visibility: 'public' | 'authenticated' = 'authenticated',
+): Promise<CreatedItem> {
+  const outcome = await updateService.create(
+    admin,
+    {
+      categoryId: updateCategoryId,
+      lifecycleStatusId: updateStatusId,
+      displayName,
+      visibility,
+      attributes: { serial_number: serialNumber },
+    },
+    { idempotencyKey: `create-${key}` },
+  );
+  return outcome.item;
+}
+
+function createUpdateService(outbox: OutboxPort = new TransactionalOutboxPort()): ItemService {
+  return new ItemService(
+    new ItemRepository(updatePrisma, randomUUID, () => instant),
+    new IdempotencyRepository(updateDatabase, () => instant),
+    new FieldDefinitionRepository(updatePrisma, () => instant),
     {
       attributes: new TransactionalAttributeValuePort(),
       audit: new TransactionalAuditPort(),

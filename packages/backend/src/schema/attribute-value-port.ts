@@ -37,6 +37,11 @@ export interface AttributeValuePort {
     context: TransactionContext<Database>,
     command: ReplaceAttributeValues,
   ): Promise<void>;
+  /** Reads the stored canonical values of one owner in stable definition/position order. */
+  read<Database>(
+    context: TransactionContext<Database>,
+    owner: AttributeOwner,
+  ): Promise<AttributeValueAssignment[]>;
 }
 
 export interface ApplicableFieldDefinition extends FieldValueShape {
@@ -168,6 +173,21 @@ interface OptionRow {
   archived: boolean;
 }
 
+/** One stored `attribute_values` row with every typed slot projected as a portable scalar. */
+interface StoredValueRow {
+  field_definition_id: string;
+  value_text: string | null;
+  value_number: string | null;
+  value_boolean: boolean | null;
+  value_date: string | null;
+  value_datetime: string | null;
+  value_option_id: string | null;
+  value_money_amount: string | null;
+  value_money_currency: string | null;
+  value_reference_item_id: string | null;
+  value_reference_node_id: string | null;
+}
+
 /**
  * Writes only `attribute_values` inside the supplied source transaction. It never opens a
  * transaction, never returns a Schema domain row, and exposes no Schema repository. The Prisma
@@ -189,6 +209,22 @@ export class TransactionalAttributeValuePort implements AttributeValuePort {
     const rows = planAttributeRows(command, definitions, options, this.newId);
     await this.deleteOwnerRows(context, command.owner);
     for (const row of rows) await this.insertRow(context, command, row);
+  }
+
+  async read<Database>(
+    context: TransactionContext<Database>,
+    owner: AttributeOwner,
+  ): Promise<AttributeValueAssignment[]> {
+    const rows = await this.ownerRows(context, owner);
+    const byDefinition = new Map<string, CanonicalFieldValue[]>();
+    for (const row of rows) {
+      const value = toCanonicalValue(row);
+      if (!value) continue;
+      const values = byDefinition.get(row.field_definition_id);
+      if (values) values.push(value);
+      else byDefinition.set(row.field_definition_id, [value]);
+    }
+    return [...byDefinition].map(([fieldDefinitionId, values]) => ({ fieldDefinitionId, values }));
   }
 
   private async definitions<Database>(
@@ -266,6 +302,53 @@ export class TransactionalAttributeValuePort implements AttributeValuePort {
     `.execute(context.trx);
   }
 
+  private async ownerRows<Database>(
+    context: TransactionContext<Database>,
+    owner: AttributeOwner,
+  ): Promise<StoredValueRow[]> {
+    const itemId = owner.kind === 'item' ? owner.id : null;
+    const nodeId = owner.kind === 'storageNode' ? owner.id : null;
+    if (context.kind === 'prisma') {
+      return context.trx.$queryRaw<StoredValueRow[]>`
+        select field_definition_id::text as field_definition_id,
+               value_text,
+               value_number::text as value_number,
+               value_boolean,
+               to_char(value_date, 'YYYY-MM-DD') as value_date,
+               to_char(value_datetime at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
+                 as value_datetime,
+               value_option_id::text as value_option_id,
+               value_money_amount::text as value_money_amount,
+               value_money_currency::text as value_money_currency,
+               value_reference_item_id::text as value_reference_item_id,
+               value_reference_node_id::text as value_reference_node_id
+          from attribute_values
+          where item_id is not distinct from ${itemId}::uuid
+            and storage_node_id is not distinct from ${nodeId}::uuid
+          order by field_definition_id, "position"
+      `;
+    }
+    const { rows } = await kyselySql<StoredValueRow>`
+      select field_definition_id::text as field_definition_id,
+             value_text,
+             value_number::text as value_number,
+             value_boolean,
+             to_char(value_date, 'YYYY-MM-DD') as value_date,
+             to_char(value_datetime at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
+               as value_datetime,
+             value_option_id::text as value_option_id,
+             value_money_amount::text as value_money_amount,
+             value_money_currency::text as value_money_currency,
+             value_reference_item_id::text as value_reference_item_id,
+             value_reference_node_id::text as value_reference_node_id
+        from attribute_values
+        where item_id is not distinct from ${itemId}::uuid
+          and storage_node_id is not distinct from ${nodeId}::uuid
+        order by field_definition_id, "position"
+    `.execute(context.trx);
+    return rows;
+  }
+
   private async insertRow<Database>(
     context: TransactionContext<Database>,
     command: ReplaceAttributeValues,
@@ -308,6 +391,27 @@ export class TransactionalAttributeValuePort implements AttributeValuePort {
       )
     `.execute(context.trx);
   }
+}
+
+/** Rebuilds the canonical value from the single populated slot of a stored row. */
+function toCanonicalValue(row: StoredValueRow): CanonicalFieldValue | null {
+  if (row.value_text !== null) return { slot: 'text', text: row.value_text };
+  if (row.value_number !== null) return { slot: 'number', number: row.value_number };
+  if (row.value_boolean !== null) return { slot: 'boolean', boolean: row.value_boolean };
+  if (row.value_date !== null) return { slot: 'date', date: row.value_date };
+  if (row.value_datetime !== null) return { slot: 'datetime', datetime: row.value_datetime };
+  if (row.value_option_id !== null) return { slot: 'option', optionId: row.value_option_id };
+  if (row.value_money_amount !== null && row.value_money_currency !== null)
+    return {
+      slot: 'money',
+      amount: row.value_money_amount,
+      currency: row.value_money_currency.trim(),
+    };
+  if (row.value_reference_item_id !== null)
+    return { slot: 'referenceItem', itemId: row.value_reference_item_id };
+  if (row.value_reference_node_id !== null)
+    return { slot: 'referenceNode', nodeId: row.value_reference_node_id };
+  return null;
 }
 
 function toApplicableDefinition(row: DefinitionRow): ApplicableFieldDefinition {

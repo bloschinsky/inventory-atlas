@@ -105,6 +105,91 @@ export class CreatedItemDto {
   declare version: number;
 }
 
+export class UpdateItemRequestDto {
+  @ApiProperty({
+    description: 'Known aggregate version; must equal the current Item version.',
+    example: 3,
+    minimum: 1,
+    type: Number,
+  })
+  declare expectedVersion: number;
+
+  @ApiPropertyOptional({ format: 'uuid', type: String })
+  declare categoryId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid', type: String })
+  declare lifecycleStatusId?: string;
+
+  @ApiPropertyOptional({ example: 'Cordless drill', maxLength: 200, minLength: 1, type: String })
+  declare displayName?: string;
+
+  @ApiPropertyOptional({ maxLength: 10_000, nullable: true, type: String })
+  declare description?: string | null;
+
+  @ApiPropertyOptional({ enum: ['public', 'authenticated', 'private', 'unlisted'], type: String })
+  declare visibility?: 'public' | 'authenticated' | 'private' | 'unlisted';
+
+  @ApiPropertyOptional({ format: 'uuid', nullable: true, type: String })
+  declare storageNodeId?: string | null;
+
+  @ApiPropertyOptional({
+    items: { maxLength: 100, minLength: 1, type: 'string' },
+    maxItems: 50,
+    type: 'array',
+  })
+  declare tags?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Submitted attribute values keyed by stable field key. Absent keys are kept.',
+    additionalProperties: true,
+    type: 'object',
+  })
+  declare attributes?: Record<string, unknown>;
+}
+
+export class UpdatedItemDto extends CreatedItemDto {
+  @ApiProperty({
+    description: 'Search invalidation registry events this update fired.',
+    enum: ['ItemCreated', 'AttributeChanged', 'ItemVisibilityChanged'],
+    isArray: true,
+    type: String,
+  })
+  declare invalidators: string[];
+}
+
+export class ItemDetailDto {
+  @ApiProperty({ format: 'uuid', type: String }) declare publicId: string;
+
+  @ApiProperty({ pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$', type: String }) declare slug: string;
+
+  @ApiProperty({ type: String }) declare displayName: string;
+
+  @ApiPropertyOptional({ nullable: true, type: String }) declare description: string | null;
+
+  @ApiProperty({ format: 'uuid', type: String }) declare categoryId: string;
+
+  @ApiProperty({ format: 'uuid', type: String }) declare lifecycleStatusId: string;
+
+  @ApiPropertyOptional({ format: 'uuid', nullable: true, type: String })
+  declare storageNodeId: string | null;
+
+  @ApiProperty({ enum: ['public', 'authenticated', 'private', 'unlisted'], type: String })
+  declare visibility: string;
+
+  @ApiProperty({ minimum: 1, type: Number }) declare version: number;
+
+  @ApiProperty({ items: { type: 'string' }, type: 'array' }) declare tags: string[];
+
+  @ApiProperty({
+    description: 'Attribute values the actor may read, keyed by stable field key.',
+    additionalProperties: true,
+    type: 'object',
+  })
+  declare attributes: Record<string, unknown>;
+
+  @ApiProperty({ format: 'date-time', type: String }) declare updatedAt: string;
+}
+
 export class ItemSummaryDto {
   @ApiProperty({ example: 'itm_01JBM4V6M9Q5Q2HTY0FQVN3M2D', type: String })
   declare publicId: string;
@@ -142,8 +227,13 @@ export class VersionConflictProblemDto extends ProblemDetailsDto {
 
   @ApiProperty({
     additionalProperties: true,
-    description: 'Visibility-safe fields that changed since the submitted version.',
-    example: { displayName: 'Cordless drill (workshop)' },
+    description:
+      'Visibility-safe fields that differ between the stored Item and the rejected submission. ' +
+      'Each entry carries the current and submitted value; fields the actor cannot view are ' +
+      'never included.',
+    example: {
+      displayName: { current: 'Cordless drill (workshop)', submitted: 'Cordless drill' },
+    },
     type: 'object',
   })
   declare safeDiff: Record<string, unknown>;
@@ -155,6 +245,9 @@ export const contractModels = [
   ItemMutationRequestDto,
   CreateItemRequestDto,
   CreatedItemDto,
+  UpdateItemRequestDto,
+  UpdatedItemDto,
+  ItemDetailDto,
   ItemSummaryDto,
   CursorPageDto,
   ItemPageResponseDto,
