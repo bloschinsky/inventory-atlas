@@ -10,10 +10,18 @@ import {
   expectedSchemaVersion,
   FieldDefinitionRepository,
   FieldDefinitionService,
+  IdempotencyRepository,
   initializeInstallationSettings,
   readAdminAuthorizationSettings,
   SessionService,
+  ItemRepository,
+  ItemService,
   TransactionalAttributeValuePort,
+  TransactionalAuditPort,
+  TransactionalIdempotencyPort,
+  TransactionalMovementHistoryPort,
+  TransactionalOutboxPort,
+  TransactionalSearchProjectionPort,
 } from '@inventory-atlas/backend';
 import {
   parseEnvironment,
@@ -26,6 +34,7 @@ import { fileURLToPath } from 'node:url';
 import type { AuthRuntimePort } from './auth.runtime.js';
 import type { CatalogRuntimePort } from './catalog.runtime.js';
 import type { SchemaRuntimePort } from './schema.runtime.js';
+import type { ItemsRuntimePort } from './items.runtime.js';
 
 export const FOUNDATION_RUNTIME = Symbol('FOUNDATION_RUNTIME');
 
@@ -57,6 +66,7 @@ export class FoundationRuntime
     AuthRuntimePort,
     CatalogRuntimePort,
     SchemaRuntimePort,
+    ItemsRuntimePort,
     OnApplicationShutdown
 {
   private schemaVersion: string | null = null;
@@ -64,6 +74,7 @@ export class FoundationRuntime
   private administration: AuthAdministrationService | null = null;
   private dictionaries: CatalogDictionaryService | null = null;
   private schemaFieldService: FieldDefinitionService | null = null;
+  private itemService: ItemService | null = null;
   private readonly rateLimiter: AuthRateLimiter;
 
   private constructor(
@@ -106,9 +117,21 @@ export class FoundationRuntime
       runtime.dictionaries = new CatalogDictionaryService(
         new CatalogDictionaryRepository(settingsClient),
       );
-      runtime.schemaFieldService = new FieldDefinitionService(
-        new FieldDefinitionRepository(settingsClient),
-        new TransactionalAttributeValuePort(),
+      const fieldRepository = new FieldDefinitionRepository(settingsClient);
+      const attributeValues = new TransactionalAttributeValuePort();
+      runtime.schemaFieldService = new FieldDefinitionService(fieldRepository, attributeValues);
+      runtime.itemService = new ItemService(
+        new ItemRepository(settingsClient),
+        new IdempotencyRepository(database),
+        fieldRepository,
+        {
+          attributes: attributeValues,
+          audit: new TransactionalAuditPort(),
+          idempotency: new TransactionalIdempotencyPort(),
+          movements: new TransactionalMovementHistoryPort(),
+          outbox: new TransactionalOutboxPort(),
+          search: new TransactionalSearchProjectionPort(),
+        },
       );
       await runtime.verifyMedia();
       return runtime;
@@ -192,6 +215,11 @@ export class FoundationRuntime
   schemaFields(): FieldDefinitionService {
     if (!this.schemaFieldService) throw new Error('Dynamic schema is not initialized.');
     return this.schemaFieldService;
+  }
+
+  catalogItems(): ItemService {
+    if (!this.itemService) throw new Error('Catalog Items are not initialized.');
+    return this.itemService;
   }
 
   secureSessionCookies(): boolean {

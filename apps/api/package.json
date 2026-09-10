@@ -12,6 +12,7 @@
   "dependencies": {
     "@inventory-atlas/backend": "workspace:*",
     "@inventory-atlas/config": "workspace:*",
+    "@inventory-atlas/contracts": "workspace:*",
     "@nestjs/common": "catalog:",
     "@nestjs/core": "catalog:",
     "@nestjs/platform-fastify": "catalog:",

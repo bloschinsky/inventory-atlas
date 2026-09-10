@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./jsdoc": "./src/generated/jsdoc.gen.js"
+    "./jsdoc": "./src/generated/jsdoc.gen.js",
+    "./zod": "./src/generated/zod.gen.ts"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

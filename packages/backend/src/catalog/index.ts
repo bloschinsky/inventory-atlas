@@ -8,7 +8,18 @@ export {
   type ItemCoreRecord,
   type ItemTransaction,
   type ItemVisibility,
+  ItemPolicyError,
+  type ItemPolicyCode,
 } from './item-repository.js';
+export {
+  ItemCreateError,
+  ItemService,
+  type CreatedItem,
+  type CreateItemInput,
+  type CreateItemOutcome,
+  type ItemCreateErrorCode,
+  type ItemMutationMetadata,
+} from './item-service.js';
 export {
   CatalogDictionaryRepository,
   type CategoryRecord,

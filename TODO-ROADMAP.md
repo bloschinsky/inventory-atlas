@@ -410,25 +410,25 @@ Tasks:
 
 - [x] Add Item, tag, Item-tag, idempotency, movement, search projection, and required infrastructure migrations.
 - [x] Implement immutable UUID public IDs and decorative slugs.
-- [ ] Implement Item DTO validation using generated contract schemas.
-- [ ] Implement idempotency reservation, fingerprint conflict, lease recovery, and transactional completion.
-- [ ] Implement the Prisma-source Item transaction from blueprint section 9.1.
-- [ ] Validate and replace attributes through `AttributeValuePort` in the same transaction.
-- [ ] Write display name and the complete synchronous search projection before commit.
+- [x] Implement Item DTO validation using generated contract schemas.
+- [x] Implement idempotency reservation, fingerprint conflict, lease recovery, and transactional completion.
+- [x] Implement the Prisma-source Item transaction from blueprint section 9.1.
+- [x] Validate and replace attributes through `AttributeValuePort` in the same transaction.
+- [x] Write display name and the complete synchronous search projection before commit.
 - [ ] Resolve a destination path through `SearchProjectionPort` under the shared root lock when applicable.
-- [ ] Write safe audit, movement, and outbox records through transaction-aware ports.
-- [ ] Return stable field-key validation errors and the new ETag/version.
+- [x] Write safe audit, movement, and outbox records through transaction-aware ports.
+- [x] Return stable field-key validation errors and the new ETag/version.
 - [ ] Build category-driven mobile-first form controls using the UI facade.
 - [ ] Build the Item card with core fields, dynamic values, breadcrumb policy, and placeholder media.
 - [ ] Add atomic rollback, duplicate-request, public-ID, localization, authorization, and E2E tests.
 
 Acceptance criteria (verbatim from the approved blueprint):
 
-- [ ] Core and attribute rows commit atomically.
-- [ ] Display name and search projection are available immediately.
+- [x] Core and attribute rows commit atomically.
+- [x] Display name and search projection are available immediately.
 - [x] Public ID is immutable and URL-safe.
-- [ ] Validation errors map to stable field keys.
-- [ ] Duplicate idempotency key does not create a second Item.
+- [x] Validation errors map to stable field keys.
+- [x] Duplicate idempotency key does not create a second Item.
 
 ### CAT-04 Edit with optimistic concurrency
 

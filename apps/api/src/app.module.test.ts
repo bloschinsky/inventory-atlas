@@ -11,6 +11,7 @@ import type { AuthRuntimePort } from './auth.runtime.js';
 import type { FoundationRuntimePort } from './foundation.runtime.js';
 import type { CatalogRuntimePort } from './catalog.runtime.js';
 import type { SchemaRuntimePort } from './schema.runtime.js';
+import type { ItemsRuntimePort } from './items.runtime.js';
 import { createApiApplication } from './main.js';
 import { createOpenApiDocument } from './openapi-document.js';
 
@@ -141,7 +142,23 @@ function createSchemaRuntime() {
   };
 }
 const schemaFields = createSchemaRuntime();
-const runtime: FoundationRuntimePort & AuthRuntimePort & CatalogRuntimePort & SchemaRuntimePort = {
+const catalogItems = {
+  create: vi.fn(async () => ({
+    replayed: false as const,
+    status: 201 as const,
+    item: {
+      publicId: '0198f40c-92f3-7a12-bc9a-653f97786c40',
+      slug: 'cordless-drill',
+      displayName: 'Cordless drill',
+      version: 1,
+    },
+  })),
+};
+const runtime: FoundationRuntimePort &
+  AuthRuntimePort &
+  CatalogRuntimePort &
+  SchemaRuntimePort &
+  ItemsRuntimePort = {
   async readiness() {
     return {
       status: 'ready',
@@ -183,6 +200,9 @@ const runtime: FoundationRuntimePort & AuthRuntimePort & CatalogRuntimePort & Sc
   schemaFields() {
     return schemaFields;
   },
+  catalogItems() {
+    return catalogItems;
+  },
 };
 
 describe('API composition root', () => {
@@ -208,6 +228,7 @@ describe('API composition root', () => {
       'createCategory',
       'createFieldDefinition',
       'createFieldOption',
+      'createItem',
       'createLifecycleStatus',
       'deleteAuthSession',
       'getCurrentActor',
@@ -235,11 +256,65 @@ describe('API composition root', () => {
     expect(new Set(operationIds).size).toBe(operationIds.length);
     expect(document.components?.schemas).toMatchObject({
       CursorPageDto: expect.any(Object),
+      CreatedItemDto: expect.any(Object),
+      CreateItemRequestDto: expect.any(Object),
       ItemMutationRequestDto: expect.any(Object),
       ItemPageResponseDto: expect.any(Object),
       ProblemDetailsDto: expect.any(Object),
       VersionConflictProblemDto: expect.any(Object),
     });
+    await app.close();
+  });
+
+  it('validates Item creation with the generated schema and returns ETag', async () => {
+    catalogItems.create.mockClear();
+    const app = await createApiApplication(runtime);
+    await app.init();
+    const headers = {
+      cookie: `inventory_atlas_session=${sessionToken}`,
+      'x-csrf-token': csrfToken,
+      'idempotency-key': 'create-cordless-drill',
+      'x-request-id': 'request-create-item',
+    };
+    const invalid = await app.inject({
+      method: 'POST',
+      url: '/api/v1/items',
+      headers,
+      payload: { displayName: '', categoryId: 'invalid', lifecycleStatusId: 'invalid' },
+    });
+    expect(invalid.statusCode).toBe(400);
+    expect(invalid.json()).toMatchObject({
+      code: 'VALIDATION_FAILED',
+      fieldErrors: expect.arrayContaining([
+        expect.objectContaining({ field: 'categoryId' }),
+        expect.objectContaining({ field: 'displayName' }),
+        expect.objectContaining({ field: 'lifecycleStatusId' }),
+      ]),
+    });
+    expect(catalogItems.create).not.toHaveBeenCalled();
+
+    const payload = {
+      categoryId: '0198f40c-92f3-7a12-bc9a-653f97786c31',
+      lifecycleStatusId: '0198f40c-92f3-7a12-bc9a-653f97786c32',
+      displayName: 'Cordless drill',
+      attributes: { serial_number: 'SN-42' },
+    };
+    const created = await app.inject({ method: 'POST', url: '/api/v1/items', headers, payload });
+    expect(created.statusCode).toBe(201);
+    expect(created.headers.etag).toBe('"1"');
+    expect(created.json()).toMatchObject({
+      displayName: 'Cordless drill',
+      slug: 'cordless-drill',
+      version: 1,
+    });
+    expect(catalogItems.create).toHaveBeenCalledWith(
+      actor,
+      payload,
+      expect.objectContaining({
+        idempotencyKey: 'create-cordless-drill',
+        requestId: 'request-create-item',
+      }),
+    );
     await app.close();
   });
 
@@ -712,7 +787,8 @@ describe('API composition root', () => {
     const unreadyRuntime: FoundationRuntimePort &
       AuthRuntimePort &
       CatalogRuntimePort &
-      SchemaRuntimePort = {
+      SchemaRuntimePort &
+      ItemsRuntimePort = {
       ...runtime,
       async readiness() {
         return {

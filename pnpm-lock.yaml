@@ -147,6 +147,9 @@ importers:
       '@inventory-atlas/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@inventory-atlas/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@nestjs/common':
         specifier: 'catalog:'
         version: 12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)

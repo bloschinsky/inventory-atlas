@@ -58,6 +58,53 @@ export class ItemMutationRequestDto {
   declare expectedVersion: number;
 }
 
+export class CreateItemRequestDto {
+  @ApiProperty({ format: 'uuid', type: String })
+  declare categoryId: string;
+
+  @ApiProperty({ format: 'uuid', type: String })
+  declare lifecycleStatusId: string;
+
+  @ApiProperty({ example: 'Cordless drill', maxLength: 200, minLength: 1, type: String })
+  declare displayName: string;
+
+  @ApiPropertyOptional({ maxLength: 10_000, nullable: true, type: String })
+  declare description?: string | null;
+
+  @ApiPropertyOptional({
+    enum: ['public', 'authenticated', 'private', 'unlisted'],
+    type: String,
+  })
+  declare visibility?: 'public' | 'authenticated' | 'private' | 'unlisted';
+
+  @ApiPropertyOptional({ format: 'uuid', nullable: true, type: String })
+  declare storageNodeId?: string | null;
+
+  @ApiPropertyOptional({
+    items: { maxLength: 100, minLength: 1, type: 'string' },
+    maxItems: 50,
+    type: 'array',
+  })
+  declare tags?: string[];
+
+  @ApiPropertyOptional({ additionalProperties: true, type: 'object' })
+  declare attributes?: Record<string, unknown>;
+}
+
+export class CreatedItemDto {
+  @ApiProperty({ format: 'uuid', type: String })
+  declare publicId: string;
+
+  @ApiProperty({ pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$', type: String })
+  declare slug: string;
+
+  @ApiProperty({ type: String })
+  declare displayName: string;
+
+  @ApiProperty({ minimum: 1, type: Number })
+  declare version: number;
+}
+
 export class ItemSummaryDto {
   @ApiProperty({ example: 'itm_01JBM4V6M9Q5Q2HTY0FQVN3M2D', type: String })
   declare publicId: string;
@@ -106,6 +153,8 @@ export const contractModels = [
   ProblemFieldErrorDto,
   ProblemDetailsDto,
   ItemMutationRequestDto,
+  CreateItemRequestDto,
+  CreatedItemDto,
   ItemSummaryDto,
   CursorPageDto,
   ItemPageResponseDto,

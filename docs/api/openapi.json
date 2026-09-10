@@ -109,6 +109,16 @@
         "required": ["targetDataType"],
         "type": "object"
       },
+      "CreatedItemDto": {
+        "properties": {
+          "displayName": { "type": "string" },
+          "publicId": { "format": "uuid", "type": "string" },
+          "slug": { "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "type": "string" },
+          "version": { "minimum": 1, "type": "number" }
+        },
+        "required": ["displayName", "publicId", "slug", "version"],
+        "type": "object"
+      },
       "CreateFieldDefinitionDto": {
         "properties": {
           "categoryId": { "format": "uuid", "nullable": true, "type": "string" },
@@ -171,6 +181,32 @@
           "labels": { "$ref": "#/components/schemas/LocalizedTextDto" }
         },
         "required": ["expectedVersion", "key", "labels"],
+        "type": "object"
+      },
+      "CreateItemRequestDto": {
+        "properties": {
+          "attributes": { "additionalProperties": true, "type": "object" },
+          "categoryId": { "format": "uuid", "type": "string" },
+          "description": { "maxLength": 10000, "nullable": true, "type": "string" },
+          "displayName": {
+            "example": "Cordless drill",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "lifecycleStatusId": { "format": "uuid", "type": "string" },
+          "storageNodeId": { "format": "uuid", "nullable": true, "type": "string" },
+          "tags": {
+            "items": { "maxLength": 100, "minLength": 1, "type": "string" },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "visibility": {
+            "enum": ["authenticated", "private", "public", "unlisted"],
+            "type": "string"
+          }
+        },
+        "required": ["categoryId", "displayName", "lifecycleStatusId"],
         "type": "object"
       },
       "CurrentSessionResponseDto": {
@@ -1660,6 +1696,68 @@
         "tags": ["dynamic schema"]
       }
     },
+    "/api/v1/items": {
+      "post": {
+        "operationId": "createItem",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateItemRequestDto" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/CreatedItemDto" } }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "503": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["items"]
+      }
+    },
     "/api/v1/lifecycle-statuses": {
       "get": {
         "operationId": "listLifecycleStatuses",
@@ -1902,5 +2000,5 @@
   },
   "servers": [],
   "tags": [],
-  "x-spec-checksum": "c4e7f9d4a7dee5e3a82a623396b61dfb4b776a3433a68a712fabe21732739c33"
+  "x-spec-checksum": "c65df7d6d971bb8bd6995f72766ddb4360c34031dcf5c82b075cdb25f361e090"
 }

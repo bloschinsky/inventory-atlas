@@ -4,7 +4,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { Pool } from 'pg';
 
-interface FoundationDatabase {
+export interface FoundationDatabase {
   kysely_migration: {
     name: string;
     timestamp: string;

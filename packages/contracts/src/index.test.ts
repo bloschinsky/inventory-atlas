@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { contractSource, zItemMutationRequestDto } from './index.js';
+import { contractSource, zCreateItemRequestDto, zItemMutationRequestDto } from './index.js';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -17,6 +17,23 @@ describe('contract workspace', () => {
       expectedVersion: '7',
     });
     expect(result.success).toBe(false);
+  });
+
+  it('validates the generated Item create contract including dynamic attributes', () => {
+    const valid = zCreateItemRequestDto.safeParse({
+      categoryId: '0198f40c-92f3-7a12-bc9a-653f97786c31',
+      lifecycleStatusId: '0198f40c-92f3-7a12-bc9a-653f97786c32',
+      displayName: 'Cordless drill',
+      attributes: { serial_number: 'SN-42', calibrated: true },
+    });
+    expect(valid.success).toBe(true);
+    expect(
+      zCreateItemRequestDto.safeParse({
+        categoryId: 'not-a-uuid',
+        lifecycleStatusId: 'also-invalid',
+        displayName: '',
+      }).success,
+    ).toBe(false);
   });
 
   it('carries the normalized spec checksum in every generated artifact', async () => {

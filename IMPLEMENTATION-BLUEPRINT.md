@@ -1492,11 +1492,11 @@ As an Editor, I can create an Item with core fields and typed attributes.
 
 Acceptance criteria:
 
-- [ ] Core and attribute rows commit atomically.
-- [ ] Display name and search projection are available immediately.
+- [x] Core and attribute rows commit atomically.
+- [x] Display name and search projection are available immediately.
 - [x] Public ID is immutable and URL-safe.
-- [ ] Validation errors map to stable field keys.
-- [ ] Duplicate idempotency key does not create a second Item.
+- [x] Validation errors map to stable field keys.
+- [x] Duplicate idempotency key does not create a second Item.
 
 #### CAT-04 Edit with optimistic concurrency
 

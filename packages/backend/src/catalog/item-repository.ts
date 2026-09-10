@@ -33,10 +33,32 @@ export interface CreateItemCoreInput {
   slug?: string;
 }
 
+export type ItemPolicyCode =
+  | 'ITEM_DISPLAY_NAME_REQUIRED'
+  | 'ITEM_CATEGORY_INVALID'
+  | 'ITEM_LIFECYCLE_STATUS_INVALID'
+  | 'ITEM_STORAGE_DESTINATION_UNAVAILABLE'
+  | 'ITEM_VISIBILITY_INVALID';
+
+export class ItemPolicyError extends Error {
+  constructor(
+    readonly code: ItemPolicyCode,
+    readonly fieldKey: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'ItemPolicyError';
+  }
+}
+
 export function normalizeItemVisibility(value: string | undefined): ItemVisibility {
   const normalized = value ?? 'authenticated';
   if (!itemVisibilities.includes(normalized as ItemVisibility))
-    throw new Error('Item visibility is invalid.');
+    throw new ItemPolicyError(
+      'ITEM_VISIBILITY_INVALID',
+      'visibility',
+      'Item visibility is invalid.',
+    );
   return normalized as ItemVisibility;
 }
 
@@ -70,7 +92,26 @@ export class ItemRepository {
     const id = this.newId();
     const publicId = this.newId();
     const displayName = input.displayName.trim();
-    if (!displayName) throw new Error('Item display name is required.');
+    if (!displayName)
+      throw new ItemPolicyError(
+        'ITEM_DISPLAY_NAME_REQUIRED',
+        'displayName',
+        'Item display name is required.',
+      );
+    const [category, lifecycleStatus] = await Promise.all([
+      transaction.category.findFirst({ where: { id: input.categoryId, archivedAt: null } }),
+      transaction.lifecycleStatus.findFirst({
+        where: { id: input.lifecycleStatusId, archivedAt: null },
+      }),
+    ]);
+    if (!category)
+      throw new ItemPolicyError('ITEM_CATEGORY_INVALID', 'categoryId', 'Category is not active.');
+    if (!lifecycleStatus)
+      throw new ItemPolicyError(
+        'ITEM_LIFECYCLE_STATUS_INVALID',
+        'lifecycleStatusId',
+        'Lifecycle status is not active.',
+      );
     const now = this.now();
     const row = await transaction.item.create({
       data: {

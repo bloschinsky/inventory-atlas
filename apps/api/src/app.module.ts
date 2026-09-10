@@ -9,11 +9,17 @@ import { CatalogDictionariesController } from './catalog-dictionaries.controller
 import { CATALOG_RUNTIME, type CatalogRuntimePort } from './catalog.runtime.js';
 import { SchemaFieldsController } from './schema-fields.controller.js';
 import { SCHEMA_RUNTIME, type SchemaRuntimePort } from './schema.runtime.js';
+import { ItemsController } from './items.controller.js';
+import { ITEMS_RUNTIME, type ItemsRuntimePort } from './items.runtime.js';
 
 @Module({})
 export class AppModule {
   static register(
-    runtime: FoundationRuntimePort & AuthRuntimePort & CatalogRuntimePort & SchemaRuntimePort,
+    runtime: FoundationRuntimePort &
+      AuthRuntimePort &
+      CatalogRuntimePort &
+      SchemaRuntimePort &
+      ItemsRuntimePort,
   ): DynamicModule {
     return {
       module: AppModule,
@@ -23,6 +29,7 @@ export class AppModule {
         CatalogDictionariesController,
         FoundationController,
         HealthController,
+        ItemsController,
         MetaController,
         SchemaFieldsController,
       ],
@@ -31,6 +38,7 @@ export class AppModule {
         { provide: FOUNDATION_RUNTIME, useValue: runtime },
         { provide: CATALOG_RUNTIME, useValue: runtime },
         { provide: SCHEMA_RUNTIME, useValue: runtime },
+        { provide: ITEMS_RUNTIME, useValue: runtime },
       ],
     };
   }

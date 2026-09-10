@@ -76,6 +76,15 @@ export {
   type ItemCoreRecord,
   type ItemTransaction,
   type ItemVisibility,
+  ItemPolicyError,
+  type ItemPolicyCode,
+  ItemCreateError,
+  ItemService,
+  type CreatedItem,
+  type CreateItemInput,
+  type CreateItemOutcome,
+  type ItemCreateErrorCode,
+  type ItemMutationMetadata,
 } from './catalog/index.js';
 export {
   AttributeValidationError,
@@ -145,6 +154,9 @@ export {
   type ValidationRules,
 } from './schema/index.js';
 export {
+  IdempotencyRepository,
+  idempotencyPolicy,
+  requestFingerprint,
   TransactionalIdempotencyPort,
   TransactionalMovementHistoryPort,
   TransactionalSearchProjectionPort,
@@ -161,5 +173,8 @@ export {
   type OutboxMessage,
   type OutboxPort,
   type TransactionContext,
+  type IdempotencyReservation,
+  type IdempotencyReservationPort,
+  type ReserveIdempotencyRequest,
 } from './infrastructure/index.js';
 export { lifecycleStatusSeeds, runSeeds, seedLifecycleStatuses } from './seed.js';

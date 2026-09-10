@@ -16,3 +16,11 @@ export {
   type OutboxPort,
   type TransactionContext,
 } from './transaction-ports.js';
+export {
+  IdempotencyRepository,
+  idempotencyPolicy,
+  requestFingerprint,
+  type IdempotencyReservation,
+  type IdempotencyReservationPort,
+  type ReserveIdempotencyRequest,
+} from './idempotency-repository.js';
