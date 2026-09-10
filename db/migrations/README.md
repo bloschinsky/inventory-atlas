@@ -88,3 +88,19 @@ appear, so a later migration cannot forget them.
 Rollback drops the three tables and their data; use it only on disposable
 databases or as a planned destructive operation. It leaves the CAT-01
 dictionaries intact.
+
+`0006_item_aggregate.mjs` starts CAT-03A with Prisma-owned `items`, `tags`, and
+`item_tags`, plus the Kysely-owned movement history, synchronous `item_search`
+read model, and idempotency reservation store. Item public IDs are unique UUIDs
+and an update trigger makes them immutable; slugs are decorative URL-safe text.
+The migration adds the real Item owner/reference foreign keys promised by
+CAT-02. Storage-node foreign keys and destination path locking are added by
+STO-01 when `storage_nodes` exists.
+
+Movement rows are append-only. Search projections include separate authenticated
+and public vectors/attribute objects, while privacy-safe construction stays in
+`SearchProjectionPort`. Idempotency keys and fingerprints are stored only as
+SHA-256 hashes; completion must update the matching live reservation from the
+source transaction. Rollback drops all CAT-03 tables and Item attribute foreign
+keys and therefore destroys Item, tag, movement, projection, and idempotency data;
+use it only on disposable databases or as part of a planned restore.

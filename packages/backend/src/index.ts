@@ -67,6 +67,17 @@ export {
   type LocalizedLabel,
 } from './catalog/index.js';
 export {
+  ItemRepository,
+  itemSlug,
+  itemVisibilities,
+  normalizeItemVisibility,
+  normalizeTagName,
+  type CreateItemCoreInput,
+  type ItemCoreRecord,
+  type ItemTransaction,
+  type ItemVisibility,
+} from './catalog/index.js';
+export {
   AttributeValidationError,
   canonicalizeFieldValues,
   compareDecimal,
@@ -134,8 +145,17 @@ export {
   type ValidationRules,
 } from './schema/index.js';
 export {
+  TransactionalIdempotencyPort,
+  TransactionalMovementHistoryPort,
+  TransactionalSearchProjectionPort,
   TransactionalAuditPort,
   TransactionalOutboxPort,
+  type IdempotencyCompletion,
+  type IdempotencyPort,
+  type ItemSearchProjection,
+  type MovementHistoryPort,
+  type MovementRecord,
+  type SearchProjectionPort,
   type AuditPort,
   type AuditRecord,
   type OutboxMessage,

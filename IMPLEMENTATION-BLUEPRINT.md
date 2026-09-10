@@ -1494,7 +1494,7 @@ Acceptance criteria:
 
 - [ ] Core and attribute rows commit atomically.
 - [ ] Display name and search projection are available immediately.
-- [ ] Public ID is immutable and URL-safe.
+- [x] Public ID is immutable and URL-safe.
 - [ ] Validation errors map to stable field keys.
 - [ ] Duplicate idempotency key does not create a second Item.
 

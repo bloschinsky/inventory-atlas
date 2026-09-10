@@ -61,7 +61,10 @@ export const ModelName = {
   LifecycleStatus: 'LifecycleStatus',
   AttributeValue: 'AttributeValue',
   FieldDefinition: 'FieldDefinition',
-  FieldOption: 'FieldOption'
+  FieldOption: 'FieldOption',
+  Item: 'Item',
+  Tag: 'Tag',
+  ItemTag: 'ItemTag'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -262,6 +265,46 @@ export const FieldOptionScalarFieldEnum = {
 } as const
 
 export type FieldOptionScalarFieldEnum = (typeof FieldOptionScalarFieldEnum)[keyof typeof FieldOptionScalarFieldEnum]
+
+
+export const ItemScalarFieldEnum = {
+  id: 'id',
+  publicId: 'publicId',
+  slug: 'slug',
+  categoryId: 'categoryId',
+  lifecycleStatusId: 'lifecycleStatusId',
+  storageNodeId: 'storageNodeId',
+  displayName: 'displayName',
+  description: 'description',
+  visibility: 'visibility',
+  version: 'version',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  archivedAt: 'archivedAt'
+} as const
+
+export type ItemScalarFieldEnum = (typeof ItemScalarFieldEnum)[keyof typeof ItemScalarFieldEnum]
+
+
+export const TagScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  nameNormalized: 'nameNormalized',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  archivedAt: 'archivedAt'
+} as const
+
+export type TagScalarFieldEnum = (typeof TagScalarFieldEnum)[keyof typeof TagScalarFieldEnum]
+
+
+export const ItemTagScalarFieldEnum = {
+  itemId: 'itemId',
+  tagId: 'tagId',
+  createdAt: 'createdAt'
+} as const
+
+export type ItemTagScalarFieldEnum = (typeof ItemTagScalarFieldEnum)[keyof typeof ItemTagScalarFieldEnum]
 
 
 export const SortOrder = {

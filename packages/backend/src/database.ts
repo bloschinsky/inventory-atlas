@@ -11,7 +11,7 @@ interface FoundationDatabase {
   };
 }
 
-export const expectedSchemaVersion = '0005_dynamic_schema';
+export const expectedSchemaVersion = '0006_item_aggregate';
 
 export function createDatabase(
   connectionString: string,

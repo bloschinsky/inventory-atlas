@@ -60,6 +60,25 @@ suite('Prisma schema drift', () => {
       [prismaCli, 'db', 'pull', '--schema', introspectedSchemaPath, '--url', schemaUrl],
       { cwd: root },
     );
+    // Prisma 7.10 introspection preserves @@ignore on Kysely-owned models but omits the required
+    // @ignore marker from relation fields that point to them, producing a schema it cannot format.
+    // Restore only those derived relation markers before normalization and comparison.
+    const pulledSchema = await readFile(introspectedSchemaPath, 'utf8');
+    const ignoredModels = [...pulledSchema.matchAll(/^model\s+(\w+)\s*\{([\s\S]*?)^\}/gmu)]
+      .filter((match) => match[2]?.includes('@@ignore'))
+      .map((match) => match[1]);
+    const formattableSchema = pulledSchema
+      .split(/\r?\n/u)
+      .map((line) => {
+        if (line.includes('@ignore')) return line;
+        return ignoredModels.some((model) =>
+          new RegExp(`^\\s+\\w+\\s+${model}(?:\\[\\]|\\?)?(?:\\s|$)`).test(line),
+        )
+          ? `${line} @ignore`
+          : line;
+      })
+      .join('\n');
+    await writeFile(introspectedSchemaPath, formattableSchema);
     await execute(process.execPath, [prismaCli, 'format', '--schema', introspectedSchemaPath], {
       cwd: root,
     });

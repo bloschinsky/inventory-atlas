@@ -27,21 +27,23 @@ model InstallationMetadata {
 
 /// Database check constraints defined by the Kysely migration remain authoritative.
 model User {
-  id                  String       @id @db.Uuid
-  emailNormalized     String       @unique @map("email_normalized")
-  displayName         String       @map("display_name")
-  passwordHash        String       @map("password_hash")
+  id                  String              @id @db.Uuid
+  emailNormalized     String              @unique @map("email_normalized")
+  displayName         String              @map("display_name")
+  passwordHash        String              @map("password_hash")
   role                String
-  locale              String       @default("en")
-  status              String       @default("active")
-  lastLoginAt         DateTime?    @map("last_login_at") @db.Timestamptz(6)
-  createdAt           DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
-  archivedAt          DateTime?    @map("archived_at") @db.Timestamptz(6)
-  version             BigInt       @default(1)
+  locale              String              @default("en")
+  status              String              @default("active")
+  lastLoginAt         DateTime?           @map("last_login_at") @db.Timestamptz(6)
+  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime            @default(now()) @map("updated_at") @db.Timestamptz(6)
+  archivedAt          DateTime?           @map("archived_at") @db.Timestamptz(6)
+  version             BigInt              @default(1)
   auditEvents         AuditEvent[]
-  invitationsAccepted Invitation[] @relation("InvitationAcceptor")
-  invitationsIssued   Invitation[] @relation("InvitationInviter")
+  idempotencyRecords  IdempotencyRecord[] @ignore
+  invitationsAccepted Invitation[]        @relation("InvitationAcceptor")
+  invitationsIssued   Invitation[]        @relation("InvitationInviter")
+  movements           Movement[]          @ignore
   sessions            Session[]
 
   @@index([role], map: "users_active_role_idx", where: raw("((status = 'active'::text) AND (archived_at IS NULL))"))
@@ -133,6 +135,8 @@ model Category {
   parent           Category?         @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: NoAction)
   children         Category[]        @relation("CategoryTree")
   fieldDefinitions FieldDefinition[]
+  itemSearch       ItemSearch[]      @ignore
+  items            Item[]
 
   @@index([parentId, displayOrder, key], map: "categories_parent_order_idx")
   @@index([displayOrder, key], map: "categories_active_order_idx", where: raw("(archived_at IS NULL)"))
@@ -141,15 +145,17 @@ model Category {
 
 /// Database label, ordering, archive, version and immutable-key checks remain authoritative.
 model LifecycleStatus {
-  id           String    @id @db.Uuid
-  key          String    @unique @db.VarChar(64)
-  labelI18n    Json      @map("label_i18n")
-  colorToken   String    @map("color_token") @db.VarChar(64)
-  displayOrder Int       @default(0) @map("display_order")
-  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
-  archivedAt   DateTime? @map("archived_at") @db.Timestamptz(6)
-  version      BigInt    @default(1)
+  id           String       @id @db.Uuid
+  key          String       @unique @db.VarChar(64)
+  labelI18n    Json         @map("label_i18n")
+  colorToken   String       @map("color_token") @db.VarChar(64)
+  displayOrder Int          @default(0) @map("display_order")
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  archivedAt   DateTime?    @map("archived_at") @db.Timestamptz(6)
+  version      BigInt       @default(1)
+  itemSearch   ItemSearch[] @ignore
+  items        Item[]
 
   @@index([displayOrder, key], map: "lifecycle_statuses_active_order_idx", where: raw("(archived_at IS NULL)"))
   @@map("lifecycle_statuses")
@@ -197,7 +203,9 @@ model AttributeValue {
   createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime        @default(now()) @map("updated_at") @db.Timestamptz(6)
   definition           FieldDefinition @relation(fields: [fieldDefinitionId], references: [id], onUpdate: NoAction)
+  item                 Item?           @relation("ItemAttributeValues", fields: [itemId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "attribute_values_item_fk")
   option               FieldOption?    @relation(fields: [valueOptionId, fieldDefinitionId], references: [id, fieldDefinitionId], onUpdate: NoAction, map: "attribute_values_option_fk")
+  referencedItem       Item?           @relation("ReferencedItemAttributeValues", fields: [valueReferenceItemId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "attribute_values_reference_item_fk")
 
   @@unique([itemId, fieldDefinitionId, valueOptionId], map: "attribute_values_item_option_idx", where: raw("((item_id IS NOT NULL) AND (value_option_id IS NOT NULL))"))
   @@unique([itemId, fieldDefinitionId, position], map: "attribute_values_item_position_idx", where: raw("(item_id IS NOT NULL)"))
@@ -263,4 +271,137 @@ model FieldOption {
   @@unique([id, fieldDefinitionId], map: "field_options_identity_key")
   @@index([fieldDefinitionId, displayOrder, key], map: "field_options_order_idx")
   @@map("field_options")
+}
+
+/// Database checks and the immutable-public-ID trigger defined by Kysely remain authoritative.
+model Item {
+  id                String           @id @db.Uuid
+  publicId          String           @unique @map("public_id") @db.Uuid
+  slug              String           @db.VarChar(160)
+  categoryId        String           @map("category_id") @db.Uuid
+  lifecycleStatusId String           @map("lifecycle_status_id") @db.Uuid
+  storageNodeId     String?          @map("storage_node_id") @db.Uuid
+  displayName       String           @map("display_name")
+  description       String?
+  visibility        String           @default("authenticated") @db.VarChar(16)
+  version           BigInt           @default(1)
+  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime         @default(now()) @map("updated_at") @db.Timestamptz(6)
+  archivedAt        DateTime?        @map("archived_at") @db.Timestamptz(6)
+  attributeValues   AttributeValue[] @relation("ItemAttributeValues")
+  referencingValues AttributeValue[] @relation("ReferencedItemAttributeValues")
+  search            ItemSearch?      @ignore
+  tags              ItemTag[]
+  category          Category         @relation(fields: [categoryId], references: [id], onUpdate: NoAction)
+  lifecycleStatus   LifecycleStatus  @relation(fields: [lifecycleStatusId], references: [id], onUpdate: NoAction)
+  movements         Movement[]       @ignore
+
+  @@index([categoryId, lifecycleStatusId, updatedAt(sort: Desc), id(sort: Desc)], map: "items_category_status_updated_idx", where: raw("(archived_at IS NULL)"))
+  @@index([storageNodeId], map: "items_storage_node_idx", where: raw("(storage_node_id IS NOT NULL)"))
+  @@index([updatedAt(sort: Desc), id(sort: Desc)], map: "items_updated_idx", where: raw("(archived_at IS NULL)"))
+  @@map("items")
+}
+
+model Tag {
+  id             String    @id @db.Uuid
+  name           String
+  nameNormalized String    @unique @map("name_normalized")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  archivedAt     DateTime? @map("archived_at") @db.Timestamptz(6)
+  items          ItemTag[]
+
+  @@index([nameNormalized], map: "tags_active_name_idx", where: raw("(archived_at IS NULL)"))
+  @@map("tags")
+}
+
+model ItemTag {
+  itemId    String   @map("item_id") @db.Uuid
+  tagId     String   @map("tag_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tag       Tag      @relation(fields: [tagId], references: [id], onUpdate: NoAction)
+
+  @@id([itemId, tagId])
+  @@index([tagId, itemId], map: "item_tags_tag_idx")
+  @@map("item_tags")
+}
+
+/// Kysely owns this synchronous read model; source transactions write through SearchProjectionPort.
+model ItemSearch {
+  itemId             String                  @id @map("item_id") @db.Uuid
+  displayName        String                  @map("display_name")
+  description        String?
+  categoryId         String                  @map("category_id") @db.Uuid
+  lifecycleStatusId  String                  @map("lifecycle_status_id") @db.Uuid
+  pathText           String                  @default("") @map("path_text")
+  publicPathText     String                  @default("") @map("public_path_text")
+  searchVector       Unsupported("tsvector") @default(dbgenerated("''::tsvector")) @map("search_vector")
+  publicSearchVector Unsupported("tsvector") @default(dbgenerated("''::tsvector")) @map("public_search_vector")
+  attrs              Json                    @default("{}")
+  publicAttrs        Json                    @default("{}") @map("public_attrs")
+  visibility         String                  @db.VarChar(16)
+  indexState         String                  @default("ready") @map("index_state") @db.VarChar(16)
+  itemUpdatedAt      DateTime                @map("item_updated_at") @db.Timestamptz(6)
+  indexedAt          DateTime                @default(now()) @map("indexed_at") @db.Timestamptz(6)
+  category           Category                @relation(fields: [categoryId], references: [id], onUpdate: NoAction)
+  item               Item                    @relation(fields: [itemId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  lifecycleStatus    LifecycleStatus         @relation(fields: [lifecycleStatusId], references: [id], onUpdate: NoAction)
+
+  @@index([searchVector], map: "item_search_vector_idx", type: Gin)
+  @@index([publicSearchVector], map: "item_search_public_vector_idx", type: Gin)
+  @@index([attrs(ops: JsonbPathOps)], type: Gin)
+  @@index([publicAttrs(ops: JsonbPathOps)], type: Gin)
+  @@index([itemUpdatedAt(sort: Desc), itemId(sort: Desc)], map: "item_search_updated_idx")
+  @@index([categoryId, lifecycleStatusId, itemUpdatedAt(sort: Desc), itemId(sort: Desc)], map: "item_search_category_status_idx")
+  @@map("item_search")
+  @@ignore
+}
+
+/// Database checks and the append-only trigger remain authoritative; writes use MovementHistoryPort.
+model Movement {
+  id               String   @id @db.Uuid
+  entityType       String   @map("entity_type") @db.VarChar(16)
+  itemId           String?  @map("item_id") @db.Uuid
+  storageNodeId    String?  @map("storage_node_id") @db.Uuid
+  fromNodeId       String?  @map("from_node_id") @db.Uuid
+  toNodeId         String?  @map("to_node_id") @db.Uuid
+  fromPathSnapshot String?  @map("from_path_snapshot")
+  toPathSnapshot   String?  @map("to_path_snapshot")
+  actorUserId      String   @map("actor_user_id") @db.Uuid
+  reason           String?  @db.VarChar(512)
+  occurredAt       DateTime @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  correlationId    String   @map("correlation_id") @db.VarChar(128)
+  actor            User     @relation(fields: [actorUserId], references: [id], onUpdate: NoAction)
+  item             Item?    @relation(fields: [itemId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([itemId, occurredAt(sort: Desc), id(sort: Desc)], map: "movements_item_idx", where: raw("(item_id IS NOT NULL)"))
+  @@index([storageNodeId, occurredAt(sort: Desc), id(sort: Desc)], map: "movements_node_idx", where: raw("(storage_node_id IS NOT NULL)"))
+  @@map("movements")
+  @@ignore
+}
+
+/// Reservation uses Kysely; completion joins the source transaction through IdempotencyPort.
+model IdempotencyRecord {
+  id                   String    @id @db.Uuid
+  actorId              String    @map("actor_id") @db.Uuid
+  scope                String    @db.VarChar(96)
+  keyHash              String    @map("key_hash") @db.Char(64)
+  requestFingerprint   String    @map("request_fingerprint") @db.Char(64)
+  state                String    @default("reserved") @db.VarChar(16)
+  responseStatus       Int?      @map("response_status")
+  responseBodyJson     Json?     @map("response_body_json")
+  reservationTokenHash String    @map("reservation_token_hash") @db.Char(64)
+  leaseExpiresAt       DateTime  @map("lease_expires_at") @db.Timestamptz(6)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  expiresAt            DateTime  @map("expires_at") @db.Timestamptz(6)
+  completedAt          DateTime? @map("completed_at") @db.Timestamptz(6)
+  actor                User      @relation(fields: [actorId], references: [id], onUpdate: NoAction)
+
+  @@unique([actorId, scope, keyHash], map: "idempotency_actor_scope_key")
+  @@index([expiresAt], map: "idempotency_expiry_idx")
+  @@index([leaseExpiresAt], map: "idempotency_reserved_lease_idx", where: raw("((state)::text = 'reserved'::text)"))
+  @@map("idempotency_records")
+  @@ignore
 }

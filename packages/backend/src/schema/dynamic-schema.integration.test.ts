@@ -16,12 +16,35 @@ let pool: Pool;
 let database: ReturnType<typeof createDatabase>;
 let migrator: Migrator;
 let categoryId: string;
+let lifecycleStatusId: string;
+
+async function ensureItem(id: string): Promise<void> {
+  await pool.query(
+    `insert into items (
+       id, public_id, slug, category_id, lifecycle_status_id, display_name, created_at, updated_at
+     ) values ($1, $2, $3, $4, $5, 'Schema fixture item', $6, $6)
+     on conflict (id) do nothing`,
+    [
+      id,
+      randomUUID(),
+      `fixture-${id.replaceAll('-', '')}`,
+      categoryId,
+      lifecycleStatusId,
+      createdAt,
+    ],
+  );
+}
 
 // Only synthetic fixture identifiers enter SQL; values are always bound parameters.
 async function insert(
   table: 'categories' | 'field_definitions' | 'field_options' | 'attribute_values',
   values: Record<string, unknown>,
 ) {
+  if (table === 'attribute_values') {
+    if (typeof values.item_id === 'string') await ensureItem(values.item_id);
+    if (typeof values.value_reference_item_id === 'string')
+      await ensureItem(values.value_reference_item_id);
+  }
   const entries = Object.entries(values);
   const columns = entries.map(([key]) => `"${key.replaceAll('"', '""')}"`).join(', ');
   const parameters = entries.map((_, index) => `$${index + 1}`).join(', ');
@@ -84,6 +107,13 @@ suite('CAT-02 dynamic schema on PostgreSQL', () => {
         key: 'electronics',
         label_i18n: { en: 'Electronics', uk: 'Електроніка' },
       })
+    ).rows[0].id;
+    lifecycleStatusId = (
+      await pool.query(
+        `insert into lifecycle_statuses (id, key, label_i18n, color_token)
+         values ($1, 'stored', '{"en":"Stored"}', 'status.info') returning id`,
+        [randomUUID()],
+      )
     ).rows[0].id;
   });
 
@@ -456,6 +486,8 @@ suite('CAT-02 dynamic schema on PostgreSQL', () => {
   });
 
   it('rolls back the dynamic schema and reapplies cleanly', async () => {
+    expect((await migrator.migrateDown()).error).toBeUndefined();
+    expect(await currentSchemaVersion(database)).toBe('0005_dynamic_schema');
     expect((await migrator.migrateDown()).error).toBeUndefined();
     expect(await currentSchemaVersion(database)).toBe('0004_outbox');
     expect(

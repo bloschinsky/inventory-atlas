@@ -26,9 +26,26 @@ let prisma: ReturnType<typeof createSettingsClient>;
 let database: ReturnType<typeof createDatabase>;
 let repository: FieldDefinitionRepository;
 let port: TransactionalAttributeValuePort;
+let fixtureCategoryId: string;
+let fixtureStatusId: string;
 /** Field ids keyed by `${scope}:${key}` so both source clients replace an identical schema. */
 const fields = new Map<string, string>();
 const options = new Map<string, string>();
+
+async function createFixtureItem(id: string, categoryId = fixtureCategoryId): Promise<void> {
+  await prisma.item.create({
+    data: {
+      id,
+      publicId: randomUUID(),
+      slug: `fixture-${id.replaceAll('-', '')}`,
+      categoryId,
+      lifecycleStatusId: fixtureStatusId,
+      displayName: 'Attribute fixture item',
+      createdAt: now,
+      updatedAt: now,
+    },
+  });
+}
 
 function fieldId(scope: FieldScope, key: string): string {
   return fields.get(`${scope}:${key}`)!;
@@ -175,6 +192,30 @@ suite('CAT-02 attribute value port parity on PostgreSQL', () => {
     database = createDatabase(schemaUrl, 2);
     repository = new FieldDefinitionRepository(prisma, () => now);
     port = new TransactionalAttributeValuePort();
+    fixtureCategoryId = (
+      await prisma.category.create({
+        data: {
+          id: randomUUID(),
+          key: 'fixtures',
+          labelI18n: { en: 'Fixtures' },
+          createdAt: now,
+          updatedAt: now,
+        },
+      })
+    ).id;
+    fixtureStatusId = (
+      await prisma.lifecycleStatus.create({
+        data: {
+          id: randomUUID(),
+          key: 'stored',
+          labelI18n: { en: 'Stored' },
+          colorToken: 'status.info',
+          createdAt: now,
+          updatedAt: now,
+        },
+      })
+    ).id;
+    await createFixtureItem(referencedItemId);
     await seedScope('item');
     await seedScope('storage_node');
   }, 60_000);
@@ -191,6 +232,7 @@ suite('CAT-02 attribute value port parity on PostgreSQL', () => {
 
   it('writes identical typed rows from a Prisma source and a Kysely source', async () => {
     const itemOwner: AttributeOwner = { kind: 'item', id: randomUUID() };
+    await createFixtureItem(itemOwner.id);
     const nodeOwner: AttributeOwner = { kind: 'storageNode', id: randomUUID() };
     await prisma.$transaction(async (transaction) =>
       port.replace(
@@ -242,6 +284,7 @@ suite('CAT-02 attribute value port parity on PostgreSQL', () => {
 
   it('projects stored values back through the Prisma-owned read path', async () => {
     const owner: AttributeOwner = { kind: 'item', id: randomUUID() };
+    await createFixtureItem(owner.id);
     await prisma.$transaction(async (transaction) =>
       port.replace(
         { kind: 'prisma', trx: transaction },
@@ -266,6 +309,8 @@ suite('CAT-02 attribute value port parity on PostgreSQL', () => {
   it('replaces the complete owner set and leaves other owners untouched', async () => {
     const owner: AttributeOwner = { kind: 'item', id: randomUUID() };
     const other: AttributeOwner = { kind: 'item', id: randomUUID() };
+    await createFixtureItem(owner.id);
+    await createFixtureItem(other.id);
     for (const target of [owner, other]) {
       await prisma.$transaction(async (transaction) =>
         port.replace(
@@ -374,6 +419,7 @@ suite('CAT-02 attribute value port parity on PostgreSQL', () => {
 
   it('rolls attribute rows back with the source transaction from either client', async () => {
     const itemOwner: AttributeOwner = { kind: 'item', id: randomUUID() };
+    await createFixtureItem(itemOwner.id);
     const nodeOwner: AttributeOwner = { kind: 'storageNode', id: randomUUID() };
     await expect(
       prisma.$transaction(async (transaction) => {
@@ -415,6 +461,7 @@ suite('CAT-02 attribute value port parity on PostgreSQL', () => {
       dataType: 'text',
     });
     const owner: AttributeOwner = { kind: 'item', id: randomUUID() };
+    await createFixtureItem(owner.id, category.id);
     const assignment: AttributeValueAssignment[] = [
       { fieldDefinitionId: fieldId('item', 'quantity'), values: [{ slot: 'number', number: '1' }] },
       { fieldDefinitionId: scoped.id, values: [{ slot: 'text', text: '978-0000000000' }] },
@@ -470,6 +517,7 @@ suite('CAT-02 attribute value port parity on PostgreSQL', () => {
 
   it('stores no array-shaped value for a multiselect field', async () => {
     const owner: AttributeOwner = { kind: 'item', id: randomUUID() };
+    await createFixtureItem(owner.id);
     await prisma.$transaction(async (transaction) =>
       port.replace(
         { kind: 'prisma', trx: transaction },

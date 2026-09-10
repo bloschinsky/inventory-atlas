@@ -248,6 +248,7 @@ export type LifecycleStatusWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"LifecycleStatus"> | Date | string
   archivedAt?: Prisma.DateTimeNullableFilter<"LifecycleStatus"> | Date | string | null
   version?: Prisma.BigIntFilter<"LifecycleStatus"> | bigint | number
+  items?: Prisma.ItemListRelationFilter
 }
 
 export type LifecycleStatusOrderByWithRelationInput = {
@@ -260,6 +261,7 @@ export type LifecycleStatusOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   archivedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   version?: Prisma.SortOrder
+  items?: Prisma.ItemOrderByRelationAggregateInput
 }
 
 export type LifecycleStatusWhereUniqueInput = Prisma.AtLeast<{
@@ -275,6 +277,7 @@ export type LifecycleStatusWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"LifecycleStatus"> | Date | string
   archivedAt?: Prisma.DateTimeNullableFilter<"LifecycleStatus"> | Date | string | null
   version?: Prisma.BigIntFilter<"LifecycleStatus"> | bigint | number
+  items?: Prisma.ItemListRelationFilter
 }, "id" | "key">
 
 export type LifecycleStatusOrderByWithAggregationInput = {
@@ -319,6 +322,7 @@ export type LifecycleStatusCreateInput = {
   updatedAt?: Date | string
   archivedAt?: Date | string | null
   version?: bigint | number
+  items?: Prisma.ItemCreateNestedManyWithoutLifecycleStatusInput
 }
 
 export type LifecycleStatusUncheckedCreateInput = {
@@ -331,6 +335,7 @@ export type LifecycleStatusUncheckedCreateInput = {
   updatedAt?: Date | string
   archivedAt?: Date | string | null
   version?: bigint | number
+  items?: Prisma.ItemUncheckedCreateNestedManyWithoutLifecycleStatusInput
 }
 
 export type LifecycleStatusUpdateInput = {
@@ -343,6 +348,7 @@ export type LifecycleStatusUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  items?: Prisma.ItemUpdateManyWithoutLifecycleStatusNestedInput
 }
 
 export type LifecycleStatusUncheckedUpdateInput = {
@@ -355,6 +361,7 @@ export type LifecycleStatusUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  items?: Prisma.ItemUncheckedUpdateManyWithoutLifecycleStatusNestedInput
 }
 
 export type LifecycleStatusCreateManyInput = {
@@ -437,6 +444,118 @@ export type LifecycleStatusSumOrderByAggregateInput = {
   version?: Prisma.SortOrder
 }
 
+export type LifecycleStatusScalarRelationFilter = {
+  is?: Prisma.LifecycleStatusWhereInput
+  isNot?: Prisma.LifecycleStatusWhereInput
+}
+
+export type LifecycleStatusCreateNestedOneWithoutItemsInput = {
+  create?: Prisma.XOR<Prisma.LifecycleStatusCreateWithoutItemsInput, Prisma.LifecycleStatusUncheckedCreateWithoutItemsInput>
+  connectOrCreate?: Prisma.LifecycleStatusCreateOrConnectWithoutItemsInput
+  connect?: Prisma.LifecycleStatusWhereUniqueInput
+}
+
+export type LifecycleStatusUpdateOneRequiredWithoutItemsNestedInput = {
+  create?: Prisma.XOR<Prisma.LifecycleStatusCreateWithoutItemsInput, Prisma.LifecycleStatusUncheckedCreateWithoutItemsInput>
+  connectOrCreate?: Prisma.LifecycleStatusCreateOrConnectWithoutItemsInput
+  upsert?: Prisma.LifecycleStatusUpsertWithoutItemsInput
+  connect?: Prisma.LifecycleStatusWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.LifecycleStatusUpdateToOneWithWhereWithoutItemsInput, Prisma.LifecycleStatusUpdateWithoutItemsInput>, Prisma.LifecycleStatusUncheckedUpdateWithoutItemsInput>
+}
+
+export type LifecycleStatusCreateWithoutItemsInput = {
+  id: string
+  key: string
+  labelI18n: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  colorToken: string
+  displayOrder?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  archivedAt?: Date | string | null
+  version?: bigint | number
+}
+
+export type LifecycleStatusUncheckedCreateWithoutItemsInput = {
+  id: string
+  key: string
+  labelI18n: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  colorToken: string
+  displayOrder?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  archivedAt?: Date | string | null
+  version?: bigint | number
+}
+
+export type LifecycleStatusCreateOrConnectWithoutItemsInput = {
+  where: Prisma.LifecycleStatusWhereUniqueInput
+  create: Prisma.XOR<Prisma.LifecycleStatusCreateWithoutItemsInput, Prisma.LifecycleStatusUncheckedCreateWithoutItemsInput>
+}
+
+export type LifecycleStatusUpsertWithoutItemsInput = {
+  update: Prisma.XOR<Prisma.LifecycleStatusUpdateWithoutItemsInput, Prisma.LifecycleStatusUncheckedUpdateWithoutItemsInput>
+  create: Prisma.XOR<Prisma.LifecycleStatusCreateWithoutItemsInput, Prisma.LifecycleStatusUncheckedCreateWithoutItemsInput>
+  where?: Prisma.LifecycleStatusWhereInput
+}
+
+export type LifecycleStatusUpdateToOneWithWhereWithoutItemsInput = {
+  where?: Prisma.LifecycleStatusWhereInput
+  data: Prisma.XOR<Prisma.LifecycleStatusUpdateWithoutItemsInput, Prisma.LifecycleStatusUncheckedUpdateWithoutItemsInput>
+}
+
+export type LifecycleStatusUpdateWithoutItemsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  key?: Prisma.StringFieldUpdateOperationsInput | string
+  labelI18n?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  colorToken?: Prisma.StringFieldUpdateOperationsInput | string
+  displayOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+}
+
+export type LifecycleStatusUncheckedUpdateWithoutItemsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  key?: Prisma.StringFieldUpdateOperationsInput | string
+  labelI18n?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  colorToken?: Prisma.StringFieldUpdateOperationsInput | string
+  displayOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+}
+
+
+/**
+ * Count Type LifecycleStatusCountOutputType
+ */
+
+export type LifecycleStatusCountOutputType = {
+  items: number
+}
+
+export type LifecycleStatusCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  items?: boolean | LifecycleStatusCountOutputTypeCountItemsArgs
+}
+
+/**
+ * LifecycleStatusCountOutputType without action
+ */
+export type LifecycleStatusCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the LifecycleStatusCountOutputType
+   */
+  select?: Prisma.LifecycleStatusCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * LifecycleStatusCountOutputType without action
+ */
+export type LifecycleStatusCountOutputTypeCountItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ItemWhereInput
+}
 
 
 export type LifecycleStatusSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -449,6 +568,8 @@ export type LifecycleStatusSelect<ExtArgs extends runtime.Types.Extensions.Inter
   updatedAt?: boolean
   archivedAt?: boolean
   version?: boolean
+  items?: boolean | Prisma.LifecycleStatus$itemsArgs<ExtArgs>
+  _count?: boolean | Prisma.LifecycleStatusCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["lifecycleStatus"]>
 
 export type LifecycleStatusSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -488,10 +609,18 @@ export type LifecycleStatusSelectScalar = {
 }
 
 export type LifecycleStatusOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "key" | "labelI18n" | "colorToken" | "displayOrder" | "createdAt" | "updatedAt" | "archivedAt" | "version", ExtArgs["result"]["lifecycleStatus"]>
+export type LifecycleStatusInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  items?: boolean | Prisma.LifecycleStatus$itemsArgs<ExtArgs>
+  _count?: boolean | Prisma.LifecycleStatusCountOutputTypeDefaultArgs<ExtArgs>
+}
+export type LifecycleStatusIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type LifecycleStatusIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
 
 export type $LifecycleStatusPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "LifecycleStatus"
-  objects: {}
+  objects: {
+    items: Prisma.$ItemPayload<ExtArgs>[]
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     key: string
@@ -896,6 +1025,7 @@ readonly fields: LifecycleStatusFieldRefs;
  */
 export interface Prisma__LifecycleStatusClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  items<T extends Prisma.LifecycleStatus$itemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LifecycleStatus$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -951,6 +1081,10 @@ export type LifecycleStatusFindUniqueArgs<ExtArgs extends runtime.Types.Extensio
    */
   omit?: Prisma.LifecycleStatusOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LifecycleStatusInclude<ExtArgs> | null
+  /**
    * Filter, which LifecycleStatus to fetch.
    */
   where: Prisma.LifecycleStatusWhereUniqueInput
@@ -969,6 +1103,10 @@ export type LifecycleStatusFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.E
    */
   omit?: Prisma.LifecycleStatusOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LifecycleStatusInclude<ExtArgs> | null
+  /**
    * Filter, which LifecycleStatus to fetch.
    */
   where: Prisma.LifecycleStatusWhereUniqueInput
@@ -986,6 +1124,10 @@ export type LifecycleStatusFindFirstArgs<ExtArgs extends runtime.Types.Extension
    * Omit specific fields from the LifecycleStatus
    */
   omit?: Prisma.LifecycleStatusOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LifecycleStatusInclude<ExtArgs> | null
   /**
    * Filter, which LifecycleStatus to fetch.
    */
@@ -1035,6 +1177,10 @@ export type LifecycleStatusFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Ex
    */
   omit?: Prisma.LifecycleStatusOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LifecycleStatusInclude<ExtArgs> | null
+  /**
    * Filter, which LifecycleStatus to fetch.
    */
   where?: Prisma.LifecycleStatusWhereInput
@@ -1082,6 +1228,10 @@ export type LifecycleStatusFindManyArgs<ExtArgs extends runtime.Types.Extensions
    * Omit specific fields from the LifecycleStatus
    */
   omit?: Prisma.LifecycleStatusOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LifecycleStatusInclude<ExtArgs> | null
   /**
    * Filter, which LifecycleStatuses to fetch.
    */
@@ -1131,6 +1281,10 @@ export type LifecycleStatusCreateArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   omit?: Prisma.LifecycleStatusOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LifecycleStatusInclude<ExtArgs> | null
+  /**
    * The data needed to create a LifecycleStatus.
    */
   data: Prisma.XOR<Prisma.LifecycleStatusCreateInput, Prisma.LifecycleStatusUncheckedCreateInput>
@@ -1178,6 +1332,10 @@ export type LifecycleStatusUpdateArgs<ExtArgs extends runtime.Types.Extensions.I
    * Omit specific fields from the LifecycleStatus
    */
   omit?: Prisma.LifecycleStatusOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LifecycleStatusInclude<ExtArgs> | null
   /**
    * The data needed to update a LifecycleStatus.
    */
@@ -1245,6 +1403,10 @@ export type LifecycleStatusUpsertArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   omit?: Prisma.LifecycleStatusOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LifecycleStatusInclude<ExtArgs> | null
+  /**
    * The filter to search for the LifecycleStatus to update in case it exists.
    */
   where: Prisma.LifecycleStatusWhereUniqueInput
@@ -1271,6 +1433,10 @@ export type LifecycleStatusDeleteArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   omit?: Prisma.LifecycleStatusOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LifecycleStatusInclude<ExtArgs> | null
+  /**
    * Filter which LifecycleStatus to delete.
    */
   where: Prisma.LifecycleStatusWhereUniqueInput
@@ -1291,6 +1457,30 @@ export type LifecycleStatusDeleteManyArgs<ExtArgs extends runtime.Types.Extensio
 }
 
 /**
+ * LifecycleStatus.items
+ */
+export type LifecycleStatus$itemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Item
+   */
+  select?: Prisma.ItemSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Item
+   */
+  omit?: Prisma.ItemOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ItemInclude<ExtArgs> | null
+  where?: Prisma.ItemWhereInput
+  orderBy?: Prisma.ItemOrderByWithRelationInput | Prisma.ItemOrderByWithRelationInput[]
+  cursor?: Prisma.ItemWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ItemScalarFieldEnum | Prisma.ItemScalarFieldEnum[]
+}
+
+/**
  * LifecycleStatus without action
  */
 export type LifecycleStatusDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1302,4 +1492,8 @@ export type LifecycleStatusDefaultArgs<ExtArgs extends runtime.Types.Extensions.
    * Omit specific fields from the LifecycleStatus
    */
   omit?: Prisma.LifecycleStatusOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LifecycleStatusInclude<ExtArgs> | null
 }

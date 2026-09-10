@@ -16,6 +16,23 @@ let pool: Pool;
 let prisma: ReturnType<typeof createSettingsClient>;
 let repository: FieldDefinitionRepository;
 let categoryId: string;
+let lifecycleStatusId: string;
+
+async function createFixtureItem(id = randomUUID()): Promise<string> {
+  await prisma.item.create({
+    data: {
+      id,
+      publicId: randomUUID(),
+      slug: `fixture-${id.replaceAll('-', '')}`,
+      categoryId,
+      lifecycleStatusId,
+      displayName: 'Schema fixture item',
+      createdAt: now,
+      updatedAt: now,
+    },
+  });
+  return id;
+}
 
 async function audits(entityId: string): Promise<Record<string, unknown>[]> {
   const { rows } = await pool.query(
@@ -64,6 +81,18 @@ suite('CAT-02 field definitions on PostgreSQL', () => {
           id: randomUUID(),
           key: 'electronics',
           labelI18n: { en: 'Electronics', uk: 'Електроніка' },
+          createdAt: now,
+          updatedAt: now,
+        },
+      })
+    ).id;
+    lifecycleStatusId = (
+      await prisma.lifecycleStatus.create({
+        data: {
+          id: randomUUID(),
+          key: 'stored',
+          labelI18n: { en: 'Stored' },
+          colorToken: 'status.info',
           createdAt: now,
           updatedAt: now,
         },
@@ -371,7 +400,7 @@ suite('CAT-02 field definitions on PostgreSQL', () => {
       data: {
         id: randomUUID(),
         fieldDefinitionId: field.id,
-        itemId: randomUUID(),
+        itemId: await createFixtureItem(),
         position: 0,
         valueText: '42',
         createdAt: now,
@@ -421,6 +450,7 @@ suite('CAT-02 field definitions on PostgreSQL', () => {
       definitionInput({ key: 'previewed', dataType: 'text' }),
     );
     const itemId = randomUUID();
+    await createFixtureItem(itemId);
     for (const [position, valueText] of ['12.5', 'not-a-number', '2026-09-09'].entries()) {
       await prisma.attributeValue.create({
         data: {

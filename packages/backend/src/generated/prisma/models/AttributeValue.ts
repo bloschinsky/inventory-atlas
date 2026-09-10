@@ -322,7 +322,9 @@ export type AttributeValueWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"AttributeValue"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AttributeValue"> | Date | string
   definition?: Prisma.XOR<Prisma.FieldDefinitionScalarRelationFilter, Prisma.FieldDefinitionWhereInput>
+  item?: Prisma.XOR<Prisma.ItemNullableScalarRelationFilter, Prisma.ItemWhereInput> | null
   option?: Prisma.XOR<Prisma.FieldOptionNullableScalarRelationFilter, Prisma.FieldOptionWhereInput> | null
+  referencedItem?: Prisma.XOR<Prisma.ItemNullableScalarRelationFilter, Prisma.ItemWhereInput> | null
 }
 
 export type AttributeValueOrderByWithRelationInput = {
@@ -344,7 +346,9 @@ export type AttributeValueOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   definition?: Prisma.FieldDefinitionOrderByWithRelationInput
+  item?: Prisma.ItemOrderByWithRelationInput
   option?: Prisma.FieldOptionOrderByWithRelationInput
+  referencedItem?: Prisma.ItemOrderByWithRelationInput
 }
 
 export type AttributeValueWhereUniqueInput = Prisma.AtLeast<{
@@ -373,7 +377,9 @@ export type AttributeValueWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"AttributeValue"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AttributeValue"> | Date | string
   definition?: Prisma.XOR<Prisma.FieldDefinitionScalarRelationFilter, Prisma.FieldDefinitionWhereInput>
+  item?: Prisma.XOR<Prisma.ItemNullableScalarRelationFilter, Prisma.ItemWhereInput> | null
   option?: Prisma.XOR<Prisma.FieldOptionNullableScalarRelationFilter, Prisma.FieldOptionWhereInput> | null
+  referencedItem?: Prisma.XOR<Prisma.ItemNullableScalarRelationFilter, Prisma.ItemWhereInput> | null
 }, "id" | "itemId_fieldDefinitionId_valueOptionId" | "itemId_fieldDefinitionId_position" | "storageNodeId_fieldDefinitionId_valueOptionId" | "storageNodeId_fieldDefinitionId_position">
 
 export type AttributeValueOrderByWithAggregationInput = {
@@ -426,7 +432,6 @@ export type AttributeValueScalarWhereWithAggregatesInput = {
 
 export type AttributeValueCreateInput = {
   id: string
-  itemId?: string | null
   storageNodeId?: string | null
   position: number
   valueText?: string | null
@@ -436,12 +441,13 @@ export type AttributeValueCreateInput = {
   valueDatetime?: Date | string | null
   valueMoneyAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   valueMoneyCurrency?: string | null
-  valueReferenceItemId?: string | null
   valueReferenceNodeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   definition: Prisma.FieldDefinitionCreateNestedOneWithoutAttributeValuesInput
+  item?: Prisma.ItemCreateNestedOneWithoutAttributeValuesInput
   option?: Prisma.FieldOptionCreateNestedOneWithoutAttributeValuesInput
+  referencedItem?: Prisma.ItemCreateNestedOneWithoutReferencingValuesInput
 }
 
 export type AttributeValueUncheckedCreateInput = {
@@ -466,7 +472,6 @@ export type AttributeValueUncheckedCreateInput = {
 
 export type AttributeValueUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  itemId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   valueText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -476,12 +481,13 @@ export type AttributeValueUpdateInput = {
   valueDatetime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   valueMoneyAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   valueMoneyCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  valueReferenceItemId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   valueReferenceNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   definition?: Prisma.FieldDefinitionUpdateOneRequiredWithoutAttributeValuesNestedInput
+  item?: Prisma.ItemUpdateOneWithoutAttributeValuesNestedInput
   option?: Prisma.FieldOptionUpdateOneWithoutAttributeValuesNestedInput
+  referencedItem?: Prisma.ItemUpdateOneWithoutReferencingValuesNestedInput
 }
 
 export type AttributeValueUncheckedUpdateInput = {
@@ -526,7 +532,6 @@ export type AttributeValueCreateManyInput = {
 
 export type AttributeValueUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  itemId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   valueText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -536,7 +541,6 @@ export type AttributeValueUpdateManyMutationInput = {
   valueDatetime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   valueMoneyAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   valueMoneyCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  valueReferenceItemId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   valueReferenceNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -764,9 +768,92 @@ export type AttributeValueUncheckedUpdateManyWithoutOptionNestedInput = {
   deleteMany?: Prisma.AttributeValueScalarWhereInput | Prisma.AttributeValueScalarWhereInput[]
 }
 
+export type AttributeValueCreateNestedManyWithoutItemInput = {
+  create?: Prisma.XOR<Prisma.AttributeValueCreateWithoutItemInput, Prisma.AttributeValueUncheckedCreateWithoutItemInput> | Prisma.AttributeValueCreateWithoutItemInput[] | Prisma.AttributeValueUncheckedCreateWithoutItemInput[]
+  connectOrCreate?: Prisma.AttributeValueCreateOrConnectWithoutItemInput | Prisma.AttributeValueCreateOrConnectWithoutItemInput[]
+  createMany?: Prisma.AttributeValueCreateManyItemInputEnvelope
+  connect?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+}
+
+export type AttributeValueCreateNestedManyWithoutReferencedItemInput = {
+  create?: Prisma.XOR<Prisma.AttributeValueCreateWithoutReferencedItemInput, Prisma.AttributeValueUncheckedCreateWithoutReferencedItemInput> | Prisma.AttributeValueCreateWithoutReferencedItemInput[] | Prisma.AttributeValueUncheckedCreateWithoutReferencedItemInput[]
+  connectOrCreate?: Prisma.AttributeValueCreateOrConnectWithoutReferencedItemInput | Prisma.AttributeValueCreateOrConnectWithoutReferencedItemInput[]
+  createMany?: Prisma.AttributeValueCreateManyReferencedItemInputEnvelope
+  connect?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+}
+
+export type AttributeValueUncheckedCreateNestedManyWithoutItemInput = {
+  create?: Prisma.XOR<Prisma.AttributeValueCreateWithoutItemInput, Prisma.AttributeValueUncheckedCreateWithoutItemInput> | Prisma.AttributeValueCreateWithoutItemInput[] | Prisma.AttributeValueUncheckedCreateWithoutItemInput[]
+  connectOrCreate?: Prisma.AttributeValueCreateOrConnectWithoutItemInput | Prisma.AttributeValueCreateOrConnectWithoutItemInput[]
+  createMany?: Prisma.AttributeValueCreateManyItemInputEnvelope
+  connect?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+}
+
+export type AttributeValueUncheckedCreateNestedManyWithoutReferencedItemInput = {
+  create?: Prisma.XOR<Prisma.AttributeValueCreateWithoutReferencedItemInput, Prisma.AttributeValueUncheckedCreateWithoutReferencedItemInput> | Prisma.AttributeValueCreateWithoutReferencedItemInput[] | Prisma.AttributeValueUncheckedCreateWithoutReferencedItemInput[]
+  connectOrCreate?: Prisma.AttributeValueCreateOrConnectWithoutReferencedItemInput | Prisma.AttributeValueCreateOrConnectWithoutReferencedItemInput[]
+  createMany?: Prisma.AttributeValueCreateManyReferencedItemInputEnvelope
+  connect?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+}
+
+export type AttributeValueUpdateManyWithoutItemNestedInput = {
+  create?: Prisma.XOR<Prisma.AttributeValueCreateWithoutItemInput, Prisma.AttributeValueUncheckedCreateWithoutItemInput> | Prisma.AttributeValueCreateWithoutItemInput[] | Prisma.AttributeValueUncheckedCreateWithoutItemInput[]
+  connectOrCreate?: Prisma.AttributeValueCreateOrConnectWithoutItemInput | Prisma.AttributeValueCreateOrConnectWithoutItemInput[]
+  upsert?: Prisma.AttributeValueUpsertWithWhereUniqueWithoutItemInput | Prisma.AttributeValueUpsertWithWhereUniqueWithoutItemInput[]
+  createMany?: Prisma.AttributeValueCreateManyItemInputEnvelope
+  set?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+  disconnect?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+  delete?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+  connect?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+  update?: Prisma.AttributeValueUpdateWithWhereUniqueWithoutItemInput | Prisma.AttributeValueUpdateWithWhereUniqueWithoutItemInput[]
+  updateMany?: Prisma.AttributeValueUpdateManyWithWhereWithoutItemInput | Prisma.AttributeValueUpdateManyWithWhereWithoutItemInput[]
+  deleteMany?: Prisma.AttributeValueScalarWhereInput | Prisma.AttributeValueScalarWhereInput[]
+}
+
+export type AttributeValueUpdateManyWithoutReferencedItemNestedInput = {
+  create?: Prisma.XOR<Prisma.AttributeValueCreateWithoutReferencedItemInput, Prisma.AttributeValueUncheckedCreateWithoutReferencedItemInput> | Prisma.AttributeValueCreateWithoutReferencedItemInput[] | Prisma.AttributeValueUncheckedCreateWithoutReferencedItemInput[]
+  connectOrCreate?: Prisma.AttributeValueCreateOrConnectWithoutReferencedItemInput | Prisma.AttributeValueCreateOrConnectWithoutReferencedItemInput[]
+  upsert?: Prisma.AttributeValueUpsertWithWhereUniqueWithoutReferencedItemInput | Prisma.AttributeValueUpsertWithWhereUniqueWithoutReferencedItemInput[]
+  createMany?: Prisma.AttributeValueCreateManyReferencedItemInputEnvelope
+  set?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+  disconnect?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+  delete?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+  connect?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+  update?: Prisma.AttributeValueUpdateWithWhereUniqueWithoutReferencedItemInput | Prisma.AttributeValueUpdateWithWhereUniqueWithoutReferencedItemInput[]
+  updateMany?: Prisma.AttributeValueUpdateManyWithWhereWithoutReferencedItemInput | Prisma.AttributeValueUpdateManyWithWhereWithoutReferencedItemInput[]
+  deleteMany?: Prisma.AttributeValueScalarWhereInput | Prisma.AttributeValueScalarWhereInput[]
+}
+
+export type AttributeValueUncheckedUpdateManyWithoutItemNestedInput = {
+  create?: Prisma.XOR<Prisma.AttributeValueCreateWithoutItemInput, Prisma.AttributeValueUncheckedCreateWithoutItemInput> | Prisma.AttributeValueCreateWithoutItemInput[] | Prisma.AttributeValueUncheckedCreateWithoutItemInput[]
+  connectOrCreate?: Prisma.AttributeValueCreateOrConnectWithoutItemInput | Prisma.AttributeValueCreateOrConnectWithoutItemInput[]
+  upsert?: Prisma.AttributeValueUpsertWithWhereUniqueWithoutItemInput | Prisma.AttributeValueUpsertWithWhereUniqueWithoutItemInput[]
+  createMany?: Prisma.AttributeValueCreateManyItemInputEnvelope
+  set?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+  disconnect?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+  delete?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+  connect?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+  update?: Prisma.AttributeValueUpdateWithWhereUniqueWithoutItemInput | Prisma.AttributeValueUpdateWithWhereUniqueWithoutItemInput[]
+  updateMany?: Prisma.AttributeValueUpdateManyWithWhereWithoutItemInput | Prisma.AttributeValueUpdateManyWithWhereWithoutItemInput[]
+  deleteMany?: Prisma.AttributeValueScalarWhereInput | Prisma.AttributeValueScalarWhereInput[]
+}
+
+export type AttributeValueUncheckedUpdateManyWithoutReferencedItemNestedInput = {
+  create?: Prisma.XOR<Prisma.AttributeValueCreateWithoutReferencedItemInput, Prisma.AttributeValueUncheckedCreateWithoutReferencedItemInput> | Prisma.AttributeValueCreateWithoutReferencedItemInput[] | Prisma.AttributeValueUncheckedCreateWithoutReferencedItemInput[]
+  connectOrCreate?: Prisma.AttributeValueCreateOrConnectWithoutReferencedItemInput | Prisma.AttributeValueCreateOrConnectWithoutReferencedItemInput[]
+  upsert?: Prisma.AttributeValueUpsertWithWhereUniqueWithoutReferencedItemInput | Prisma.AttributeValueUpsertWithWhereUniqueWithoutReferencedItemInput[]
+  createMany?: Prisma.AttributeValueCreateManyReferencedItemInputEnvelope
+  set?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+  disconnect?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+  delete?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+  connect?: Prisma.AttributeValueWhereUniqueInput | Prisma.AttributeValueWhereUniqueInput[]
+  update?: Prisma.AttributeValueUpdateWithWhereUniqueWithoutReferencedItemInput | Prisma.AttributeValueUpdateWithWhereUniqueWithoutReferencedItemInput[]
+  updateMany?: Prisma.AttributeValueUpdateManyWithWhereWithoutReferencedItemInput | Prisma.AttributeValueUpdateManyWithWhereWithoutReferencedItemInput[]
+  deleteMany?: Prisma.AttributeValueScalarWhereInput | Prisma.AttributeValueScalarWhereInput[]
+}
+
 export type AttributeValueCreateWithoutDefinitionInput = {
   id: string
-  itemId?: string | null
   storageNodeId?: string | null
   position: number
   valueText?: string | null
@@ -776,11 +863,12 @@ export type AttributeValueCreateWithoutDefinitionInput = {
   valueDatetime?: Date | string | null
   valueMoneyAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   valueMoneyCurrency?: string | null
-  valueReferenceItemId?: string | null
   valueReferenceNodeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  item?: Prisma.ItemCreateNestedOneWithoutAttributeValuesInput
   option?: Prisma.FieldOptionCreateNestedOneWithoutAttributeValuesInput
+  referencedItem?: Prisma.ItemCreateNestedOneWithoutReferencingValuesInput
 }
 
 export type AttributeValueUncheckedCreateWithoutDefinitionInput = {
@@ -853,7 +941,6 @@ export type AttributeValueScalarWhereInput = {
 
 export type AttributeValueCreateWithoutOptionInput = {
   id: string
-  itemId?: string | null
   storageNodeId?: string | null
   position: number
   valueText?: string | null
@@ -863,11 +950,12 @@ export type AttributeValueCreateWithoutOptionInput = {
   valueDatetime?: Date | string | null
   valueMoneyAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   valueMoneyCurrency?: string | null
-  valueReferenceItemId?: string | null
   valueReferenceNodeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   definition: Prisma.FieldDefinitionCreateNestedOneWithoutAttributeValuesInput
+  item?: Prisma.ItemCreateNestedOneWithoutAttributeValuesInput
+  referencedItem?: Prisma.ItemCreateNestedOneWithoutReferencingValuesInput
 }
 
 export type AttributeValueUncheckedCreateWithoutOptionInput = {
@@ -914,6 +1002,134 @@ export type AttributeValueUpdateManyWithWhereWithoutOptionInput = {
   data: Prisma.XOR<Prisma.AttributeValueUpdateManyMutationInput, Prisma.AttributeValueUncheckedUpdateManyWithoutOptionInput>
 }
 
+export type AttributeValueCreateWithoutItemInput = {
+  id: string
+  storageNodeId?: string | null
+  position: number
+  valueText?: string | null
+  valueNumber?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueBoolean?: boolean | null
+  valueDate?: Date | string | null
+  valueDatetime?: Date | string | null
+  valueMoneyAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueMoneyCurrency?: string | null
+  valueReferenceNodeId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  definition: Prisma.FieldDefinitionCreateNestedOneWithoutAttributeValuesInput
+  option?: Prisma.FieldOptionCreateNestedOneWithoutAttributeValuesInput
+  referencedItem?: Prisma.ItemCreateNestedOneWithoutReferencingValuesInput
+}
+
+export type AttributeValueUncheckedCreateWithoutItemInput = {
+  id: string
+  fieldDefinitionId: string
+  storageNodeId?: string | null
+  position: number
+  valueText?: string | null
+  valueNumber?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueBoolean?: boolean | null
+  valueDate?: Date | string | null
+  valueDatetime?: Date | string | null
+  valueOptionId?: string | null
+  valueMoneyAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueMoneyCurrency?: string | null
+  valueReferenceItemId?: string | null
+  valueReferenceNodeId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type AttributeValueCreateOrConnectWithoutItemInput = {
+  where: Prisma.AttributeValueWhereUniqueInput
+  create: Prisma.XOR<Prisma.AttributeValueCreateWithoutItemInput, Prisma.AttributeValueUncheckedCreateWithoutItemInput>
+}
+
+export type AttributeValueCreateManyItemInputEnvelope = {
+  data: Prisma.AttributeValueCreateManyItemInput | Prisma.AttributeValueCreateManyItemInput[]
+  skipDuplicates?: boolean
+}
+
+export type AttributeValueCreateWithoutReferencedItemInput = {
+  id: string
+  storageNodeId?: string | null
+  position: number
+  valueText?: string | null
+  valueNumber?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueBoolean?: boolean | null
+  valueDate?: Date | string | null
+  valueDatetime?: Date | string | null
+  valueMoneyAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueMoneyCurrency?: string | null
+  valueReferenceNodeId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  definition: Prisma.FieldDefinitionCreateNestedOneWithoutAttributeValuesInput
+  item?: Prisma.ItemCreateNestedOneWithoutAttributeValuesInput
+  option?: Prisma.FieldOptionCreateNestedOneWithoutAttributeValuesInput
+}
+
+export type AttributeValueUncheckedCreateWithoutReferencedItemInput = {
+  id: string
+  fieldDefinitionId: string
+  itemId?: string | null
+  storageNodeId?: string | null
+  position: number
+  valueText?: string | null
+  valueNumber?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueBoolean?: boolean | null
+  valueDate?: Date | string | null
+  valueDatetime?: Date | string | null
+  valueOptionId?: string | null
+  valueMoneyAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueMoneyCurrency?: string | null
+  valueReferenceNodeId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type AttributeValueCreateOrConnectWithoutReferencedItemInput = {
+  where: Prisma.AttributeValueWhereUniqueInput
+  create: Prisma.XOR<Prisma.AttributeValueCreateWithoutReferencedItemInput, Prisma.AttributeValueUncheckedCreateWithoutReferencedItemInput>
+}
+
+export type AttributeValueCreateManyReferencedItemInputEnvelope = {
+  data: Prisma.AttributeValueCreateManyReferencedItemInput | Prisma.AttributeValueCreateManyReferencedItemInput[]
+  skipDuplicates?: boolean
+}
+
+export type AttributeValueUpsertWithWhereUniqueWithoutItemInput = {
+  where: Prisma.AttributeValueWhereUniqueInput
+  update: Prisma.XOR<Prisma.AttributeValueUpdateWithoutItemInput, Prisma.AttributeValueUncheckedUpdateWithoutItemInput>
+  create: Prisma.XOR<Prisma.AttributeValueCreateWithoutItemInput, Prisma.AttributeValueUncheckedCreateWithoutItemInput>
+}
+
+export type AttributeValueUpdateWithWhereUniqueWithoutItemInput = {
+  where: Prisma.AttributeValueWhereUniqueInput
+  data: Prisma.XOR<Prisma.AttributeValueUpdateWithoutItemInput, Prisma.AttributeValueUncheckedUpdateWithoutItemInput>
+}
+
+export type AttributeValueUpdateManyWithWhereWithoutItemInput = {
+  where: Prisma.AttributeValueScalarWhereInput
+  data: Prisma.XOR<Prisma.AttributeValueUpdateManyMutationInput, Prisma.AttributeValueUncheckedUpdateManyWithoutItemInput>
+}
+
+export type AttributeValueUpsertWithWhereUniqueWithoutReferencedItemInput = {
+  where: Prisma.AttributeValueWhereUniqueInput
+  update: Prisma.XOR<Prisma.AttributeValueUpdateWithoutReferencedItemInput, Prisma.AttributeValueUncheckedUpdateWithoutReferencedItemInput>
+  create: Prisma.XOR<Prisma.AttributeValueCreateWithoutReferencedItemInput, Prisma.AttributeValueUncheckedCreateWithoutReferencedItemInput>
+}
+
+export type AttributeValueUpdateWithWhereUniqueWithoutReferencedItemInput = {
+  where: Prisma.AttributeValueWhereUniqueInput
+  data: Prisma.XOR<Prisma.AttributeValueUpdateWithoutReferencedItemInput, Prisma.AttributeValueUncheckedUpdateWithoutReferencedItemInput>
+}
+
+export type AttributeValueUpdateManyWithWhereWithoutReferencedItemInput = {
+  where: Prisma.AttributeValueScalarWhereInput
+  data: Prisma.XOR<Prisma.AttributeValueUpdateManyMutationInput, Prisma.AttributeValueUncheckedUpdateManyWithoutReferencedItemInput>
+}
+
 export type AttributeValueCreateManyDefinitionInput = {
   id: string
   itemId?: string | null
@@ -935,7 +1151,6 @@ export type AttributeValueCreateManyDefinitionInput = {
 
 export type AttributeValueUpdateWithoutDefinitionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  itemId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   valueText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -945,11 +1160,12 @@ export type AttributeValueUpdateWithoutDefinitionInput = {
   valueDatetime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   valueMoneyAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   valueMoneyCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  valueReferenceItemId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   valueReferenceNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  item?: Prisma.ItemUpdateOneWithoutAttributeValuesNestedInput
   option?: Prisma.FieldOptionUpdateOneWithoutAttributeValuesNestedInput
+  referencedItem?: Prisma.ItemUpdateOneWithoutReferencingValuesNestedInput
 }
 
 export type AttributeValueUncheckedUpdateWithoutDefinitionInput = {
@@ -1010,7 +1226,6 @@ export type AttributeValueCreateManyOptionInput = {
 
 export type AttributeValueUpdateWithoutOptionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  itemId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   valueText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1020,11 +1235,12 @@ export type AttributeValueUpdateWithoutOptionInput = {
   valueDatetime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   valueMoneyAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   valueMoneyCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  valueReferenceItemId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   valueReferenceNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   definition?: Prisma.FieldDefinitionUpdateOneRequiredWithoutAttributeValuesNestedInput
+  item?: Prisma.ItemUpdateOneWithoutAttributeValuesNestedInput
+  referencedItem?: Prisma.ItemUpdateOneWithoutReferencingValuesNestedInput
 }
 
 export type AttributeValueUncheckedUpdateWithoutOptionInput = {
@@ -1063,6 +1279,158 @@ export type AttributeValueUncheckedUpdateManyWithoutOptionInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+export type AttributeValueCreateManyItemInput = {
+  id: string
+  fieldDefinitionId: string
+  storageNodeId?: string | null
+  position: number
+  valueText?: string | null
+  valueNumber?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueBoolean?: boolean | null
+  valueDate?: Date | string | null
+  valueDatetime?: Date | string | null
+  valueOptionId?: string | null
+  valueMoneyAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueMoneyCurrency?: string | null
+  valueReferenceItemId?: string | null
+  valueReferenceNodeId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type AttributeValueCreateManyReferencedItemInput = {
+  id: string
+  fieldDefinitionId: string
+  itemId?: string | null
+  storageNodeId?: string | null
+  position: number
+  valueText?: string | null
+  valueNumber?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueBoolean?: boolean | null
+  valueDate?: Date | string | null
+  valueDatetime?: Date | string | null
+  valueOptionId?: string | null
+  valueMoneyAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueMoneyCurrency?: string | null
+  valueReferenceNodeId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type AttributeValueUpdateWithoutItemInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  valueText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  valueNumber?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueBoolean?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  valueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  valueDatetime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  valueMoneyAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueMoneyCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  valueReferenceNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  definition?: Prisma.FieldDefinitionUpdateOneRequiredWithoutAttributeValuesNestedInput
+  option?: Prisma.FieldOptionUpdateOneWithoutAttributeValuesNestedInput
+  referencedItem?: Prisma.ItemUpdateOneWithoutReferencingValuesNestedInput
+}
+
+export type AttributeValueUncheckedUpdateWithoutItemInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  fieldDefinitionId?: Prisma.StringFieldUpdateOperationsInput | string
+  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  valueText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  valueNumber?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueBoolean?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  valueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  valueDatetime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  valueOptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  valueMoneyAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueMoneyCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  valueReferenceItemId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  valueReferenceNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type AttributeValueUncheckedUpdateManyWithoutItemInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  fieldDefinitionId?: Prisma.StringFieldUpdateOperationsInput | string
+  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  valueText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  valueNumber?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueBoolean?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  valueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  valueDatetime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  valueOptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  valueMoneyAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueMoneyCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  valueReferenceItemId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  valueReferenceNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type AttributeValueUpdateWithoutReferencedItemInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  valueText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  valueNumber?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueBoolean?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  valueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  valueDatetime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  valueMoneyAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueMoneyCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  valueReferenceNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  definition?: Prisma.FieldDefinitionUpdateOneRequiredWithoutAttributeValuesNestedInput
+  item?: Prisma.ItemUpdateOneWithoutAttributeValuesNestedInput
+  option?: Prisma.FieldOptionUpdateOneWithoutAttributeValuesNestedInput
+}
+
+export type AttributeValueUncheckedUpdateWithoutReferencedItemInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  fieldDefinitionId?: Prisma.StringFieldUpdateOperationsInput | string
+  itemId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  valueText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  valueNumber?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueBoolean?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  valueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  valueDatetime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  valueOptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  valueMoneyAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueMoneyCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  valueReferenceNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type AttributeValueUncheckedUpdateManyWithoutReferencedItemInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  fieldDefinitionId?: Prisma.StringFieldUpdateOperationsInput | string
+  itemId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  valueText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  valueNumber?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueBoolean?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  valueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  valueDatetime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  valueOptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  valueMoneyAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueMoneyCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  valueReferenceNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 
 
 export type AttributeValueSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1084,7 +1452,9 @@ export type AttributeValueSelect<ExtArgs extends runtime.Types.Extensions.Intern
   createdAt?: boolean
   updatedAt?: boolean
   definition?: boolean | Prisma.FieldDefinitionDefaultArgs<ExtArgs>
+  item?: boolean | Prisma.AttributeValue$itemArgs<ExtArgs>
   option?: boolean | Prisma.AttributeValue$optionArgs<ExtArgs>
+  referencedItem?: boolean | Prisma.AttributeValue$referencedItemArgs<ExtArgs>
 }, ExtArgs["result"]["attributeValue"]>
 
 export type AttributeValueSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1106,7 +1476,9 @@ export type AttributeValueSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   createdAt?: boolean
   updatedAt?: boolean
   definition?: boolean | Prisma.FieldDefinitionDefaultArgs<ExtArgs>
+  item?: boolean | Prisma.AttributeValue$itemArgs<ExtArgs>
   option?: boolean | Prisma.AttributeValue$optionArgs<ExtArgs>
+  referencedItem?: boolean | Prisma.AttributeValue$referencedItemArgs<ExtArgs>
 }, ExtArgs["result"]["attributeValue"]>
 
 export type AttributeValueSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1128,7 +1500,9 @@ export type AttributeValueSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   createdAt?: boolean
   updatedAt?: boolean
   definition?: boolean | Prisma.FieldDefinitionDefaultArgs<ExtArgs>
+  item?: boolean | Prisma.AttributeValue$itemArgs<ExtArgs>
   option?: boolean | Prisma.AttributeValue$optionArgs<ExtArgs>
+  referencedItem?: boolean | Prisma.AttributeValue$referencedItemArgs<ExtArgs>
 }, ExtArgs["result"]["attributeValue"]>
 
 export type AttributeValueSelectScalar = {
@@ -1154,22 +1528,30 @@ export type AttributeValueSelectScalar = {
 export type AttributeValueOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "fieldDefinitionId" | "itemId" | "storageNodeId" | "position" | "valueText" | "valueNumber" | "valueBoolean" | "valueDate" | "valueDatetime" | "valueOptionId" | "valueMoneyAmount" | "valueMoneyCurrency" | "valueReferenceItemId" | "valueReferenceNodeId" | "createdAt" | "updatedAt", ExtArgs["result"]["attributeValue"]>
 export type AttributeValueInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   definition?: boolean | Prisma.FieldDefinitionDefaultArgs<ExtArgs>
+  item?: boolean | Prisma.AttributeValue$itemArgs<ExtArgs>
   option?: boolean | Prisma.AttributeValue$optionArgs<ExtArgs>
+  referencedItem?: boolean | Prisma.AttributeValue$referencedItemArgs<ExtArgs>
 }
 export type AttributeValueIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   definition?: boolean | Prisma.FieldDefinitionDefaultArgs<ExtArgs>
+  item?: boolean | Prisma.AttributeValue$itemArgs<ExtArgs>
   option?: boolean | Prisma.AttributeValue$optionArgs<ExtArgs>
+  referencedItem?: boolean | Prisma.AttributeValue$referencedItemArgs<ExtArgs>
 }
 export type AttributeValueIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   definition?: boolean | Prisma.FieldDefinitionDefaultArgs<ExtArgs>
+  item?: boolean | Prisma.AttributeValue$itemArgs<ExtArgs>
   option?: boolean | Prisma.AttributeValue$optionArgs<ExtArgs>
+  referencedItem?: boolean | Prisma.AttributeValue$referencedItemArgs<ExtArgs>
 }
 
 export type $AttributeValuePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "AttributeValue"
   objects: {
     definition: Prisma.$FieldDefinitionPayload<ExtArgs>
+    item: Prisma.$ItemPayload<ExtArgs> | null
     option: Prisma.$FieldOptionPayload<ExtArgs> | null
+    referencedItem: Prisma.$ItemPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1584,7 +1966,9 @@ readonly fields: AttributeValueFieldRefs;
 export interface Prisma__AttributeValueClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   definition<T extends Prisma.FieldDefinitionDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.FieldDefinitionDefaultArgs<ExtArgs>>): Prisma.Prisma__FieldDefinitionClient<runtime.Types.Result.GetResult<Prisma.$FieldDefinitionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  item<T extends Prisma.AttributeValue$itemArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AttributeValue$itemArgs<ExtArgs>>): Prisma.Prisma__ItemClient<runtime.Types.Result.GetResult<Prisma.$ItemPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   option<T extends Prisma.AttributeValue$optionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AttributeValue$optionArgs<ExtArgs>>): Prisma.Prisma__FieldOptionClient<runtime.Types.Result.GetResult<Prisma.$FieldOptionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  referencedItem<T extends Prisma.AttributeValue$referencedItemArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AttributeValue$referencedItemArgs<ExtArgs>>): Prisma.Prisma__ItemClient<runtime.Types.Result.GetResult<Prisma.$ItemPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2032,6 +2416,25 @@ export type AttributeValueDeleteManyArgs<ExtArgs extends runtime.Types.Extension
 }
 
 /**
+ * AttributeValue.item
+ */
+export type AttributeValue$itemArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Item
+   */
+  select?: Prisma.ItemSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Item
+   */
+  omit?: Prisma.ItemOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ItemInclude<ExtArgs> | null
+  where?: Prisma.ItemWhereInput
+}
+
+/**
  * AttributeValue.option
  */
 export type AttributeValue$optionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2048,6 +2451,25 @@ export type AttributeValue$optionArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   include?: Prisma.FieldOptionInclude<ExtArgs> | null
   where?: Prisma.FieldOptionWhereInput
+}
+
+/**
+ * AttributeValue.referencedItem
+ */
+export type AttributeValue$referencedItemArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Item
+   */
+  select?: Prisma.ItemSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Item
+   */
+  omit?: Prisma.ItemOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ItemInclude<ExtArgs> | null
+  where?: Prisma.ItemWhereInput
 }
 
 /**

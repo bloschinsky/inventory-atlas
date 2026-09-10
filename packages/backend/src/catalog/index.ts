@@ -1,4 +1,15 @@
 export {
+  ItemRepository,
+  itemSlug,
+  itemVisibilities,
+  normalizeItemVisibility,
+  normalizeTagName,
+  type CreateItemCoreInput,
+  type ItemCoreRecord,
+  type ItemTransaction,
+  type ItemVisibility,
+} from './item-repository.js';
+export {
   CatalogDictionaryRepository,
   type CategoryRecord,
   type DictionaryMutationMetadata,

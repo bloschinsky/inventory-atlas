@@ -75,3 +75,18 @@ export type FieldDefinition = Prisma.FieldDefinitionModel
  * key/owner trigger defined by the Kysely migration remain authoritative.
  */
 export type FieldOption = Prisma.FieldOptionModel
+/**
+ * Model Item
+ * Database checks and the immutable-public-ID trigger defined by Kysely remain authoritative.
+ */
+export type Item = Prisma.ItemModel
+/**
+ * Model Tag
+ * 
+ */
+export type Tag = Prisma.TagModel
+/**
+ * Model ItemTag
+ * 
+ */
+export type ItemTag = Prisma.ItemTagModel
