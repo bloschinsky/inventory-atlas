@@ -1,6 +1,7 @@
 import {
   AuthRateLimiter,
   CatalogDictionaryAuthorizationError,
+  DisplayTemplateError,
   ItemVersionConflictError,
   SchemaAuthorizationError,
   SchemaPolicyError,
@@ -77,6 +78,16 @@ const dictionaries = {
   createLifecycleStatus: vi.fn(),
   updateLifecycleStatus: vi.fn(),
   archiveLifecycleStatus: vi.fn(),
+  previewCategoryDisplayName: vi.fn(async () => ({
+    template: '{{brand}} {{model}} - {{condition}}',
+    tokens: [
+      { key: 'brand', kind: 'field' as const, labels: null, dataType: 'text' as const },
+      { key: 'model', kind: 'field' as const, labels: null, dataType: 'text' as const },
+      { key: 'condition', kind: 'field' as const, labels: null, dataType: 'select' as const },
+    ],
+    rendered: { en: 'Pentax LX - Used', uk: 'Pentax LX - Вживаний' },
+    missingTokens: ['model'],
+  })),
 };
 const fieldDefinitionId = '0198f40c-92f3-7a12-bc9a-653f97786c30';
 const fieldDefinition = {
@@ -271,6 +282,7 @@ describe('API composition root', () => {
       'listInvitations',
       'listLifecycleStatuses',
       'listUsers',
+      'previewCategoryDisplayName',
       'previewFieldDefinitionConversion',
       'revokeAuthSession',
       'revokeInvitation',
@@ -294,6 +306,61 @@ describe('API composition root', () => {
       UpdatedItemDto: expect.any(Object),
       UpdateItemRequestDto: expect.any(Object),
       VersionConflictProblemDto: expect.any(Object),
+    });
+    await app.close();
+  });
+
+  it('previews a display-name template with the renderer the Items use', async () => {
+    dictionaries.previewCategoryDisplayName.mockClear();
+    const app = await createApiApplication(runtime);
+    await app.init();
+    const categoryId = '0198f40c-92f3-7a12-bc9a-653f97786c41';
+    const headers = {
+      cookie: `inventory_atlas_session=${sessionToken}`,
+      'x-csrf-token': csrfToken,
+    };
+    const response = await app.inject({
+      method: 'POST',
+      url: `/api/v1/categories/${categoryId}/display-name-preview`,
+      headers,
+      payload: {
+        template: '{{brand}} {{model}} - {{condition}}',
+        sample: { brand: 'Pentax' },
+      },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      rendered: { en: 'Pentax LX - Used', uk: 'Pentax LX - Вживаний' },
+      missingTokens: ['model'],
+    });
+    expect(dictionaries.previewCategoryDisplayName).toHaveBeenCalledWith(
+      expect.objectContaining({ role: 'owner' }),
+      categoryId,
+      '{{brand}} {{model}} - {{condition}}',
+      { brand: 'Pentax' },
+    );
+
+    const missing = await app.inject({
+      method: 'POST',
+      url: `/api/v1/categories/${categoryId}/display-name-preview`,
+      headers,
+      payload: {},
+    });
+    expect(missing.statusCode).toBe(400);
+
+    dictionaries.previewCategoryDisplayName.mockRejectedValueOnce(
+      new DisplayTemplateError([{ code: 'TEMPLATE_PRIVATE_TOKEN', token: 'owner_note' }]),
+    );
+    const rejected = await app.inject({
+      method: 'POST',
+      url: `/api/v1/categories/${categoryId}/display-name-preview`,
+      headers,
+      payload: { template: '{{owner_note}}' },
+    });
+    expect(rejected.statusCode).toBe(400);
+    expect(rejected.json()).toMatchObject({
+      code: 'VALIDATION_FAILED',
+      fieldErrors: [{ field: 'displayTemplate', messages: ['TEMPLATE_PRIVATE_TOKEN:owner_note'] }],
     });
     await app.close();
   });

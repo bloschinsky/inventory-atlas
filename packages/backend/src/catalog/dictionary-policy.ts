@@ -1,3 +1,5 @@
+import { parseDisplayTemplate } from '../schema/display-template.js';
+
 export const stableDictionaryKeyPattern = /^[a-z][a-z0-9_]{0,63}$/u;
 export const semanticColorTokenPattern = /^[a-z][a-z0-9]*(?:\.[a-z0-9]+)*$/u;
 
@@ -77,6 +79,11 @@ export function validateColorToken(value: unknown): string {
   return value;
 }
 
+/**
+ * A stored category template must already satisfy the display-name grammar, so an invalid
+ * template can never reach the renderer. Token resolution against the category's fields happens
+ * in the application service, which is the layer that can read them.
+ */
 export function normalizeDisplayTemplate(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   if (typeof value !== 'string' || value.trim() === '') {
@@ -85,7 +92,9 @@ export function normalizeDisplayTemplate(value: unknown): string | null {
       'A category display template must be non-empty when supplied.',
     );
   }
-  return value.trim();
+  const template = value.trim();
+  parseDisplayTemplate(template);
+  return template;
 }
 
 export function validateExpectedVersion(value: unknown): number {

@@ -13,5 +13,6 @@ export interface CatalogRuntimePort {
     | 'createLifecycleStatus'
     | 'updateLifecycleStatus'
     | 'archiveLifecycleStatus'
+    | 'previewCategoryDisplayName'
   >;
 }

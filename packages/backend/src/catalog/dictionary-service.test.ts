@@ -26,36 +26,40 @@ function repository() {
   };
 }
 
+function fieldRepository() {
+  return { listDefinitions: vi.fn(async () => []) } as never;
+}
+
 describe('catalog dictionary application service', () => {
   it('allows an Admin to manage dictionaries', async () => {
     const adapter = repository();
-    const service = new CatalogDictionaryService(adapter as never);
+    const service = new CatalogDictionaryService(adapter as never, fieldRepository());
     await service.listCategories(admin, true);
     expect(adapter.listCategories).toHaveBeenCalledWith(true);
   });
 
   it('allows active reads but rejects management without manageSchema', async () => {
     const adapter = repository();
-    const service = new CatalogDictionaryService(adapter as never);
+    const service = new CatalogDictionaryService(adapter as never, fieldRepository());
     const editor = { ...admin, role: 'editor' as const, permissions: permissionsFor('editor') };
     await service.listLifecycleStatuses(editor);
     expect(adapter.listLifecycleStatuses).toHaveBeenCalledWith(false);
     expect(() => service.listLifecycleStatuses(editor, true)).toThrow(
       expect.objectContaining({ code: 'CATALOG_DICTIONARY_FORBIDDEN' }),
     );
-    expect(() =>
+    await expect(
       service.createCategory(editor, {
         key: 'tools',
         labels: { en: 'Tools' },
         displayOrder: 0,
       }),
-    ).toThrow(expect.objectContaining({ code: 'CATALOG_DICTIONARY_FORBIDDEN' }));
+    ).rejects.toMatchObject({ code: 'CATALOG_DICTIONARY_FORBIDDEN' });
     expect(adapter.createCategory).not.toHaveBeenCalled();
   });
 
   it('allows historical Item resolution to include archived dictionaries for a viewer', async () => {
     const adapter = repository();
-    const service = new CatalogDictionaryService(adapter as never);
+    const service = new CatalogDictionaryService(adapter as never, fieldRepository());
     const viewer = { ...admin, role: 'viewer' as const, permissions: permissionsFor('viewer') };
     await service.resolveCategory(viewer, 'category-id');
     await service.resolveLifecycleStatus(viewer, 'status-id');

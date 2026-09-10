@@ -19,6 +19,7 @@ import {
   listDictionary,
   updateDictionaryEntry,
 } from '../features/catalog/api.js';
+import DisplayTemplateEditor from '../features/catalog/DisplayTemplateEditor.vue';
 import { useSessionContext } from '../shared/auth/session-context.js';
 import { problemMessageKey } from '../shared/lib/problem-message.js';
 
@@ -278,9 +279,11 @@ watch(kind, () => {
               option-value="value"
             />
           </AppField>
-          <AppField input-id="dictionary-template" :label="t('catalog.displayTemplate')">
-            <AppInput id="dictionary-template" v-model="form.displayTemplate" />
-          </AppField>
+          <DisplayTemplateEditor
+            v-model="form.displayTemplate"
+            :category-id="editingId"
+            :csrf-token="session.summary?.csrfToken ?? ''"
+          />
         </template>
         <AppField
           v-else

@@ -114,10 +114,9 @@ export class FoundationRuntime
         configuration.sessionSecret,
         authorizationSettings,
       );
-      runtime.dictionaries = new CatalogDictionaryService(
-        new CatalogDictionaryRepository(settingsClient),
-      );
+      const dictionaryRepository = new CatalogDictionaryRepository(settingsClient);
       const fieldRepository = new FieldDefinitionRepository(settingsClient);
+      runtime.dictionaries = new CatalogDictionaryService(dictionaryRepository, fieldRepository);
       const attributeValues = new TransactionalAttributeValuePort();
       runtime.schemaFieldService = new FieldDefinitionService(fieldRepository, attributeValues);
       runtime.itemService = new ItemService(
@@ -132,6 +131,7 @@ export class FoundationRuntime
           outbox: new TransactionalOutboxPort(),
           search: new TransactionalSearchProjectionPort(),
         },
+        dictionaryRepository,
       );
       await runtime.verifyMedia();
       return runtime;

@@ -123,7 +123,9 @@ suite('CAT-01 catalog dictionaries on PostgreSQL', () => {
     const renamed = await repository.updateCategory(category.id, category.version, {
       labels: { en: 'Powered tools', uk: 'Електричні інструменти' },
     });
-    await repository.updateCategory(renamed.id, renamed.version, { displayOrder: 41 });
+    const reordered = await repository.updateCategory(renamed.id, renamed.version, {
+      displayOrder: 41,
+    });
 
     const audit = await prisma.auditEvent.findMany({
       where: { entityType: 'category', entityId: category.id },
@@ -149,10 +151,28 @@ suite('CAT-01 catalog dictionaries on PostgreSQL', () => {
           payloadVersion: 1,
           categoryId: category.id,
           dictionaryVersion: 2,
+          reasons: ['labels'],
+          rebuildsDisplayNames: false,
         },
         deduplication_key: `category-renamed:${category.id}:v2`,
       },
     ]);
+
+    // A template-only edit rebuilds derived display names through the same registry row.
+    await repository.updateCategory(reordered.id, reordered.version, {
+      displayTemplate: '{{category}}',
+    });
+    const afterTemplate = await adminPool.query(
+      `select payload_json from "${schema}".outbox where aggregate_id = $1::uuid
+       order by created_at`,
+      [category.id],
+    );
+    expect(afterTemplate.rows).toHaveLength(2);
+    expect(afterTemplate.rows[1].payload_json).toMatchObject({
+      event: 'CategoryRenamed',
+      reasons: ['display_template'],
+      rebuildsDisplayNames: true,
+    });
   });
 
   it('rolls back the rename and audit when its outbox write fails', async () => {

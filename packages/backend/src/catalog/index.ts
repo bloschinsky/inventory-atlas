@@ -51,6 +51,7 @@ export {
   CatalogDictionaryAuthorizationError,
   CatalogDictionaryService,
   type DictionaryRequestMetadata,
+  type DisplayNamePreview,
 } from './dictionary-service.js';
 export {
   DictionaryPolicyError,

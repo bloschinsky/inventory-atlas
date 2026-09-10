@@ -476,22 +476,24 @@ Suggested pull requests:
 
 Tasks:
 
-- [ ] Define the restricted token grammar and whitelisted core/field key resolver.
-- [ ] Reject loops, expressions, JavaScript, HTML, unknown tokens, and network behavior.
-- [ ] Implement deterministic missing-value skipping and whitespace collapse.
-- [ ] Expose one renderer to preview and persisted Item mutation paths.
-- [ ] Add preview/save endpoints with authorization and version checks.
-- [ ] Build the Admin editor with token insertion, validation, and live preview.
-- [ ] Recompute names and projection content on template/referenced-value changes.
-- [ ] Prove public ID and active codes remain unchanged.
-- [ ] Add parser fuzz/negative, determinism, localization, and integration tests.
+- [x] Define the restricted token grammar and whitelisted core/field key resolver.
+- [x] Reject loops, expressions, JavaScript, HTML, unknown tokens, and network behavior.
+- [x] Implement deterministic missing-value skipping and whitespace collapse.
+- [x] Expose one renderer to preview and persisted Item mutation paths.
+- [x] Add preview/save endpoints with authorization and version checks.
+- [x] Build the Admin editor with token insertion, validation, and live preview.
+- [x] Recompute names and projection content on template/referenced-value changes.
+- [x] Prove public ID and active codes remain unchanged.
+- [x] Add parser fuzz/negative, determinism, localization, and integration tests.
+
+Implementation evidence: [Display-name templates](docs/project/display-names.md).
 
 Acceptance criteria (verbatim from the approved blueprint):
 
-- [ ] Only approved tokens are allowed.
-- [ ] Missing tokens and whitespace are handled deterministically.
-- [ ] Stored result and preview use the same renderer.
-- [ ] Name changes do not change public ID or issued codes.
+- [x] Only approved tokens are allowed.
+- [x] Missing tokens and whitespace are handled deterministically.
+- [x] Stored result and preview use the same renderer.
+- [x] Name changes do not change public ID or issued codes.
 
 ### MED-01 Upload and attach images
 

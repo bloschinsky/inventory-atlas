@@ -70,8 +70,12 @@ export class CatalogDictionaryRepository {
     return toCategoryRecord(row);
   }
 
-  async findCategoryById(id: string, includeArchived = true): Promise<CategoryRecord | null> {
-    const row = await this.prisma.category.findUnique({ where: { id } });
+  async findCategoryById(
+    id: string,
+    includeArchived = true,
+    transaction?: CatalogReadClient,
+  ): Promise<CategoryRecord | null> {
+    const row = await (transaction ?? this.prisma).category.findUnique({ where: { id } });
     if (!row || (!includeArchived && row.archivedAt)) return null;
     return toCategoryRecord(row);
   }
@@ -160,7 +164,12 @@ export class CatalogDictionaryRepository {
         after,
         now,
       );
-      if (before && !sameLabels(before.labels, after.labels)) {
+      const renamed = Boolean(before) && !sameLabels(before!.labels, after.labels);
+      const retemplated = Boolean(before) && before!.displayTemplate !== after.displayTemplate;
+      if (renamed || retemplated) {
+        // Both reasons drive the same `CategoryRenamed` row of the blueprint section 9.4
+        // registry: the category's Items need their derived text rebuilt. `reason` keeps the
+        // message honest about which change produced it without adding a registry event.
         await this.outboxPort.enqueue(
           { kind: 'prisma', trx: transaction },
           {
@@ -172,6 +181,11 @@ export class CatalogDictionaryRepository {
               payloadVersion: 1,
               categoryId: after.id,
               dictionaryVersion: after.version,
+              reasons: [
+                ...(renamed ? ['labels'] : []),
+                ...(retemplated ? ['display_template'] : []),
+              ],
+              rebuildsDisplayNames: retemplated,
             },
             deduplicationKey: `category-renamed:${after.id}:v${after.version}`,
             createdAt: now,
@@ -232,8 +246,9 @@ export class CatalogDictionaryRepository {
   async findLifecycleStatusById(
     id: string,
     includeArchived = true,
+    transaction?: CatalogReadClient,
   ): Promise<LifecycleStatusRecord | null> {
-    const row = await this.prisma.lifecycleStatus.findUnique({ where: { id } });
+    const row = await (transaction ?? this.prisma).lifecycleStatus.findUnique({ where: { id } });
     if (!row || (!includeArchived && row.archivedAt)) return null;
     return toLifecycleStatusRecord(row);
   }

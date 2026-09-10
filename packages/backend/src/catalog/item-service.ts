@@ -17,6 +17,12 @@ import type {
 } from '../schema/attribute-value-port.js';
 import type { CanonicalFieldValue } from '../schema/field-policy.js';
 import {
+  parseDisplayTemplate,
+  renderDisplayName,
+  toDisplayTokenField,
+} from '../schema/display-template.js';
+import type { CatalogDictionaryRepository } from './dictionary-repository.js';
+import {
   AttributeValidationError,
   canonicalizeFieldValues,
   projectFieldValues,
@@ -179,6 +185,10 @@ export class ItemService {
     private readonly idempotencyRecords: IdempotencyReservationPort,
     private readonly fields: Pick<FieldDefinitionRepository, 'listDefinitions'>,
     private readonly ports: ItemServicePorts,
+    private readonly dictionaries: Pick<
+      CatalogDictionaryRepository,
+      'findCategoryById' | 'findLifecycleStatusById'
+    >,
     private readonly now: () => Date = () => new Date(),
   ) {}
 
@@ -227,7 +237,14 @@ export class ItemService {
       const assignments = assignmentsFor(definitions, normalized.attributes);
       item = await this.items.transaction(async (transaction) => {
         const createdAt = this.now();
-        const created = await this.items.createCore(transaction, normalized);
+        const displayName = await this.deriveDisplayName(transaction, {
+          categoryId: normalized.categoryId,
+          lifecycleStatusId: normalized.lifecycleStatusId,
+          definitions,
+          assignments,
+          fallback: normalized.displayName,
+        });
+        const created = await this.items.createCore(transaction, { ...normalized, displayName });
         const context = { kind: 'prisma' as const, trx: transaction };
         await this.items.replaceTags(transaction, created.id, normalized.tags);
         await this.ports.attributes.replace(context, {
@@ -410,11 +427,18 @@ export class ItemService {
             ? null
             : assignmentsFor(writableDefinitions(definitions, privileged), normalized.attributes);
         const assignments = mergeAssignments(definitions, stored, submitted);
+        const displayName = await this.deriveDisplayName(transaction, {
+          categoryId,
+          lifecycleStatusId: normalized.lifecycleStatusId ?? current.lifecycleStatusId,
+          definitions,
+          assignments,
+          fallback: normalized.displayName ?? current.displayName,
+        });
         const updated = await this.items.updateCore(
           transaction,
           current.id,
           version,
-          coreChanges(normalized),
+          { ...coreChanges(normalized), displayName },
           updatedAt,
         );
         if (!updated) {
@@ -505,6 +529,54 @@ export class ItemService {
           this.now(),
         );
       throw error;
+    }
+  }
+
+  /**
+   * Resolves the cached display name (blueprint section 9.3). A category without a template keeps
+   * the name the actor supplied; a category with one derives the name through the shared Schema
+   * renderer, so the stored value always equals what the Admin preview showed. A template that
+   * resolves to nothing falls back to the supplied name rather than storing an empty column.
+   *
+   * The rendered name never changes `public_id`, the slug of an existing Item, or any issued
+   * code: only `items.display_name` and the projection text it feeds are rewritten.
+   */
+  private async deriveDisplayName(
+    transaction: ItemTransaction,
+    input: {
+      categoryId: string;
+      lifecycleStatusId: string;
+      definitions: readonly FieldDefinitionRecord[];
+      assignments: readonly AttributeValueAssignment[];
+      fallback: string;
+    },
+  ): Promise<string> {
+    const category = await this.dictionaries.findCategoryById(input.categoryId, true, transaction);
+    const template = category?.displayTemplate;
+    if (!template) return input.fallback;
+    const status = await this.dictionaries.findLifecycleStatusById(
+      input.lifecycleStatusId,
+      true,
+      transaction,
+    );
+    const byId = new Map(input.definitions.map((definition) => [definition.id, definition]));
+    const values: Record<string, readonly CanonicalFieldValue[]> = {};
+    for (const assignment of input.assignments) {
+      const definition = byId.get(assignment.fieldDefinitionId);
+      if (definition) values[definition.key] = assignment.values;
+    }
+    try {
+      const rendered = renderDisplayName(parseDisplayTemplate(template), {
+        // The cached column stores one string, so it renders in the source locale.
+        locale: 'en',
+        core: { category: category?.labels ?? null, status: status?.labels ?? null },
+        fields: input.definitions.map(toDisplayTokenField),
+        values,
+      });
+      return rendered || input.fallback;
+    } catch {
+      // A stored template that no longer parses must not block an Item mutation.
+      return input.fallback;
     }
   }
 

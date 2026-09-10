@@ -44,3 +44,23 @@ export function archiveDictionaryEntry(kind, id, version, csrfToken) {
     { csrfToken },
   );
 }
+
+/**
+ * Renders a candidate display-name template with the server-side renderer the Items use, so the
+ * editor preview can never disagree with the stored result.
+ * @param {string} categoryId
+ * @param {string} template
+ * @param {Record<string, unknown>} sample
+ * @param {string} csrfToken
+ */
+export function previewCategoryDisplayName(categoryId, template, sample, csrfToken) {
+  return apiRequest(
+    `/categories/${categoryId}/display-name-preview`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ template, sample }),
+    },
+    { csrfToken },
+  );
+}

@@ -4,7 +4,27 @@ import {
   type CategoryRecord,
   type LifecycleStatusRecord,
 } from './dictionary-repository.js';
-import type { LocalizedLabel } from './dictionary-policy.js';
+import { DictionaryPolicyError, type LocalizedLabel } from './dictionary-policy.js';
+import type { FieldDefinitionRecord, FieldDefinitionRepository } from '../schema/index.js';
+import {
+  describeDisplayTokens,
+  renderDisplayName,
+  toDisplayTokenField,
+  validateDisplayTemplate,
+  type DisplayNameSource,
+  type DisplayTokenDescription,
+} from '../schema/display-template.js';
+import { canonicalizeFieldValues, type FieldValueShape } from '../schema/field-policy.js';
+
+/** One rendered preview of a category template, produced by the renderer the Items use. */
+export interface DisplayNamePreview {
+  template: string;
+  tokens: DisplayTokenDescription[];
+  /** Rendered output per supported locale, using the supplied or placeholder sample values. */
+  rendered: { en: string; uk: string };
+  /** Stable field keys the template references that resolved to no sample value. */
+  missingTokens: string[];
+}
 
 export interface DictionaryRequestMetadata {
   correlationId?: string;
@@ -21,7 +41,10 @@ export class CatalogDictionaryAuthorizationError extends Error {
 }
 
 export class CatalogDictionaryService {
-  constructor(private readonly repository: CatalogDictionaryRepository) {}
+  constructor(
+    private readonly repository: CatalogDictionaryRepository,
+    private readonly fields: Pick<FieldDefinitionRepository, 'listDefinitions'>,
+  ) {}
 
   listCategories(actor: SessionActor, includeArchived = false): Promise<CategoryRecord[]> {
     this.authorizeRead(actor, includeArchived);
@@ -33,7 +56,7 @@ export class CatalogDictionaryService {
     return this.repository.findCategoryById(id, true);
   }
 
-  createCategory(
+  async createCategory(
     actor: SessionActor,
     input: {
       key: string;
@@ -45,10 +68,11 @@ export class CatalogDictionaryService {
     metadata: DictionaryRequestMetadata = {},
   ): Promise<CategoryRecord> {
     this.authorize(actor);
+    await this.requireResolvableTemplate(input.displayTemplate, null);
     return this.repository.createCategory(input, { actorId: actor.id, ...metadata });
   }
 
-  updateCategory(
+  async updateCategory(
     actor: SessionActor,
     id: string,
     expectedVersion: number,
@@ -61,6 +85,7 @@ export class CatalogDictionaryService {
     metadata: DictionaryRequestMetadata = {},
   ): Promise<CategoryRecord> {
     this.authorize(actor);
+    await this.requireResolvableTemplate(input.displayTemplate, id);
     return this.repository.updateCategory(id, expectedVersion, input, {
       actorId: actor.id,
       ...metadata,
@@ -129,6 +154,72 @@ export class CatalogDictionaryService {
     });
   }
 
+  /**
+   * Renders a candidate template with the same renderer the Item mutation path uses, so the
+   * preview and the stored result can never disagree. Sample values are supplied by the caller;
+   * a token without one renders as missing, which is exactly how a real Item behaves.
+   */
+  async previewCategoryDisplayName(
+    actor: SessionActor,
+    categoryId: string | null,
+    template: unknown,
+    sample: Readonly<Record<string, unknown>> = {},
+  ): Promise<DisplayNamePreview> {
+    this.authorize(actor);
+    const category = categoryId ? await this.repository.findCategoryById(categoryId, true) : null;
+    if (categoryId && !category)
+      throw new DictionaryPolicyError(
+        'CATALOG_DICTIONARY_NOT_FOUND',
+        'The category does not exist.',
+      );
+    const definitions = await this.templateFields(categoryId);
+    const segments = validateDisplayTemplate(template, definitions.map(toDisplayTokenField));
+    const values = sampleValues(definitions, sample);
+    const core = {
+      category: category?.labels ?? null,
+      status: null,
+    };
+    const source = (locale: 'en' | 'uk'): DisplayNameSource => ({
+      locale,
+      core,
+      fields: definitions.map(toDisplayTokenField),
+      values,
+    });
+    return {
+      template: String(template).trim(),
+      tokens: describeDisplayTokens(segments, definitions.map(toDisplayTokenField), core),
+      rendered: {
+        en: renderDisplayName(segments, source('en')),
+        uk: renderDisplayName(segments, source('uk')),
+      },
+      missingTokens: segments.flatMap((segment) =>
+        segment.kind === 'token' &&
+        segment.key !== 'category' &&
+        segment.key !== 'status' &&
+        !values[segment.key]?.length
+          ? [segment.key]
+          : [],
+      ),
+    };
+  }
+
+  private async requireResolvableTemplate(
+    template: string | null | undefined,
+    categoryId: string | null,
+  ): Promise<void> {
+    if (template === undefined || template === null || template.trim() === '') return;
+    const definitions = await this.templateFields(categoryId);
+    validateDisplayTemplate(template, definitions.map(toDisplayTokenField));
+  }
+
+  private templateFields(categoryId: string | null): Promise<FieldDefinitionRecord[]> {
+    return this.fields.listDefinitions({
+      scope: 'item',
+      categoryId,
+      includeArchived: false,
+    });
+  }
+
   private authorize(actor: SessionActor): void {
     if (!can(actor.role, 'manageSchema')) throw new CatalogDictionaryAuthorizationError();
   }
@@ -136,4 +227,37 @@ export class CatalogDictionaryService {
   private authorizeRead(actor: SessionActor, includeArchived: boolean): void {
     if (includeArchived || !can(actor.role, 'viewAuthenticatedFields')) this.authorize(actor);
   }
+}
+
+/**
+ * Canonicalizes caller-supplied sample values the same way a stored value is canonicalized, so a
+ * preview cannot render a shape the persistence layer would reject. An unusable sample is treated
+ * as absent rather than failing the preview.
+ */
+function sampleValues(
+  definitions: readonly FieldDefinitionRecord[],
+  sample: Readonly<Record<string, unknown>>,
+): Record<string, ReturnType<typeof canonicalizeFieldValues>> {
+  const values: Record<string, ReturnType<typeof canonicalizeFieldValues>> = {};
+  for (const definition of definitions) {
+    const raw = sample[definition.key];
+    if (raw === undefined || raw === null || raw === '') continue;
+    try {
+      const canonical = canonicalizeFieldValues(shapeOf(definition), raw);
+      if (canonical.length) values[definition.key] = canonical;
+    } catch {
+      continue;
+    }
+  }
+  return values;
+}
+
+function shapeOf(definition: FieldDefinitionRecord): FieldValueShape {
+  return {
+    key: definition.key,
+    dataType: definition.dataType,
+    repeatable: definition.repeatable,
+    required: definition.required,
+    validation: definition.validation,
+  };
 }

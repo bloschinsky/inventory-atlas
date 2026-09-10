@@ -1515,10 +1515,10 @@ As an Admin, I can define a safe display-name template and preview its output.
 
 Acceptance criteria:
 
-- [ ] Only approved tokens are allowed.
-- [ ] Missing tokens and whitespace are handled deterministically.
-- [ ] Stored result and preview use the same renderer.
-- [ ] Name changes do not change public ID or issued codes.
+- [x] Only approved tokens are allowed.
+- [x] Missing tokens and whitespace are handled deterministically.
+- [x] Stored result and preview use the same renderer.
+- [x] Name changes do not change public ID or issued codes.
 
 ### EPIC MED - Media
 

@@ -1,4 +1,23 @@
 export {
+  coreDisplayTokens,
+  describeDisplayTokens,
+  displayTemplateDataTypes,
+  displayTemplateLimits,
+  displayTemplateTokens,
+  DisplayTemplateError,
+  parseDisplayTemplate,
+  renderDisplayName,
+  toDisplayTokenField,
+  validateDisplayTemplate,
+  type CoreDisplayToken,
+  type DisplayNameSource,
+  type DisplayTemplateIssue,
+  type DisplayTemplateIssueCode,
+  type DisplayTemplateSegment,
+  type DisplayTokenDescription,
+  type DisplayTokenField,
+} from './display-template.js';
+export {
   planAttributeRows,
   scopeForOwner,
   TransactionalAttributeValuePort,

@@ -18,6 +18,23 @@ The project follows the version policy in `docs/project/versioning.md`.
 
 ### Added
 
+- Completed CAT-05 with safe display-name templates. `categories.display_template`
+  now uses a closed `{{token}}` grammar with no loop, expression, JavaScript, or
+  HTML surface: literal text is character-restricted, token names must be stable
+  keys, and a template is capped at 12 tokens and 500 characters. Tokens resolve
+  to the `category` and `status` core labels or to an active non-private
+  item-scoped field; `private`, `boolean`, and `reference` fields are refused so
+  a rendered name can never disclose a private value or an opaque identifier.
+  One pure renderer skips missing tokens, drops the separators they orphan,
+  collapses whitespace, and truncates deterministically. `items.display_name` is
+  derived from it inside the Item transaction and rebuilt whenever a referenced
+  value changes, while `public_id`, an existing slug, and issued codes stay
+  untouched; a category template change enqueues the category rebuild message.
+  `POST /api/v1/categories/{id}/display-name-preview` renders a candidate with
+  the same renderer, and the `/admin/categories` editor inserts tokens, reports
+  stable issue codes in the active locale, and previews English and Ukrainian
+  output live.
+
 - Completed CAT-04 with versioned Item editing: `PATCH /api/v1/items/{publicId}`
   enforces `If-Match` or `expectedVersion` through a compare-and-swap on the
   aggregate version, `GET /api/v1/items/{publicId}` serves the visibility-aware

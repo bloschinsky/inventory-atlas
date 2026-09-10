@@ -19,9 +19,13 @@ import {
 } from '@nestjs/common';
 import {
   CatalogDictionaryAuthorizationError,
+  coreDisplayTokens,
   DictionaryPolicyError,
+  displayTemplateLimits,
+  DisplayTemplateError,
   type CategoryRecord,
   type DictionaryRequestMetadata,
+  type DisplayNamePreview,
   type LifecycleStatusRecord,
   type LocalizedLabel,
   type SessionActor,
@@ -29,6 +33,7 @@ import {
 } from '@inventory-atlas/backend';
 import {
   ApiBadRequestResponse,
+  ApiBody,
   ApiConflictResponse,
   ApiCookieAuth,
   ApiCreatedResponse,
@@ -37,6 +42,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiProperty,
   ApiPropertyOptional,
   ApiQuery,
@@ -117,6 +123,55 @@ class UpdateLifecycleStatusDto {
   @ApiPropertyOptional({ pattern: '^[a-z][a-z0-9]*(?:\\.[a-z0-9]+)*$', type: String })
   declare colorToken?: string;
   @ApiPropertyOptional({ minimum: 0, type: Number }) declare displayOrder?: number;
+}
+
+class DisplayNamePreviewRequestDto {
+  @ApiProperty({
+    description:
+      'Candidate template. Literal text interleaved with `{{stable_key}}` tokens; core tokens ' +
+      `are ${coreDisplayTokens.map((token: string) => `\`${token}\``).join(' and ')}.`,
+    example: '{{brand}} {{model}} - {{condition}}',
+    maxLength: displayTemplateLimits.maxLength,
+    minLength: 1,
+    type: String,
+  })
+  declare template: string;
+
+  @ApiPropertyOptional({
+    additionalProperties: true,
+    description: 'Sample attribute values keyed by stable field key, in the API value shape.',
+    type: 'object',
+  })
+  declare sample?: Record<string, unknown>;
+}
+
+class DisplayNameTokenDto {
+  @ApiProperty({ example: 'brand', pattern: '^[a-z][a-z0-9_]{0,63}$', type: String })
+  declare key: string;
+
+  @ApiProperty({ enum: ['core', 'field'], type: String }) declare kind: string;
+
+  @ApiPropertyOptional({ nullable: true, type: LocalizedLabelDto })
+  declare labels: LocalizedLabelDto | null;
+
+  @ApiPropertyOptional({ nullable: true, type: String }) declare dataType: string | null;
+}
+
+class RenderedDisplayNameDto {
+  @ApiProperty({ example: 'Pentax LX - Used', type: String }) declare en: string;
+  @ApiProperty({ example: 'Pentax LX - Вживаний', type: String }) declare uk: string;
+}
+
+class DisplayNamePreviewDto {
+  @ApiProperty({ type: String }) declare template: string;
+  @ApiProperty({ type: [DisplayNameTokenDto] }) declare tokens: DisplayNameTokenDto[];
+  @ApiProperty({ type: RenderedDisplayNameDto }) declare rendered: RenderedDisplayNameDto;
+  @ApiProperty({
+    description: 'Tokens with no sample value; they render as skipped, exactly as a real Item.',
+    items: { type: 'string' },
+    type: 'array',
+  })
+  declare missingTokens: string[];
 }
 
 @Controller('api/v1')
@@ -233,6 +288,38 @@ export class CatalogDictionariesController {
           requireVersion(ifMatch),
           dictionaryMetadata(request),
         );
+    } catch (error) {
+      throw mapCatalogError(error);
+    }
+  }
+
+  @Post('categories/:id/display-name-preview')
+  @HttpCode(200)
+  @ApiOperation({ operationId: 'previewCategoryDisplayName' })
+  @ApiParam({ format: 'uuid', name: 'id', type: String })
+  @ApiBody({ type: DisplayNamePreviewRequestDto })
+  @ApiOkResponse({ type: DisplayNamePreviewDto })
+  @ApiBadRequestResponse({ type: ProblemDetailsDto })
+  @ApiNotFoundResponse({ type: ProblemDetailsDto })
+  async previewCategoryDisplayName(
+    @Param('id') id: string,
+    @Body() body: unknown,
+    @Headers('cookie') cookie?: string,
+    @Headers('x-csrf-token') csrf?: string,
+  ): Promise<DisplayNamePreviewDto> {
+    if (!uuidPattern.test(id)) throw new BadRequestException('Category ID is invalid.');
+    const request = readPreviewRequest(body);
+    try {
+      return previewDto(
+        await this.catalog
+          .catalogDictionaries()
+          .previewCategoryDisplayName(
+            await this.mutationActor(cookie, csrf),
+            id,
+            request.template,
+            request.sample,
+          ),
+      );
     } catch (error) {
       throw mapCatalogError(error);
     }
@@ -465,10 +552,59 @@ function requireVersion(value: string | undefined): number {
     throw new BadRequestException('If-Match must contain a positive version.');
   return version;
 }
+function previewDto(preview: DisplayNamePreview): DisplayNamePreviewDto {
+  return {
+    template: preview.template,
+    tokens: preview.tokens.map((token) => ({
+      key: token.key,
+      kind: token.kind,
+      labels: token.labels,
+      dataType: token.dataType,
+    })),
+    rendered: { ...preview.rendered },
+    missingTokens: [...preview.missingTokens],
+  };
+}
+
+function readPreviewRequest(body: unknown): {
+  template: string;
+  sample: Record<string, unknown>;
+} {
+  const item = body as Record<string, unknown> | null;
+  if (!item || typeof item !== 'object' || typeof item.template !== 'string')
+    throw new BadRequestException('A display-name template is required.');
+  const sample = item.sample;
+  if (
+    sample !== undefined &&
+    (typeof sample !== 'object' || sample === null || Array.isArray(sample))
+  )
+    throw new BadRequestException('Sample values must be an object keyed by stable field key.');
+  return {
+    template: item.template,
+    sample: (sample as Record<string, unknown> | undefined) ?? {},
+  };
+}
+
 function mapCatalogError(error: unknown): Error {
   if (error instanceof SessionError) return new UnauthorizedException(error.message);
   if (error instanceof CatalogDictionaryAuthorizationError)
     return new ForbiddenException(error.message);
+  if (error instanceof DisplayTemplateError)
+    return new BadRequestException({
+      code: 'VALIDATION_FAILED',
+      detail: error.message,
+      fieldErrors: [
+        {
+          field: 'displayTemplate',
+          messages: error.issues.map((issue) =>
+            issue.token ? `${issue.code}:${issue.token}` : issue.code,
+          ),
+        },
+      ],
+      status: 400,
+      title: 'Request validation failed',
+      type: 'https://inventory-atlas.local/problems/validation-failed',
+    });
   if (error instanceof DictionaryPolicyError) {
     if (error.code === 'CATALOG_DICTIONARY_NOT_FOUND') return new NotFoundException(error.message);
     if (error.code === 'CATALOG_DICTIONARY_VERSION_CONFLICT')

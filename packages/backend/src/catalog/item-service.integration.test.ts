@@ -16,6 +16,8 @@ import {
 import { TransactionalAttributeValuePort } from '../schema/attribute-value-port.js';
 import { FieldDefinitionRepository } from '../schema/field-definition-repository.js';
 import { createSettingsClient } from '../settings.repository.js';
+import { CatalogDictionaryRepository } from './dictionary-repository.js';
+import { CatalogDictionaryService } from './dictionary-service.js';
 import { ItemRepository } from './item-repository.js';
 import { ItemService, ItemVersionConflictError, type CreatedItem } from './item-service.js';
 
@@ -327,6 +329,7 @@ function createService(outbox: OutboxPort = new TransactionalOutboxPort()): Item
       outbox,
       search: new TransactionalSearchProjectionPort(),
     },
+    new CatalogDictionaryRepository(prisma, () => instant),
     () => instant,
   );
 }
@@ -707,6 +710,220 @@ suite('CAT-04 Item edit with optimistic concurrency', () => {
       visibility: 'private',
     });
   });
+
+  describe('CAT-05 rendered display names', () => {
+    let templateCategoryId: string;
+    let dictionaryService: CatalogDictionaryService;
+
+    beforeAll(async () => {
+      templateCategoryId = (
+        await updatePrisma.category.create({
+          data: {
+            id: randomUUID(),
+            key: 'cameras',
+            labelI18n: { en: 'Cameras', uk: 'Фотокамери' },
+            createdAt: instant,
+            updatedAt: instant,
+          },
+        })
+      ).id;
+      await updatePrisma.fieldDefinition.createMany({
+        data: [
+          {
+            id: randomUUID(),
+            key: 'brand',
+            scope: 'item',
+            categoryId: templateCategoryId,
+            labelI18n: { en: 'Brand', uk: 'Бренд' },
+            dataType: 'text',
+            searchable: true,
+            visibility: 'public',
+            createdAt: instant,
+            updatedAt: instant,
+          },
+          {
+            id: randomUUID(),
+            key: 'model',
+            scope: 'item',
+            categoryId: templateCategoryId,
+            labelI18n: { en: 'Model', uk: 'Модель' },
+            dataType: 'text',
+            visibility: 'public',
+            createdAt: instant,
+            updatedAt: instant,
+          },
+          {
+            id: randomUUID(),
+            key: 'secret_note',
+            scope: 'item',
+            categoryId: templateCategoryId,
+            labelI18n: { en: 'Secret note', uk: 'Таємна нотатка' },
+            dataType: 'text',
+            visibility: 'private',
+            createdAt: instant,
+            updatedAt: instant,
+          },
+        ],
+      });
+      dictionaryService = new CatalogDictionaryService(
+        new CatalogDictionaryRepository(updatePrisma, () => instant),
+        new FieldDefinitionRepository(updatePrisma, () => instant),
+      );
+      await setTemplate('{{category}} {{brand}} {{model}}');
+    });
+
+    async function setTemplate(displayTemplate: string | null): Promise<void> {
+      const current = await dictionaryService.resolveCategory(admin, templateCategoryId);
+      await dictionaryService.updateCategory(admin, templateCategoryId, current!.version, {
+        displayTemplate,
+      });
+    }
+
+    async function createCamera(
+      key: string,
+      attributes: Record<string, unknown>,
+      suppliedName = 'Typed by the editor',
+    ): Promise<CreatedItem> {
+      const outcome = await updateService.create(
+        admin,
+        {
+          categoryId: templateCategoryId,
+          lifecycleStatusId: updateStatusId,
+          displayName: suppliedName,
+          attributes,
+        },
+        { idempotencyKey: `camera-${key}` },
+      );
+      return outcome.item;
+    }
+
+    it('derives the stored name from the template instead of the submitted name', async () => {
+      const created = await createCamera('derive', { brand: 'Pentax', model: 'LX' });
+      expect(created.displayName).toBe('Cameras Pentax LX');
+      const row = (
+        await updatePool.query('select display_name, slug from items where public_id = $1', [
+          created.publicId,
+        ])
+      ).rows[0];
+      expect(row.display_name).toBe('Cameras Pentax LX');
+      expect(row.slug).toBe('cameras-pentax-lx');
+      expect(
+        (
+          await updatePool.query(
+            'select display_name from item_search where item_id = (select id from items where public_id = $1)',
+            [created.publicId],
+          )
+        ).rows[0].display_name,
+      ).toBe('Cameras Pentax LX');
+    });
+
+    it('rebuilds the name when a referenced value changes and keeps the public ID', async () => {
+      const created = await createCamera('rebuild', { brand: 'Pentax', model: 'LX' });
+      const before = (
+        await updatePool.query('select id, public_id, slug from items where public_id = $1', [
+          created.publicId,
+        ])
+      ).rows[0];
+
+      const updated = await updateService.update(admin, created.publicId, created.version, {
+        attributes: { brand: 'Nikon', model: 'F3' },
+      });
+
+      expect(updated.item.displayName).toBe('Cameras Nikon F3');
+      expect(updated.invalidators).toEqual(['AttributeChanged']);
+      const after = (
+        await updatePool.query(
+          'select id, public_id, slug, display_name from items where public_id = $1',
+          [created.publicId],
+        )
+      ).rows[0];
+      expect(after.display_name).toBe('Cameras Nikon F3');
+      expect({ id: after.id, public_id: after.public_id, slug: after.slug }).toEqual(before);
+      expect(
+        (
+          await updatePool.query('select display_name from item_search where item_id = $1', [
+            after.id,
+          ])
+        ).rows[0].display_name,
+      ).toBe('Cameras Nikon F3');
+    });
+
+    it('skips missing tokens and keeps the submitted name when nothing renders', async () => {
+      const partial = await createCamera('partial', { brand: 'Pentax' });
+      expect(partial.displayName).toBe('Cameras Pentax');
+
+      await setTemplate('{{brand}} - {{model}}');
+      const empty = await createCamera('empty', {}, 'Untitled camera');
+      expect(empty.displayName).toBe('Untitled camera');
+      const dangling = await createCamera('dangling', { model: 'LX' });
+      expect(dangling.displayName).toBe('LX');
+      await setTemplate('{{category}} {{brand}} {{model}}');
+    });
+
+    it('keeps the submitted name when the category has no template', async () => {
+      const item = await updateService.create(
+        admin,
+        {
+          categoryId: updateCategoryId,
+          lifecycleStatusId: updateStatusId,
+          displayName: 'Plain name',
+          attributes: { serial_number: 'SN-PLAIN' },
+        },
+        { idempotencyKey: 'camera-no-template' },
+      );
+      expect(item.item.displayName).toBe('Plain name');
+    });
+
+    it('renders the preview with the same output the Item stores', async () => {
+      const preview = await dictionaryService.previewCategoryDisplayName(
+        admin,
+        templateCategoryId,
+        '{{category}} {{brand}} {{model}}',
+        { brand: 'Pentax', model: 'LX' },
+      );
+      const created = await createCamera('preview-parity', { brand: 'Pentax', model: 'LX' });
+      expect(preview.rendered.en).toBe(created.displayName);
+      expect(preview.rendered.uk).toBe('Фотокамери Pentax LX');
+      expect(preview.missingTokens).toEqual([]);
+      expect(preview.tokens.map((token) => token.key)).toEqual(['category', 'brand', 'model']);
+    });
+
+    it('refuses a template that names a private field, an unknown key, or JavaScript', async () => {
+      const current = await dictionaryService.resolveCategory(admin, templateCategoryId);
+      for (const template of ['{{secret_note}}', '{{nope}}', '{{brand}}<script>x</script>']) {
+        await expect(
+          dictionaryService.updateCategory(admin, templateCategoryId, current!.version, {
+            displayTemplate: template,
+          }),
+        ).rejects.toMatchObject({ name: 'DisplayTemplateError' });
+      }
+      expect(
+        (
+          await updatePool.query('select display_template from categories where id = $1', [
+            templateCategoryId,
+          ])
+        ).rows[0].display_template,
+      ).toBe('{{category}} {{brand}} {{model}}');
+    });
+
+    it('enqueues one category rebuild message when the template changes', async () => {
+      await updatePool.query("delete from outbox where topic = 'search.rebuild-items.v1'");
+      await setTemplate('{{brand}} {{model}}');
+      const messages = (
+        await updatePool.query(
+          "select payload_json from outbox where topic = 'search.rebuild-items.v1'",
+        )
+      ).rows;
+      expect(messages).toHaveLength(1);
+      expect(messages[0].payload_json).toMatchObject({
+        event: 'CategoryRenamed',
+        categoryId: templateCategoryId,
+        reasons: ['display_template'],
+        rebuildsDisplayNames: true,
+      });
+      await setTemplate('{{category}} {{brand}} {{model}}');
+    });
+  });
 });
 
 async function createSubject(
@@ -742,6 +959,7 @@ function createUpdateService(outbox: OutboxPort = new TransactionalOutboxPort())
       outbox,
       search: new TransactionalSearchProjectionPort(),
     },
+    new CatalogDictionaryRepository(updatePrisma, () => instant),
     () => instant,
   );
 }
