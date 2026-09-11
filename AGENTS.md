@@ -18,6 +18,37 @@ When instructions conflict, stop and resolve the conflict in this order:
 
 Do not change product scope, frozen architecture, an acceptance criterion, or an ADR decision merely to simplify implementation. Escalate the conflict instead.
 
+## Repository map
+
+Keep this section current. Any change that adds, removes, moves, renames, or materially repurposes a project directory or package must update this map in the same change.
+
+| Path | Purpose |
+| --- | --- |
+| `apps/api` | NestJS/Fastify HTTP composition root: controllers, API DTOs/OpenAPI decorators, and runtime wiring. Domain and repository logic belongs in `packages/backend`. |
+| `apps/web` | Vue application. `app/` owns bootstrapping, routing, layouts, and UI stores; `pages/` composes routes; `features/` owns user workflows; `entities/` owns reusable domain presentation; `shared/` owns generic API, auth, i18n, UI, and utility code. Playwright specs live in `e2e/`. |
+| `apps/worker` | NestJS background-worker composition root. It wires backend jobs without owning domain logic. |
+| `packages/backend` | Backend domain, application services, ports, and data adapters, grouped by module under `src/` (`auth`, `catalog`, `schema`, `media`, and shared `infrastructure`). Other workspaces import only its public `src/index.ts` surface. |
+| `packages/config` | Shared environment parsing, validation, and runtime configuration types. |
+| `packages/contracts` | OpenAPI-generated types, Fetch client, JSDoc declarations, and Zod schemas. Files under `src/generated/` are generator-owned. |
+| `packages/i18n` | Locale setup, the MVP message inventory, and English/Ukrainian translations. |
+| `packages/ui` | Semantic `App*` component facade, PrimeVue integration, and design tokens. |
+| `packages/testkit` | Shared synthetic test helpers and fixtures intended for reuse across workspaces. |
+| `db/migrations` | Ordered Kysely migrations; the sole schema-migration authority. |
+| `db/prisma` | Prisma CRUD schema. Generated Prisma code lives in `packages/backend/src/generated/prisma/` and must not be edited manually. |
+| `db/seeds` / `db/fixtures` | Seed guidance and versioned catalog, storage, media, and label acceptance fixtures. |
+| `docs/adr` | Accepted architecture decisions. `docs/project`, `docs/frontend`, `docs/operations`, `docs/api`, and `docs/security` contain focused implementation and operating guidance. |
+| `infra` | Production/development container images, Compose overlays, and Caddy configuration. Root `docker-compose.yml` is the compact deployment graph; `compose.dev.yml` is the daily development environment. |
+| `scripts` | Root generators and policy checks for contracts, boundaries, i18n, licenses, Compose, Prisma, and repository hygiene. |
+| `.github/workflows` | CI workflow definitions. Root config files define the pnpm workspace and shared TypeScript, JavaScript, lint, Vitest, and Playwright behavior. |
+
+### Where to make a change
+
+- Start product work from the matching story in `TODO-ROADMAP.md`, then follow its blueprint sections and ADRs.
+- For an API change, update HTTP contracts/controllers in `apps/api`, implement behavior through the public modules in `packages/backend`, then regenerate `docs/api/openapi.json` and `packages/contracts/src/generated/`.
+- For a frontend workflow, compose the route in `apps/web/src/pages`, place use-case behavior in `features`, and reuse `shared/ui` rather than importing PrimeVue directly.
+- Keep unit tests beside their source as `*.test.*`, PostgreSQL tests as `*.integration.test.*`, and browser journeys in `apps/web/e2e`.
+- Treat `dist/`, `node_modules/`, `.pnpm-store/`, `test-results/`, and generated source directories as outputs, not implementation entry points.
+
 ## Technology baseline
 
 ### Frontend
