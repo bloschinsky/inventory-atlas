@@ -67,3 +67,4 @@ export {
   type DictionaryPolicyCode,
   type LocalizedLabel,
 } from './dictionary-policy.js';
+export { CatalogMediaOwnerAdapter } from './media-owner-adapter.js';

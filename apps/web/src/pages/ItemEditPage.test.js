@@ -149,6 +149,7 @@ function stubApi(handlers) {
         return json([{ id: categoryId, labels: { en: 'Tools', uk: 'Інструменти' } }]);
       if (url.includes('/lifecycle-statuses'))
         return json([{ id: statusId, labels: { en: 'Stored', uk: 'Зберігається' } }]);
+      if (url.includes('/media')) return json([]);
       if (url.includes('/field-definitions'))
         return json([
           {

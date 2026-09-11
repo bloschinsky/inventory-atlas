@@ -18,6 +18,22 @@ The project follows the version policy in `docs/project/versioning.md`.
 
 ### Added
 
+- Completed MED-01 with the shared media model and the full Item image flow. Kysely migration
+  `0007_media` adds Prisma-owned `media_assets`, `media_relations` and `upload_sessions` with
+  partial unique indexes that enforce one active primary per owner and one active relation per
+  owner, role and position. Uploading is three steps: an authorized session declares the file
+  (approved types only, extension and declared type must agree, filename reduced to a safe base
+  name, byte ceiling from `MEDIA_MAX_UPLOAD_BYTES`), a raw `PUT` streams the bytes into temporary
+  storage while the size and SHA-256 are computed and the ceiling is enforced mid-stream, and
+  finalize verifies size, checksum and file signature before promoting the object and writing the
+  asset, relation, session completion, audit event and `media.process-asset.v1` message in one
+  Prisma transaction. `MediaStoragePort` keeps bytes behind one contract with a local default
+  driver that refuses keys outside its root, leaving S3 optional. Detaching only schedules
+  deletion; `collectOrphans` rechecks live references and deletes conditionally, so a re-attached
+  asset is retained. The Item edit page gained an accessible manager with upload progress, primary
+  selection, gallery reordering and localized error codes, and the Item card now shows the primary
+  image with the category placeholder as its fallback.
+
 - Completed CAT-05 with safe display-name templates. `categories.display_template`
   now uses a closed `{{token}}` grammar with no loop, expression, JavaScript, or
   HTML surface: literal text is character-restricted, token names must be stable

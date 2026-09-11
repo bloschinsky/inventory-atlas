@@ -276,6 +276,7 @@ export type UserWhereInput = {
   invitationsAccepted?: Prisma.InvitationListRelationFilter
   invitationsIssued?: Prisma.InvitationListRelationFilter
   sessions?: Prisma.SessionListRelationFilter
+  uploadSessions?: Prisma.UploadSessionListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -295,6 +296,7 @@ export type UserOrderByWithRelationInput = {
   invitationsAccepted?: Prisma.InvitationOrderByRelationAggregateInput
   invitationsIssued?: Prisma.InvitationOrderByRelationAggregateInput
   sessions?: Prisma.SessionOrderByRelationAggregateInput
+  uploadSessions?: Prisma.UploadSessionOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -317,6 +319,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   invitationsAccepted?: Prisma.InvitationListRelationFilter
   invitationsIssued?: Prisma.InvitationListRelationFilter
   sessions?: Prisma.SessionListRelationFilter
+  uploadSessions?: Prisma.UploadSessionListRelationFilter
 }, "id" | "emailNormalized">
 
 export type UserOrderByWithAggregationInput = {
@@ -374,6 +377,7 @@ export type UserCreateInput = {
   invitationsAccepted?: Prisma.InvitationCreateNestedManyWithoutAcceptedByInput
   invitationsIssued?: Prisma.InvitationCreateNestedManyWithoutInviterInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  uploadSessions?: Prisma.UploadSessionCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -393,6 +397,7 @@ export type UserUncheckedCreateInput = {
   invitationsAccepted?: Prisma.InvitationUncheckedCreateNestedManyWithoutAcceptedByInput
   invitationsIssued?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  uploadSessions?: Prisma.UploadSessionUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserUpdateInput = {
@@ -412,6 +417,7 @@ export type UserUpdateInput = {
   invitationsAccepted?: Prisma.InvitationUpdateManyWithoutAcceptedByNestedInput
   invitationsIssued?: Prisma.InvitationUpdateManyWithoutInviterNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  uploadSessions?: Prisma.UploadSessionUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -431,6 +437,7 @@ export type UserUncheckedUpdateInput = {
   invitationsAccepted?: Prisma.InvitationUncheckedUpdateManyWithoutAcceptedByNestedInput
   invitationsIssued?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  uploadSessions?: Prisma.UploadSessionUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -613,6 +620,20 @@ export type UserUpdateOneWithoutAuditEventsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAuditEventsInput, Prisma.UserUpdateWithoutAuditEventsInput>, Prisma.UserUncheckedUpdateWithoutAuditEventsInput>
 }
 
+export type UserCreateNestedOneWithoutUploadSessionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutUploadSessionsInput, Prisma.UserUncheckedCreateWithoutUploadSessionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutUploadSessionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutUploadSessionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutUploadSessionsInput, Prisma.UserUncheckedCreateWithoutUploadSessionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutUploadSessionsInput
+  upsert?: Prisma.UserUpsertWithoutUploadSessionsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutUploadSessionsInput, Prisma.UserUpdateWithoutUploadSessionsInput>, Prisma.UserUncheckedUpdateWithoutUploadSessionsInput>
+}
+
 export type UserCreateWithoutSessionsInput = {
   id: string
   emailNormalized: string
@@ -629,6 +650,7 @@ export type UserCreateWithoutSessionsInput = {
   auditEvents?: Prisma.AuditEventCreateNestedManyWithoutActorInput
   invitationsAccepted?: Prisma.InvitationCreateNestedManyWithoutAcceptedByInput
   invitationsIssued?: Prisma.InvitationCreateNestedManyWithoutInviterInput
+  uploadSessions?: Prisma.UploadSessionCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -647,6 +669,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   auditEvents?: Prisma.AuditEventUncheckedCreateNestedManyWithoutActorInput
   invitationsAccepted?: Prisma.InvitationUncheckedCreateNestedManyWithoutAcceptedByInput
   invitationsIssued?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput
+  uploadSessions?: Prisma.UploadSessionUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -681,6 +704,7 @@ export type UserUpdateWithoutSessionsInput = {
   auditEvents?: Prisma.AuditEventUpdateManyWithoutActorNestedInput
   invitationsAccepted?: Prisma.InvitationUpdateManyWithoutAcceptedByNestedInput
   invitationsIssued?: Prisma.InvitationUpdateManyWithoutInviterNestedInput
+  uploadSessions?: Prisma.UploadSessionUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -699,6 +723,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   auditEvents?: Prisma.AuditEventUncheckedUpdateManyWithoutActorNestedInput
   invitationsAccepted?: Prisma.InvitationUncheckedUpdateManyWithoutAcceptedByNestedInput
   invitationsIssued?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput
+  uploadSessions?: Prisma.UploadSessionUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutInvitationsAcceptedInput = {
@@ -717,6 +742,7 @@ export type UserCreateWithoutInvitationsAcceptedInput = {
   auditEvents?: Prisma.AuditEventCreateNestedManyWithoutActorInput
   invitationsIssued?: Prisma.InvitationCreateNestedManyWithoutInviterInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  uploadSessions?: Prisma.UploadSessionCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutInvitationsAcceptedInput = {
@@ -735,6 +761,7 @@ export type UserUncheckedCreateWithoutInvitationsAcceptedInput = {
   auditEvents?: Prisma.AuditEventUncheckedCreateNestedManyWithoutActorInput
   invitationsIssued?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  uploadSessions?: Prisma.UploadSessionUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutInvitationsAcceptedInput = {
@@ -758,6 +785,7 @@ export type UserCreateWithoutInvitationsIssuedInput = {
   auditEvents?: Prisma.AuditEventCreateNestedManyWithoutActorInput
   invitationsAccepted?: Prisma.InvitationCreateNestedManyWithoutAcceptedByInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  uploadSessions?: Prisma.UploadSessionCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutInvitationsIssuedInput = {
@@ -776,6 +804,7 @@ export type UserUncheckedCreateWithoutInvitationsIssuedInput = {
   auditEvents?: Prisma.AuditEventUncheckedCreateNestedManyWithoutActorInput
   invitationsAccepted?: Prisma.InvitationUncheckedCreateNestedManyWithoutAcceptedByInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  uploadSessions?: Prisma.UploadSessionUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutInvitationsIssuedInput = {
@@ -810,6 +839,7 @@ export type UserUpdateWithoutInvitationsAcceptedInput = {
   auditEvents?: Prisma.AuditEventUpdateManyWithoutActorNestedInput
   invitationsIssued?: Prisma.InvitationUpdateManyWithoutInviterNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  uploadSessions?: Prisma.UploadSessionUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutInvitationsAcceptedInput = {
@@ -828,6 +858,7 @@ export type UserUncheckedUpdateWithoutInvitationsAcceptedInput = {
   auditEvents?: Prisma.AuditEventUncheckedUpdateManyWithoutActorNestedInput
   invitationsIssued?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  uploadSessions?: Prisma.UploadSessionUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserUpsertWithoutInvitationsIssuedInput = {
@@ -857,6 +888,7 @@ export type UserUpdateWithoutInvitationsIssuedInput = {
   auditEvents?: Prisma.AuditEventUpdateManyWithoutActorNestedInput
   invitationsAccepted?: Prisma.InvitationUpdateManyWithoutAcceptedByNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  uploadSessions?: Prisma.UploadSessionUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutInvitationsIssuedInput = {
@@ -875,6 +907,7 @@ export type UserUncheckedUpdateWithoutInvitationsIssuedInput = {
   auditEvents?: Prisma.AuditEventUncheckedUpdateManyWithoutActorNestedInput
   invitationsAccepted?: Prisma.InvitationUncheckedUpdateManyWithoutAcceptedByNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  uploadSessions?: Prisma.UploadSessionUncheckedUpdateManyWithoutActorNestedInput
 }
 
 export type UserCreateWithoutAuditEventsInput = {
@@ -893,6 +926,7 @@ export type UserCreateWithoutAuditEventsInput = {
   invitationsAccepted?: Prisma.InvitationCreateNestedManyWithoutAcceptedByInput
   invitationsIssued?: Prisma.InvitationCreateNestedManyWithoutInviterInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  uploadSessions?: Prisma.UploadSessionCreateNestedManyWithoutActorInput
 }
 
 export type UserUncheckedCreateWithoutAuditEventsInput = {
@@ -911,6 +945,7 @@ export type UserUncheckedCreateWithoutAuditEventsInput = {
   invitationsAccepted?: Prisma.InvitationUncheckedCreateNestedManyWithoutAcceptedByInput
   invitationsIssued?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  uploadSessions?: Prisma.UploadSessionUncheckedCreateNestedManyWithoutActorInput
 }
 
 export type UserCreateOrConnectWithoutAuditEventsInput = {
@@ -945,6 +980,7 @@ export type UserUpdateWithoutAuditEventsInput = {
   invitationsAccepted?: Prisma.InvitationUpdateManyWithoutAcceptedByNestedInput
   invitationsIssued?: Prisma.InvitationUpdateManyWithoutInviterNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  uploadSessions?: Prisma.UploadSessionUpdateManyWithoutActorNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAuditEventsInput = {
@@ -963,6 +999,99 @@ export type UserUncheckedUpdateWithoutAuditEventsInput = {
   invitationsAccepted?: Prisma.InvitationUncheckedUpdateManyWithoutAcceptedByNestedInput
   invitationsIssued?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  uploadSessions?: Prisma.UploadSessionUncheckedUpdateManyWithoutActorNestedInput
+}
+
+export type UserCreateWithoutUploadSessionsInput = {
+  id: string
+  emailNormalized: string
+  displayName: string
+  passwordHash: string
+  role: string
+  locale?: string
+  status?: string
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  archivedAt?: Date | string | null
+  version?: bigint | number
+  auditEvents?: Prisma.AuditEventCreateNestedManyWithoutActorInput
+  invitationsAccepted?: Prisma.InvitationCreateNestedManyWithoutAcceptedByInput
+  invitationsIssued?: Prisma.InvitationCreateNestedManyWithoutInviterInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutUploadSessionsInput = {
+  id: string
+  emailNormalized: string
+  displayName: string
+  passwordHash: string
+  role: string
+  locale?: string
+  status?: string
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  archivedAt?: Date | string | null
+  version?: bigint | number
+  auditEvents?: Prisma.AuditEventUncheckedCreateNestedManyWithoutActorInput
+  invitationsAccepted?: Prisma.InvitationUncheckedCreateNestedManyWithoutAcceptedByInput
+  invitationsIssued?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutUploadSessionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutUploadSessionsInput, Prisma.UserUncheckedCreateWithoutUploadSessionsInput>
+}
+
+export type UserUpsertWithoutUploadSessionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutUploadSessionsInput, Prisma.UserUncheckedUpdateWithoutUploadSessionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutUploadSessionsInput, Prisma.UserUncheckedCreateWithoutUploadSessionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutUploadSessionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutUploadSessionsInput, Prisma.UserUncheckedUpdateWithoutUploadSessionsInput>
+}
+
+export type UserUpdateWithoutUploadSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  emailNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  auditEvents?: Prisma.AuditEventUpdateManyWithoutActorNestedInput
+  invitationsAccepted?: Prisma.InvitationUpdateManyWithoutAcceptedByNestedInput
+  invitationsIssued?: Prisma.InvitationUpdateManyWithoutInviterNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutUploadSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  emailNormalized?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  auditEvents?: Prisma.AuditEventUncheckedUpdateManyWithoutActorNestedInput
+  invitationsAccepted?: Prisma.InvitationUncheckedUpdateManyWithoutAcceptedByNestedInput
+  invitationsIssued?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -975,6 +1104,7 @@ export type UserCountOutputType = {
   invitationsAccepted: number
   invitationsIssued: number
   sessions: number
+  uploadSessions: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -982,6 +1112,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   invitationsAccepted?: boolean | UserCountOutputTypeCountInvitationsAcceptedArgs
   invitationsIssued?: boolean | UserCountOutputTypeCountInvitationsIssuedArgs
   sessions?: boolean | UserCountOutputTypeCountSessionsArgs
+  uploadSessions?: boolean | UserCountOutputTypeCountUploadSessionsArgs
 }
 
 /**
@@ -1022,6 +1153,13 @@ export type UserCountOutputTypeCountSessionsArgs<ExtArgs extends runtime.Types.E
   where?: Prisma.SessionWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountUploadSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UploadSessionWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1040,6 +1178,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   invitationsAccepted?: boolean | Prisma.User$invitationsAcceptedArgs<ExtArgs>
   invitationsIssued?: boolean | Prisma.User$invitationsIssuedArgs<ExtArgs>
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
+  uploadSessions?: boolean | Prisma.User$uploadSessionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1094,6 +1233,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   invitationsAccepted?: boolean | Prisma.User$invitationsAcceptedArgs<ExtArgs>
   invitationsIssued?: boolean | Prisma.User$invitationsIssuedArgs<ExtArgs>
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
+  uploadSessions?: boolean | Prisma.User$uploadSessionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1106,6 +1246,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     invitationsAccepted: Prisma.$InvitationPayload<ExtArgs>[]
     invitationsIssued: Prisma.$InvitationPayload<ExtArgs>[]
     sessions: Prisma.$SessionPayload<ExtArgs>[]
+    uploadSessions: Prisma.$UploadSessionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1518,6 +1659,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   invitationsAccepted<T extends Prisma.User$invitationsAcceptedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$invitationsAcceptedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InvitationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   invitationsIssued<T extends Prisma.User$invitationsIssuedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$invitationsIssuedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InvitationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   sessions<T extends Prisma.User$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  uploadSessions<T extends Prisma.User$uploadSessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$uploadSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UploadSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2045,6 +2187,30 @@ export type User$sessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   distinct?: Prisma.SessionScalarFieldEnum | Prisma.SessionScalarFieldEnum[]
+}
+
+/**
+ * User.uploadSessions
+ */
+export type User$uploadSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UploadSession
+   */
+  select?: Prisma.UploadSessionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UploadSession
+   */
+  omit?: Prisma.UploadSessionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UploadSessionInclude<ExtArgs> | null
+  where?: Prisma.UploadSessionWhereInput
+  orderBy?: Prisma.UploadSessionOrderByWithRelationInput | Prisma.UploadSessionOrderByWithRelationInput[]
+  cursor?: Prisma.UploadSessionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UploadSessionScalarFieldEnum | Prisma.UploadSessionScalarFieldEnum[]
 }
 
 /**

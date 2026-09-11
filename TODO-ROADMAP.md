@@ -509,25 +509,27 @@ Suggested pull requests:
 
 Tasks:
 
-- [ ] Deliver the shared media model/storage/upload flow and complete Item media in Stage 2; defer only StorageNode-specific authorization, UI wiring, and integration tests until STO-01 creates the node aggregate.
-- [ ] Add media asset, relation, and upload-session migrations and Prisma models.
-- [ ] Define the local media adapter and optional S3-compatible port without making S3 mandatory.
-- [ ] Implement begin-upload authorization, byte limit, declared type, and expiry.
-- [ ] Stream uploads to temporary storage while computing checksums.
-- [ ] Validate file signature/MIME and atomically finalize metadata/relation state.
-- [ ] Enforce one primary image per entity and stable gallery ordering.
-- [ ] Implement reorder and archive/delete semantics with optimistic concurrency.
-- [ ] Implement delayed orphan cleanup that rechecks references before deletion.
-- [ ] Add category placeholder selection when no media is present.
-- [ ] Build accessible upload, progress, primary selection, gallery reorder, and error UI.
-- [ ] Add Item authorization, race, cleanup, persistence, and E2E tests; keep the reusable StorageNode cases ready for completion in STO-01.
+- [x] Deliver the shared media model/storage/upload flow and complete Item media in Stage 2; defer only StorageNode-specific authorization, UI wiring, and integration tests until STO-01 creates the node aggregate.
+- [x] Add media asset, relation, and upload-session migrations and Prisma models.
+- [x] Define the local media adapter and optional S3-compatible port without making S3 mandatory.
+- [x] Implement begin-upload authorization, byte limit, declared type, and expiry.
+- [x] Stream uploads to temporary storage while computing checksums.
+- [x] Validate file signature/MIME and atomically finalize metadata/relation state.
+- [x] Enforce one primary image per entity and stable gallery ordering.
+- [x] Implement reorder and archive/delete semantics with optimistic concurrency.
+- [x] Implement delayed orphan cleanup that rechecks references before deletion.
+- [x] Add category placeholder selection when no media is present.
+- [x] Build accessible upload, progress, primary selection, gallery reorder, and error UI.
+- [x] Add Item authorization, race, cleanup, persistence, and E2E tests; keep the reusable StorageNode cases ready for completion in STO-01.
+
+Implementation evidence: [Media uploads and attachments](docs/project/media-uploads.md).
 
 Acceptance criteria (verbatim from the approved blueprint):
 
-- [ ] Upload session, size/type/checksum validation, and finalize flow work.
-- [ ] Primary-image uniqueness and gallery order are enforced.
-- [ ] Missing media uses a category placeholder.
-- [ ] Delayed cleanup does not delete referenced assets.
+- [x] Upload session, size/type/checksum validation, and finalize flow work.
+- [x] Primary-image uniqueness and gallery order are enforced.
+- [x] Missing media uses a category placeholder.
+- [x] Delayed cleanup does not delete referenced assets.
 
 ### MED-02 Process image variants safely
 

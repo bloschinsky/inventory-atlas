@@ -97,6 +97,14 @@ The migration adds the real Item owner/reference foreign keys promised by
 CAT-02. Storage-node foreign keys and destination path locking are added by
 STO-01 when `storage_nodes` exists.
 
+`0007_media.mjs` starts MED-01A with the Prisma-owned Media tables: `media_assets` with
+storage key, technical metadata, checksum, processing state, variant source and the delayed
+deletion timestamp; `media_relations` linking one asset to exactly one Item or StorageNode
+with role, position, alt text and visibility, guarded by partial unique indexes for one active
+primary per owner and one active relation per owner, role and position; and short-lived
+`upload_sessions` with the declared file, temporary key, received size, checksum and state.
+`media_relations.storage_node_id` has no foreign key until STO-01 creates `storage_nodes`.
+
 Movement rows are append-only. Search projections include separate authenticated
 and public vectors/attribute objects, while privacy-safe construction stays in
 `SearchProjectionPort`. Idempotency keys and fingerprints are stored only as

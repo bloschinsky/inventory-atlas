@@ -11,6 +11,8 @@ import { SchemaFieldsController } from './schema-fields.controller.js';
 import { SCHEMA_RUNTIME, type SchemaRuntimePort } from './schema.runtime.js';
 import { ItemsController } from './items.controller.js';
 import { ITEMS_RUNTIME, type ItemsRuntimePort } from './items.runtime.js';
+import { MediaController } from './media.controller.js';
+import { MEDIA_RUNTIME, type MediaRuntimePort } from './media.runtime.js';
 
 @Module({})
 export class AppModule {
@@ -19,7 +21,8 @@ export class AppModule {
       AuthRuntimePort &
       CatalogRuntimePort &
       SchemaRuntimePort &
-      ItemsRuntimePort,
+      ItemsRuntimePort &
+      MediaRuntimePort,
   ): DynamicModule {
     return {
       module: AppModule,
@@ -30,6 +33,7 @@ export class AppModule {
         FoundationController,
         HealthController,
         ItemsController,
+        MediaController,
         MetaController,
         SchemaFieldsController,
       ],
@@ -39,6 +43,7 @@ export class AppModule {
         { provide: CATALOG_RUNTIME, useValue: runtime },
         { provide: SCHEMA_RUNTIME, useValue: runtime },
         { provide: ITEMS_RUNTIME, useValue: runtime },
+        { provide: MEDIA_RUNTIME, useValue: runtime },
       ],
     };
   }

@@ -1,6 +1,28 @@
 {
   "components": {
     "schemas": {
+      "BeginUploadRequestDto": {
+        "properties": {
+          "byteSize": {
+            "description": "Declared byte size of the file.",
+            "minimum": 1,
+            "type": "number"
+          },
+          "filename": {
+            "example": "front-view.jpg",
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string"
+          },
+          "itemPublicId": { "format": "uuid", "type": "string" },
+          "mimeType": {
+            "enum": ["image/heic", "image/jpeg", "image/png", "image/webp"],
+            "type": "string"
+          }
+        },
+        "required": ["byteSize", "filename", "itemPublicId", "mimeType"],
+        "type": "object"
+      },
       "CategoryDto": {
         "properties": {
           "archivedAt": { "format": "date-time", "nullable": true, "type": "string" },
@@ -384,6 +406,20 @@
         "required": ["displayOrder", "id", "key", "labels"],
         "type": "object"
       },
+      "FinalizeUploadRequestDto": {
+        "properties": {
+          "altText": { "maxLength": 1000, "nullable": true, "type": "string" },
+          "checksumSha256": {
+            "description": "Client-computed SHA-256 of the uploaded bytes; rejected when it disagrees.",
+            "nullable": true,
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "role": { "enum": ["container_photo", "gallery", "primary"], "type": "string" },
+          "visibility": { "enum": ["authenticated", "private", "public"], "type": "string" }
+        },
+        "type": "object"
+      },
       "InvitationSummaryDto": {
         "properties": {
           "acceptedAt": { "format": "date-time", "nullable": true, "type": "string" },
@@ -523,6 +559,41 @@
         "required": ["en"],
         "type": "object"
       },
+      "MediaItemDto": {
+        "properties": {
+          "altText": { "nullable": true, "type": "string" },
+          "assetId": { "format": "uuid", "type": "string" },
+          "byteSize": { "minimum": 1, "type": "number" },
+          "checksumSha256": { "pattern": "^[0-9a-f]{64}$", "type": "string" },
+          "contentUrl": {
+            "description": "Where the stored bytes are served from.",
+            "type": "string"
+          },
+          "height": { "minimum": 1, "nullable": true, "type": "number" },
+          "mimeType": { "type": "string" },
+          "originalFilename": { "type": "string" },
+          "position": { "minimum": 0, "type": "number" },
+          "processingState": { "enum": ["failed", "pending", "ready"], "type": "string" },
+          "relationId": { "format": "uuid", "type": "string" },
+          "role": { "enum": ["container_photo", "gallery", "primary"], "type": "string" },
+          "visibility": { "enum": ["authenticated", "private", "public"], "type": "string" },
+          "width": { "minimum": 1, "nullable": true, "type": "number" }
+        },
+        "required": [
+          "assetId",
+          "byteSize",
+          "checksumSha256",
+          "contentUrl",
+          "mimeType",
+          "originalFilename",
+          "position",
+          "processingState",
+          "relationId",
+          "role",
+          "visibility"
+        ],
+        "type": "object"
+      },
       "ProblemDetailsDto": {
         "properties": {
           "code": { "example": "VALIDATION_FAILED", "type": "string" },
@@ -579,6 +650,24 @@
           "uk": { "example": "Pentax LX - Вживаний", "type": "string" }
         },
         "required": ["en", "uk"],
+        "type": "object"
+      },
+      "ReorderMediaRequestDto": {
+        "properties": {
+          "expectedVersion": {
+            "description": "Known Item version; a stale value is rejected instead of reordering.",
+            "minimum": 1,
+            "type": "number"
+          },
+          "itemPublicId": { "format": "uuid", "type": "string" },
+          "order": {
+            "description": "Every active gallery relation exactly once, in the intended order.",
+            "items": { "format": "uuid", "type": "string" },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": ["expectedVersion", "itemPublicId", "order"],
         "type": "object"
       },
       "SessionActorDto": {
@@ -766,6 +855,34 @@
       "UpdateLocaleRequestDto": {
         "properties": { "locale": { "enum": ["en", "uk"], "type": "string" } },
         "required": ["locale"],
+        "type": "object"
+      },
+      "UploadSessionDto": {
+        "properties": {
+          "declaredByteSize": { "minimum": 1, "type": "number" },
+          "declaredFilename": { "type": "string" },
+          "declaredMimeType": { "type": "string" },
+          "expiresAt": { "format": "date-time", "type": "string" },
+          "sessionId": { "format": "uuid", "type": "string" },
+          "state": {
+            "enum": ["expired", "failed", "finalized", "pending", "received"],
+            "type": "string"
+          },
+          "uploadUrl": {
+            "description": "Where the raw bytes are streamed with a PUT request.",
+            "example": "/api/v1/media/upload-sessions/{id}/content",
+            "type": "string"
+          }
+        },
+        "required": [
+          "declaredByteSize",
+          "declaredFilename",
+          "declaredMimeType",
+          "expiresAt",
+          "sessionId",
+          "state",
+          "uploadUrl"
+        ],
         "type": "object"
       },
       "UserSummaryDto": {
@@ -2097,6 +2214,59 @@
         "tags": ["items"]
       }
     },
+    "/api/v1/items/{publicId}/media": {
+      "get": {
+        "operationId": "listItemMedia",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "publicId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": { "$ref": "#/components/schemas/MediaItemDto" },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["media"]
+      }
+    },
     "/api/v1/lifecycle-statuses": {
       "get": {
         "operationId": "listLifecycleStatuses",
@@ -2268,6 +2438,381 @@
         "tags": ["catalog dictionaries"]
       }
     },
+    "/api/v1/media/assets/{id}/content": {
+      "get": {
+        "operationId": "readMediaAsset",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "The stored image bytes." },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["media"]
+      }
+    },
+    "/api/v1/media/relations/{id}": {
+      "delete": {
+        "operationId": "detachItemMedia",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "" },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VersionConflictProblemDto" }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["media"]
+      }
+    },
+    "/api/v1/media/relations/{id}/primary": {
+      "post": {
+        "operationId": "setPrimaryItemMedia",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": { "$ref": "#/components/schemas/MediaItemDto" },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VersionConflictProblemDto" }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["media"]
+      }
+    },
+    "/api/v1/media/relations/reorder": {
+      "patch": {
+        "operationId": "reorderItemMedia",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ReorderMediaRequestDto" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": { "$ref": "#/components/schemas/MediaItemDto" },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VersionConflictProblemDto" }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["media"]
+      }
+    },
+    "/api/v1/media/upload-sessions": {
+      "post": {
+        "operationId": "beginMediaUpload",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/BeginUploadRequestDto" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/UploadSessionDto" } }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["media"]
+      }
+    },
+    "/api/v1/media/upload-sessions/{id}/content": {
+      "put": {
+        "operationId": "uploadMediaContent",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "format": "binary", "type": "string" } } },
+          "description": "Raw image bytes.",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/UploadSessionDto" } }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["media"]
+      }
+    },
+    "/api/v1/media/upload-sessions/{id}/finalize": {
+      "post": {
+        "operationId": "finalizeMediaUpload",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/FinalizeUploadRequestDto" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/MediaItemDto" } }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["media"]
+      }
+    },
     "/api/v1/meta": {
       "get": {
         "operationId": "getMetadata",
@@ -2339,5 +2884,5 @@
   },
   "servers": [],
   "tags": [],
-  "x-spec-checksum": "7e17f30f12271e8d4a028836b698404d9d71f78453811c44e1cdf4429ff6bec9"
+  "x-spec-checksum": "0be25fd76d042e48bea43a214da7c758a0cf56f6a62662d707486e7155c7dc10"
 }

@@ -3,17 +3,20 @@ import {
   CatalogDictionaryAuthorizationError,
   DisplayTemplateError,
   ItemVersionConflictError,
+  MediaVersionConflictError,
   SchemaAuthorizationError,
   SchemaPolicyError,
   SessionError,
   permissionsFor,
 } from '@inventory-atlas/backend';
+import { Readable } from 'node:stream';
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthRuntimePort } from './auth.runtime.js';
 import type { FoundationRuntimePort } from './foundation.runtime.js';
 import type { CatalogRuntimePort } from './catalog.runtime.js';
 import type { SchemaRuntimePort } from './schema.runtime.js';
 import type { ItemsRuntimePort } from './items.runtime.js';
+import type { MediaRuntimePort } from './media.runtime.js';
 import { createApiApplication } from './main.js';
 import { createOpenApiDocument } from './openapi-document.js';
 
@@ -87,6 +90,66 @@ const dictionaries = {
     ],
     rendered: { en: 'Pentax LX - Used', uk: 'Pentax LX - Вживаний' },
     missingTokens: ['model'],
+  })),
+};
+const mediaRelationId = '0198f40c-92f3-7a12-bc9a-653f97786c50';
+const mediaAssetId = '0198f40c-92f3-7a12-bc9a-653f97786c51';
+const uploadSessionId = '0198f40c-92f3-7a12-bc9a-653f97786c52';
+const mediaItem = {
+  relationId: mediaRelationId,
+  assetId: mediaAssetId,
+  role: 'primary' as const,
+  position: 0,
+  altText: 'Front view',
+  visibility: 'authenticated' as const,
+  originalFilename: 'front-view.jpg',
+  mimeType: 'image/jpeg',
+  byteSize: 2_048,
+  width: null,
+  height: null,
+  checksumSha256: 'a'.repeat(64),
+  processingState: 'pending',
+  contentUrl: `/api/v1/media/assets/${mediaAssetId}/content`,
+};
+const media = {
+  beginUpload: vi.fn(async () => ({
+    sessionId: uploadSessionId,
+    uploadUrl: `/api/v1/media/upload-sessions/${uploadSessionId}/content`,
+    declaredFilename: 'front-view.jpg',
+    declaredMimeType: 'image/jpeg',
+    declaredByteSize: 2_048,
+    expiresAt: '2026-09-11T12:15:00.000Z',
+    state: 'pending',
+  })),
+  receiveContent: vi.fn(async () => ({
+    sessionId: uploadSessionId,
+    uploadUrl: `/api/v1/media/upload-sessions/${uploadSessionId}/content`,
+    declaredFilename: 'front-view.jpg',
+    declaredMimeType: 'image/jpeg',
+    declaredByteSize: 2_048,
+    expiresAt: '2026-09-11T12:15:00.000Z',
+    state: 'received',
+  })),
+  finalizeUpload: vi.fn(async () => mediaItem),
+  listItemMedia: vi.fn(async () => [mediaItem]),
+  reorderGallery: vi.fn(async () => [mediaItem]),
+  setPrimary: vi.fn(async () => [mediaItem]),
+  detachRelation: vi.fn(async () => undefined),
+  openAssetContent: vi.fn(async () => ({
+    asset: {
+      id: mediaAssetId,
+      storageKey: 'assets/01/98/object.jpg',
+      originalFilename: 'front-view.jpg',
+      mimeType: 'image/jpeg',
+      byteSize: 11,
+      width: null,
+      height: null,
+      checksumSha256: 'a'.repeat(64),
+      processingState: 'pending' as const,
+      deleteAfter: null,
+      createdAt: issuedAt,
+    },
+    content: Readable.from([Buffer.from('image-bytes')]),
   })),
 };
 const fieldDefinitionId = '0198f40c-92f3-7a12-bc9a-653f97786c30';
@@ -196,7 +259,8 @@ const runtime: FoundationRuntimePort &
   AuthRuntimePort &
   CatalogRuntimePort &
   SchemaRuntimePort &
-  ItemsRuntimePort = {
+  ItemsRuntimePort &
+  MediaRuntimePort = {
   async readiness() {
     return {
       status: 'ready',
@@ -241,6 +305,9 @@ const runtime: FoundationRuntimePort &
   catalogItems() {
     return catalogItems;
   },
+  media() {
+    return media;
+  },
 };
 
 describe('API composition root', () => {
@@ -262,6 +329,7 @@ describe('API composition root', () => {
       'archiveFieldOption',
       'archiveLifecycleStatus',
       'archiveUser',
+      'beginMediaUpload',
       'createAuthSession',
       'createCategory',
       'createFieldDefinition',
@@ -269,6 +337,8 @@ describe('API composition root', () => {
       'createItem',
       'createLifecycleStatus',
       'deleteAuthSession',
+      'detachItemMedia',
+      'finalizeMediaUpload',
       'getCurrentActor',
       'getFoundationStatus',
       'getItem',
@@ -280,12 +350,16 @@ describe('API composition root', () => {
       'listCategories',
       'listFieldDefinitions',
       'listInvitations',
+      'listItemMedia',
       'listLifecycleStatuses',
       'listUsers',
       'previewCategoryDisplayName',
       'previewFieldDefinitionConversion',
+      'readMediaAsset',
+      'reorderItemMedia',
       'revokeAuthSession',
       'revokeInvitation',
+      'setPrimaryItemMedia',
       'updateCategory',
       'updateCurrentActorLocale',
       'updateFieldDefinition',
@@ -293,13 +367,16 @@ describe('API composition root', () => {
       'updateItem',
       'updateLifecycleStatus',
       'updateUser',
+      'uploadMediaContent',
     ]);
     expect(new Set(operationIds).size).toBe(operationIds.length);
     expect(document.components?.schemas).toMatchObject({
       CursorPageDto: expect.any(Object),
       CreatedItemDto: expect.any(Object),
       CreateItemRequestDto: expect.any(Object),
+      BeginUploadRequestDto: expect.any(Object),
       ItemDetailDto: expect.any(Object),
+      MediaItemDto: expect.any(Object),
       ItemMutationRequestDto: expect.any(Object),
       ItemPageResponseDto: expect.any(Object),
       ProblemDetailsDto: expect.any(Object),
@@ -307,6 +384,146 @@ describe('API composition root', () => {
       UpdateItemRequestDto: expect.any(Object),
       VersionConflictProblemDto: expect.any(Object),
     });
+    await app.close();
+  });
+
+  it('runs the declare, upload and finalize media flow with a raw content body', async () => {
+    media.beginUpload.mockClear();
+    media.receiveContent.mockClear();
+    media.finalizeUpload.mockClear();
+    const app = await createApiApplication(runtime);
+    await app.init();
+    const headers = {
+      cookie: `inventory_atlas_session=${sessionToken}`,
+      'x-csrf-token': csrfToken,
+      'x-request-id': 'request-media',
+    };
+
+    const begun = await app.inject({
+      method: 'POST',
+      url: '/api/v1/media/upload-sessions',
+      headers,
+      payload: {
+        itemPublicId: itemPublicId,
+        filename: 'front-view.jpg',
+        mimeType: 'image/jpeg',
+        byteSize: 2_048,
+      },
+    });
+    expect(begun.statusCode).toBe(201);
+    expect(begun.json()).toMatchObject({ sessionId: uploadSessionId, state: 'pending' });
+
+    const rejected = await app.inject({
+      method: 'POST',
+      url: '/api/v1/media/upload-sessions',
+      headers,
+      payload: { itemPublicId, filename: 'notes.pdf', mimeType: 'application/pdf', byteSize: 10 },
+    });
+    expect(rejected.statusCode).toBe(400);
+    expect(rejected.json()).toMatchObject({ code: 'VALIDATION_FAILED' });
+    expect(media.beginUpload).toHaveBeenCalledTimes(1);
+
+    const uploaded = await app.inject({
+      method: 'PUT',
+      url: `/api/v1/media/upload-sessions/${uploadSessionId}/content`,
+      headers: { ...headers, 'content-type': 'application/octet-stream' },
+      payload: Buffer.from([0xff, 0xd8, 0xff, 0xe0]),
+    });
+    expect(uploaded.statusCode).toBe(200);
+    expect(uploaded.json()).toMatchObject({ state: 'received' });
+    expect(media.receiveContent).toHaveBeenCalledWith(
+      expect.objectContaining({ role: 'owner' }),
+      uploadSessionId,
+      expect.anything(),
+    );
+
+    const finalized = await app.inject({
+      method: 'POST',
+      url: `/api/v1/media/upload-sessions/${uploadSessionId}/finalize`,
+      headers,
+      payload: { role: 'primary', altText: 'Front view', checksumSha256: 'a'.repeat(64) },
+    });
+    expect(finalized.statusCode).toBe(201);
+    expect(finalized.json()).toMatchObject({ relationId: mediaRelationId, role: 'primary' });
+    await app.close();
+  });
+
+  it('serves stored bytes with an immutable cache policy and no sniffing', async () => {
+    const app = await createApiApplication(runtime);
+    await app.init();
+    const response = await app.inject({
+      method: 'GET',
+      url: `/api/v1/media/assets/${mediaAssetId}/content`,
+      headers: { cookie: `inventory_atlas_session=${sessionToken}` },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['content-type']).toBe('image/jpeg');
+    expect(response.headers['x-content-type-options']).toBe('nosniff');
+    expect(response.headers['cache-control']).toBe('private, max-age=31536000, immutable');
+    expect(response.rawPayload.toString()).toBe('image-bytes');
+    await app.close();
+  });
+
+  it('requires the owner version for reorder, primary selection and detach', async () => {
+    media.reorderGallery.mockClear();
+    media.setPrimary.mockClear();
+    media.detachRelation.mockClear();
+    const app = await createApiApplication(runtime);
+    await app.init();
+    const headers = {
+      cookie: `inventory_atlas_session=${sessionToken}`,
+      'x-csrf-token': csrfToken,
+    };
+
+    const reordered = await app.inject({
+      method: 'PATCH',
+      url: '/api/v1/media/relations/reorder',
+      headers,
+      payload: { itemPublicId, expectedVersion: 4, order: [mediaRelationId] },
+    });
+    expect(reordered.statusCode).toBe(200);
+    expect(media.reorderGallery).toHaveBeenCalledWith(
+      expect.objectContaining({ role: 'owner' }),
+      itemPublicId,
+      4,
+      [mediaRelationId],
+      expect.any(Object),
+    );
+
+    const withoutVersion = await app.inject({
+      method: 'POST',
+      url: `/api/v1/media/relations/${mediaRelationId}/primary`,
+      headers,
+    });
+    expect(withoutVersion.statusCode).toBe(400);
+    expect(media.setPrimary).not.toHaveBeenCalled();
+
+    const promoted = await app.inject({
+      method: 'POST',
+      url: `/api/v1/media/relations/${mediaRelationId}/primary`,
+      headers: { ...headers, 'if-match': '"4"' },
+    });
+    expect(promoted.statusCode).toBe(200);
+
+    media.detachRelation.mockRejectedValueOnce(new MediaVersionConflictError(9));
+    const conflicted = await app.inject({
+      method: 'DELETE',
+      url: `/api/v1/media/relations/${mediaRelationId}`,
+      headers: { ...headers, 'if-match': '"4"', 'x-request-id': 'request-detach' },
+    });
+    expect(conflicted.statusCode).toBe(409);
+    expect(conflicted.json()).toMatchObject({
+      code: 'MEDIA_OWNER_VERSION_CONFLICT',
+      currentVersion: 9,
+      requestId: 'request-detach',
+    });
+
+    const detached = await app.inject({
+      method: 'DELETE',
+      url: `/api/v1/media/relations/${mediaRelationId}`,
+      headers: { ...headers, 'if-match': '"4"' },
+    });
+    expect(detached.statusCode).toBe(204);
     await app.close();
   });
 
@@ -990,7 +1207,8 @@ describe('API composition root', () => {
       AuthRuntimePort &
       CatalogRuntimePort &
       SchemaRuntimePort &
-      ItemsRuntimePort = {
+      ItemsRuntimePort &
+      MediaRuntimePort = {
       ...runtime,
       async readiness() {
         return {

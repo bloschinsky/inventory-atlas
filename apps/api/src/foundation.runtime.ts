@@ -14,8 +14,12 @@ import {
   initializeInstallationSettings,
   readAdminAuthorizationSettings,
   SessionService,
+  CatalogMediaOwnerAdapter,
   ItemRepository,
   ItemService,
+  LocalMediaStorage,
+  MediaRepository,
+  MediaService,
   TransactionalAttributeValuePort,
   TransactionalAuditPort,
   TransactionalIdempotencyPort,
@@ -75,6 +79,7 @@ export class FoundationRuntime
   private dictionaries: CatalogDictionaryService | null = null;
   private schemaFieldService: FieldDefinitionService | null = null;
   private itemService: ItemService | null = null;
+  private mediaService: MediaService | null = null;
   private readonly rateLimiter: AuthRateLimiter;
 
   private constructor(
@@ -119,8 +124,9 @@ export class FoundationRuntime
       runtime.dictionaries = new CatalogDictionaryService(dictionaryRepository, fieldRepository);
       const attributeValues = new TransactionalAttributeValuePort();
       runtime.schemaFieldService = new FieldDefinitionService(fieldRepository, attributeValues);
+      const itemRepository = new ItemRepository(settingsClient);
       runtime.itemService = new ItemService(
-        new ItemRepository(settingsClient),
+        itemRepository,
         new IdempotencyRepository(database),
         fieldRepository,
         {
@@ -132,6 +138,13 @@ export class FoundationRuntime
           search: new TransactionalSearchProjectionPort(),
         },
         dictionaryRepository,
+      );
+      runtime.mediaService = new MediaService(
+        new MediaRepository(settingsClient),
+        new LocalMediaStorage(configuration.mediaLocalPath!),
+        new CatalogMediaOwnerAdapter(itemRepository),
+        { audit: new TransactionalAuditPort(), outbox: new TransactionalOutboxPort() },
+        configuration.mediaMaxUploadBytes,
       );
       await runtime.verifyMedia();
       return runtime;
@@ -220,6 +233,11 @@ export class FoundationRuntime
   catalogItems(): ItemService {
     if (!this.itemService) throw new Error('Catalog Items are not initialized.');
     return this.itemService;
+  }
+
+  media(): MediaService {
+    if (!this.mediaService) throw new Error('Media is not initialized.');
+    return this.mediaService;
   }
 
   secureSessionCookies(): boolean {

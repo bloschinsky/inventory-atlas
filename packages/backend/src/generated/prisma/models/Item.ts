@@ -280,11 +280,13 @@ export type ItemWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Item"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Item"> | Date | string
   archivedAt?: Prisma.DateTimeNullableFilter<"Item"> | Date | string | null
-  category?: Prisma.XOR<Prisma.CategoryScalarRelationFilter, Prisma.CategoryWhereInput>
-  lifecycleStatus?: Prisma.XOR<Prisma.LifecycleStatusScalarRelationFilter, Prisma.LifecycleStatusWhereInput>
   attributeValues?: Prisma.AttributeValueListRelationFilter
   referencingValues?: Prisma.AttributeValueListRelationFilter
   tags?: Prisma.ItemTagListRelationFilter
+  category?: Prisma.XOR<Prisma.CategoryScalarRelationFilter, Prisma.CategoryWhereInput>
+  lifecycleStatus?: Prisma.XOR<Prisma.LifecycleStatusScalarRelationFilter, Prisma.LifecycleStatusWhereInput>
+  mediaRelations?: Prisma.MediaRelationListRelationFilter
+  uploadSessions?: Prisma.UploadSessionListRelationFilter
 }
 
 export type ItemOrderByWithRelationInput = {
@@ -301,11 +303,13 @@ export type ItemOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   archivedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  category?: Prisma.CategoryOrderByWithRelationInput
-  lifecycleStatus?: Prisma.LifecycleStatusOrderByWithRelationInput
   attributeValues?: Prisma.AttributeValueOrderByRelationAggregateInput
   referencingValues?: Prisma.AttributeValueOrderByRelationAggregateInput
   tags?: Prisma.ItemTagOrderByRelationAggregateInput
+  category?: Prisma.CategoryOrderByWithRelationInput
+  lifecycleStatus?: Prisma.LifecycleStatusOrderByWithRelationInput
+  mediaRelations?: Prisma.MediaRelationOrderByRelationAggregateInput
+  uploadSessions?: Prisma.UploadSessionOrderByRelationAggregateInput
 }
 
 export type ItemWhereUniqueInput = Prisma.AtLeast<{
@@ -325,11 +329,13 @@ export type ItemWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Item"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Item"> | Date | string
   archivedAt?: Prisma.DateTimeNullableFilter<"Item"> | Date | string | null
-  category?: Prisma.XOR<Prisma.CategoryScalarRelationFilter, Prisma.CategoryWhereInput>
-  lifecycleStatus?: Prisma.XOR<Prisma.LifecycleStatusScalarRelationFilter, Prisma.LifecycleStatusWhereInput>
   attributeValues?: Prisma.AttributeValueListRelationFilter
   referencingValues?: Prisma.AttributeValueListRelationFilter
   tags?: Prisma.ItemTagListRelationFilter
+  category?: Prisma.XOR<Prisma.CategoryScalarRelationFilter, Prisma.CategoryWhereInput>
+  lifecycleStatus?: Prisma.XOR<Prisma.LifecycleStatusScalarRelationFilter, Prisma.LifecycleStatusWhereInput>
+  mediaRelations?: Prisma.MediaRelationListRelationFilter
+  uploadSessions?: Prisma.UploadSessionListRelationFilter
 }, "id" | "publicId">
 
 export type ItemOrderByWithAggregationInput = {
@@ -384,11 +390,13 @@ export type ItemCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   archivedAt?: Date | string | null
-  category: Prisma.CategoryCreateNestedOneWithoutItemsInput
-  lifecycleStatus: Prisma.LifecycleStatusCreateNestedOneWithoutItemsInput
   attributeValues?: Prisma.AttributeValueCreateNestedManyWithoutItemInput
   referencingValues?: Prisma.AttributeValueCreateNestedManyWithoutReferencedItemInput
   tags?: Prisma.ItemTagCreateNestedManyWithoutItemInput
+  category: Prisma.CategoryCreateNestedOneWithoutItemsInput
+  lifecycleStatus: Prisma.LifecycleStatusCreateNestedOneWithoutItemsInput
+  mediaRelations?: Prisma.MediaRelationCreateNestedManyWithoutItemInput
+  uploadSessions?: Prisma.UploadSessionCreateNestedManyWithoutItemInput
 }
 
 export type ItemUncheckedCreateInput = {
@@ -408,6 +416,8 @@ export type ItemUncheckedCreateInput = {
   attributeValues?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutItemInput
   referencingValues?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutReferencedItemInput
   tags?: Prisma.ItemTagUncheckedCreateNestedManyWithoutItemInput
+  mediaRelations?: Prisma.MediaRelationUncheckedCreateNestedManyWithoutItemInput
+  uploadSessions?: Prisma.UploadSessionUncheckedCreateNestedManyWithoutItemInput
 }
 
 export type ItemUpdateInput = {
@@ -422,11 +432,13 @@ export type ItemUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  category?: Prisma.CategoryUpdateOneRequiredWithoutItemsNestedInput
-  lifecycleStatus?: Prisma.LifecycleStatusUpdateOneRequiredWithoutItemsNestedInput
   attributeValues?: Prisma.AttributeValueUpdateManyWithoutItemNestedInput
   referencingValues?: Prisma.AttributeValueUpdateManyWithoutReferencedItemNestedInput
   tags?: Prisma.ItemTagUpdateManyWithoutItemNestedInput
+  category?: Prisma.CategoryUpdateOneRequiredWithoutItemsNestedInput
+  lifecycleStatus?: Prisma.LifecycleStatusUpdateOneRequiredWithoutItemsNestedInput
+  mediaRelations?: Prisma.MediaRelationUpdateManyWithoutItemNestedInput
+  uploadSessions?: Prisma.UploadSessionUpdateManyWithoutItemNestedInput
 }
 
 export type ItemUncheckedUpdateInput = {
@@ -446,6 +458,8 @@ export type ItemUncheckedUpdateInput = {
   attributeValues?: Prisma.AttributeValueUncheckedUpdateManyWithoutItemNestedInput
   referencingValues?: Prisma.AttributeValueUncheckedUpdateManyWithoutReferencedItemNestedInput
   tags?: Prisma.ItemTagUncheckedUpdateManyWithoutItemNestedInput
+  mediaRelations?: Prisma.MediaRelationUncheckedUpdateManyWithoutItemNestedInput
+  uploadSessions?: Prisma.UploadSessionUncheckedUpdateManyWithoutItemNestedInput
 }
 
 export type ItemCreateManyInput = {
@@ -700,6 +714,38 @@ export type ItemUpdateOneRequiredWithoutTagsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ItemUpdateToOneWithWhereWithoutTagsInput, Prisma.ItemUpdateWithoutTagsInput>, Prisma.ItemUncheckedUpdateWithoutTagsInput>
 }
 
+export type ItemCreateNestedOneWithoutMediaRelationsInput = {
+  create?: Prisma.XOR<Prisma.ItemCreateWithoutMediaRelationsInput, Prisma.ItemUncheckedCreateWithoutMediaRelationsInput>
+  connectOrCreate?: Prisma.ItemCreateOrConnectWithoutMediaRelationsInput
+  connect?: Prisma.ItemWhereUniqueInput
+}
+
+export type ItemUpdateOneWithoutMediaRelationsNestedInput = {
+  create?: Prisma.XOR<Prisma.ItemCreateWithoutMediaRelationsInput, Prisma.ItemUncheckedCreateWithoutMediaRelationsInput>
+  connectOrCreate?: Prisma.ItemCreateOrConnectWithoutMediaRelationsInput
+  upsert?: Prisma.ItemUpsertWithoutMediaRelationsInput
+  disconnect?: Prisma.ItemWhereInput | boolean
+  delete?: Prisma.ItemWhereInput | boolean
+  connect?: Prisma.ItemWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ItemUpdateToOneWithWhereWithoutMediaRelationsInput, Prisma.ItemUpdateWithoutMediaRelationsInput>, Prisma.ItemUncheckedUpdateWithoutMediaRelationsInput>
+}
+
+export type ItemCreateNestedOneWithoutUploadSessionsInput = {
+  create?: Prisma.XOR<Prisma.ItemCreateWithoutUploadSessionsInput, Prisma.ItemUncheckedCreateWithoutUploadSessionsInput>
+  connectOrCreate?: Prisma.ItemCreateOrConnectWithoutUploadSessionsInput
+  connect?: Prisma.ItemWhereUniqueInput
+}
+
+export type ItemUpdateOneWithoutUploadSessionsNestedInput = {
+  create?: Prisma.XOR<Prisma.ItemCreateWithoutUploadSessionsInput, Prisma.ItemUncheckedCreateWithoutUploadSessionsInput>
+  connectOrCreate?: Prisma.ItemCreateOrConnectWithoutUploadSessionsInput
+  upsert?: Prisma.ItemUpsertWithoutUploadSessionsInput
+  disconnect?: Prisma.ItemWhereInput | boolean
+  delete?: Prisma.ItemWhereInput | boolean
+  connect?: Prisma.ItemWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ItemUpdateToOneWithWhereWithoutUploadSessionsInput, Prisma.ItemUpdateWithoutUploadSessionsInput>, Prisma.ItemUncheckedUpdateWithoutUploadSessionsInput>
+}
+
 export type ItemCreateWithoutCategoryInput = {
   id: string
   publicId: string
@@ -712,10 +758,12 @@ export type ItemCreateWithoutCategoryInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   archivedAt?: Date | string | null
-  lifecycleStatus: Prisma.LifecycleStatusCreateNestedOneWithoutItemsInput
   attributeValues?: Prisma.AttributeValueCreateNestedManyWithoutItemInput
   referencingValues?: Prisma.AttributeValueCreateNestedManyWithoutReferencedItemInput
   tags?: Prisma.ItemTagCreateNestedManyWithoutItemInput
+  lifecycleStatus: Prisma.LifecycleStatusCreateNestedOneWithoutItemsInput
+  mediaRelations?: Prisma.MediaRelationCreateNestedManyWithoutItemInput
+  uploadSessions?: Prisma.UploadSessionCreateNestedManyWithoutItemInput
 }
 
 export type ItemUncheckedCreateWithoutCategoryInput = {
@@ -734,6 +782,8 @@ export type ItemUncheckedCreateWithoutCategoryInput = {
   attributeValues?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutItemInput
   referencingValues?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutReferencedItemInput
   tags?: Prisma.ItemTagUncheckedCreateNestedManyWithoutItemInput
+  mediaRelations?: Prisma.MediaRelationUncheckedCreateNestedManyWithoutItemInput
+  uploadSessions?: Prisma.UploadSessionUncheckedCreateNestedManyWithoutItemInput
 }
 
 export type ItemCreateOrConnectWithoutCategoryInput = {
@@ -793,10 +843,12 @@ export type ItemCreateWithoutLifecycleStatusInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   archivedAt?: Date | string | null
-  category: Prisma.CategoryCreateNestedOneWithoutItemsInput
   attributeValues?: Prisma.AttributeValueCreateNestedManyWithoutItemInput
   referencingValues?: Prisma.AttributeValueCreateNestedManyWithoutReferencedItemInput
   tags?: Prisma.ItemTagCreateNestedManyWithoutItemInput
+  category: Prisma.CategoryCreateNestedOneWithoutItemsInput
+  mediaRelations?: Prisma.MediaRelationCreateNestedManyWithoutItemInput
+  uploadSessions?: Prisma.UploadSessionCreateNestedManyWithoutItemInput
 }
 
 export type ItemUncheckedCreateWithoutLifecycleStatusInput = {
@@ -815,6 +867,8 @@ export type ItemUncheckedCreateWithoutLifecycleStatusInput = {
   attributeValues?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutItemInput
   referencingValues?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutReferencedItemInput
   tags?: Prisma.ItemTagUncheckedCreateNestedManyWithoutItemInput
+  mediaRelations?: Prisma.MediaRelationUncheckedCreateNestedManyWithoutItemInput
+  uploadSessions?: Prisma.UploadSessionUncheckedCreateNestedManyWithoutItemInput
 }
 
 export type ItemCreateOrConnectWithoutLifecycleStatusInput = {
@@ -855,10 +909,12 @@ export type ItemCreateWithoutAttributeValuesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   archivedAt?: Date | string | null
-  category: Prisma.CategoryCreateNestedOneWithoutItemsInput
-  lifecycleStatus: Prisma.LifecycleStatusCreateNestedOneWithoutItemsInput
   referencingValues?: Prisma.AttributeValueCreateNestedManyWithoutReferencedItemInput
   tags?: Prisma.ItemTagCreateNestedManyWithoutItemInput
+  category: Prisma.CategoryCreateNestedOneWithoutItemsInput
+  lifecycleStatus: Prisma.LifecycleStatusCreateNestedOneWithoutItemsInput
+  mediaRelations?: Prisma.MediaRelationCreateNestedManyWithoutItemInput
+  uploadSessions?: Prisma.UploadSessionCreateNestedManyWithoutItemInput
 }
 
 export type ItemUncheckedCreateWithoutAttributeValuesInput = {
@@ -877,6 +933,8 @@ export type ItemUncheckedCreateWithoutAttributeValuesInput = {
   archivedAt?: Date | string | null
   referencingValues?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutReferencedItemInput
   tags?: Prisma.ItemTagUncheckedCreateNestedManyWithoutItemInput
+  mediaRelations?: Prisma.MediaRelationUncheckedCreateNestedManyWithoutItemInput
+  uploadSessions?: Prisma.UploadSessionUncheckedCreateNestedManyWithoutItemInput
 }
 
 export type ItemCreateOrConnectWithoutAttributeValuesInput = {
@@ -896,10 +954,12 @@ export type ItemCreateWithoutReferencingValuesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   archivedAt?: Date | string | null
-  category: Prisma.CategoryCreateNestedOneWithoutItemsInput
-  lifecycleStatus: Prisma.LifecycleStatusCreateNestedOneWithoutItemsInput
   attributeValues?: Prisma.AttributeValueCreateNestedManyWithoutItemInput
   tags?: Prisma.ItemTagCreateNestedManyWithoutItemInput
+  category: Prisma.CategoryCreateNestedOneWithoutItemsInput
+  lifecycleStatus: Prisma.LifecycleStatusCreateNestedOneWithoutItemsInput
+  mediaRelations?: Prisma.MediaRelationCreateNestedManyWithoutItemInput
+  uploadSessions?: Prisma.UploadSessionCreateNestedManyWithoutItemInput
 }
 
 export type ItemUncheckedCreateWithoutReferencingValuesInput = {
@@ -918,6 +978,8 @@ export type ItemUncheckedCreateWithoutReferencingValuesInput = {
   archivedAt?: Date | string | null
   attributeValues?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutItemInput
   tags?: Prisma.ItemTagUncheckedCreateNestedManyWithoutItemInput
+  mediaRelations?: Prisma.MediaRelationUncheckedCreateNestedManyWithoutItemInput
+  uploadSessions?: Prisma.UploadSessionUncheckedCreateNestedManyWithoutItemInput
 }
 
 export type ItemCreateOrConnectWithoutReferencingValuesInput = {
@@ -948,10 +1010,12 @@ export type ItemUpdateWithoutAttributeValuesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  category?: Prisma.CategoryUpdateOneRequiredWithoutItemsNestedInput
-  lifecycleStatus?: Prisma.LifecycleStatusUpdateOneRequiredWithoutItemsNestedInput
   referencingValues?: Prisma.AttributeValueUpdateManyWithoutReferencedItemNestedInput
   tags?: Prisma.ItemTagUpdateManyWithoutItemNestedInput
+  category?: Prisma.CategoryUpdateOneRequiredWithoutItemsNestedInput
+  lifecycleStatus?: Prisma.LifecycleStatusUpdateOneRequiredWithoutItemsNestedInput
+  mediaRelations?: Prisma.MediaRelationUpdateManyWithoutItemNestedInput
+  uploadSessions?: Prisma.UploadSessionUpdateManyWithoutItemNestedInput
 }
 
 export type ItemUncheckedUpdateWithoutAttributeValuesInput = {
@@ -970,6 +1034,8 @@ export type ItemUncheckedUpdateWithoutAttributeValuesInput = {
   archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   referencingValues?: Prisma.AttributeValueUncheckedUpdateManyWithoutReferencedItemNestedInput
   tags?: Prisma.ItemTagUncheckedUpdateManyWithoutItemNestedInput
+  mediaRelations?: Prisma.MediaRelationUncheckedUpdateManyWithoutItemNestedInput
+  uploadSessions?: Prisma.UploadSessionUncheckedUpdateManyWithoutItemNestedInput
 }
 
 export type ItemUpsertWithoutReferencingValuesInput = {
@@ -995,10 +1061,12 @@ export type ItemUpdateWithoutReferencingValuesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  category?: Prisma.CategoryUpdateOneRequiredWithoutItemsNestedInput
-  lifecycleStatus?: Prisma.LifecycleStatusUpdateOneRequiredWithoutItemsNestedInput
   attributeValues?: Prisma.AttributeValueUpdateManyWithoutItemNestedInput
   tags?: Prisma.ItemTagUpdateManyWithoutItemNestedInput
+  category?: Prisma.CategoryUpdateOneRequiredWithoutItemsNestedInput
+  lifecycleStatus?: Prisma.LifecycleStatusUpdateOneRequiredWithoutItemsNestedInput
+  mediaRelations?: Prisma.MediaRelationUpdateManyWithoutItemNestedInput
+  uploadSessions?: Prisma.UploadSessionUpdateManyWithoutItemNestedInput
 }
 
 export type ItemUncheckedUpdateWithoutReferencingValuesInput = {
@@ -1017,6 +1085,8 @@ export type ItemUncheckedUpdateWithoutReferencingValuesInput = {
   archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   attributeValues?: Prisma.AttributeValueUncheckedUpdateManyWithoutItemNestedInput
   tags?: Prisma.ItemTagUncheckedUpdateManyWithoutItemNestedInput
+  mediaRelations?: Prisma.MediaRelationUncheckedUpdateManyWithoutItemNestedInput
+  uploadSessions?: Prisma.UploadSessionUncheckedUpdateManyWithoutItemNestedInput
 }
 
 export type ItemCreateWithoutTagsInput = {
@@ -1031,10 +1101,12 @@ export type ItemCreateWithoutTagsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   archivedAt?: Date | string | null
-  category: Prisma.CategoryCreateNestedOneWithoutItemsInput
-  lifecycleStatus: Prisma.LifecycleStatusCreateNestedOneWithoutItemsInput
   attributeValues?: Prisma.AttributeValueCreateNestedManyWithoutItemInput
   referencingValues?: Prisma.AttributeValueCreateNestedManyWithoutReferencedItemInput
+  category: Prisma.CategoryCreateNestedOneWithoutItemsInput
+  lifecycleStatus: Prisma.LifecycleStatusCreateNestedOneWithoutItemsInput
+  mediaRelations?: Prisma.MediaRelationCreateNestedManyWithoutItemInput
+  uploadSessions?: Prisma.UploadSessionCreateNestedManyWithoutItemInput
 }
 
 export type ItemUncheckedCreateWithoutTagsInput = {
@@ -1053,6 +1125,8 @@ export type ItemUncheckedCreateWithoutTagsInput = {
   archivedAt?: Date | string | null
   attributeValues?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutItemInput
   referencingValues?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutReferencedItemInput
+  mediaRelations?: Prisma.MediaRelationUncheckedCreateNestedManyWithoutItemInput
+  uploadSessions?: Prisma.UploadSessionUncheckedCreateNestedManyWithoutItemInput
 }
 
 export type ItemCreateOrConnectWithoutTagsInput = {
@@ -1083,10 +1157,12 @@ export type ItemUpdateWithoutTagsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  category?: Prisma.CategoryUpdateOneRequiredWithoutItemsNestedInput
-  lifecycleStatus?: Prisma.LifecycleStatusUpdateOneRequiredWithoutItemsNestedInput
   attributeValues?: Prisma.AttributeValueUpdateManyWithoutItemNestedInput
   referencingValues?: Prisma.AttributeValueUpdateManyWithoutReferencedItemNestedInput
+  category?: Prisma.CategoryUpdateOneRequiredWithoutItemsNestedInput
+  lifecycleStatus?: Prisma.LifecycleStatusUpdateOneRequiredWithoutItemsNestedInput
+  mediaRelations?: Prisma.MediaRelationUpdateManyWithoutItemNestedInput
+  uploadSessions?: Prisma.UploadSessionUpdateManyWithoutItemNestedInput
 }
 
 export type ItemUncheckedUpdateWithoutTagsInput = {
@@ -1105,6 +1181,200 @@ export type ItemUncheckedUpdateWithoutTagsInput = {
   archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   attributeValues?: Prisma.AttributeValueUncheckedUpdateManyWithoutItemNestedInput
   referencingValues?: Prisma.AttributeValueUncheckedUpdateManyWithoutReferencedItemNestedInput
+  mediaRelations?: Prisma.MediaRelationUncheckedUpdateManyWithoutItemNestedInput
+  uploadSessions?: Prisma.UploadSessionUncheckedUpdateManyWithoutItemNestedInput
+}
+
+export type ItemCreateWithoutMediaRelationsInput = {
+  id: string
+  publicId: string
+  slug: string
+  storageNodeId?: string | null
+  displayName: string
+  description?: string | null
+  visibility?: string
+  version?: bigint | number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  archivedAt?: Date | string | null
+  attributeValues?: Prisma.AttributeValueCreateNestedManyWithoutItemInput
+  referencingValues?: Prisma.AttributeValueCreateNestedManyWithoutReferencedItemInput
+  tags?: Prisma.ItemTagCreateNestedManyWithoutItemInput
+  category: Prisma.CategoryCreateNestedOneWithoutItemsInput
+  lifecycleStatus: Prisma.LifecycleStatusCreateNestedOneWithoutItemsInput
+  uploadSessions?: Prisma.UploadSessionCreateNestedManyWithoutItemInput
+}
+
+export type ItemUncheckedCreateWithoutMediaRelationsInput = {
+  id: string
+  publicId: string
+  slug: string
+  categoryId: string
+  lifecycleStatusId: string
+  storageNodeId?: string | null
+  displayName: string
+  description?: string | null
+  visibility?: string
+  version?: bigint | number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  archivedAt?: Date | string | null
+  attributeValues?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutItemInput
+  referencingValues?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutReferencedItemInput
+  tags?: Prisma.ItemTagUncheckedCreateNestedManyWithoutItemInput
+  uploadSessions?: Prisma.UploadSessionUncheckedCreateNestedManyWithoutItemInput
+}
+
+export type ItemCreateOrConnectWithoutMediaRelationsInput = {
+  where: Prisma.ItemWhereUniqueInput
+  create: Prisma.XOR<Prisma.ItemCreateWithoutMediaRelationsInput, Prisma.ItemUncheckedCreateWithoutMediaRelationsInput>
+}
+
+export type ItemUpsertWithoutMediaRelationsInput = {
+  update: Prisma.XOR<Prisma.ItemUpdateWithoutMediaRelationsInput, Prisma.ItemUncheckedUpdateWithoutMediaRelationsInput>
+  create: Prisma.XOR<Prisma.ItemCreateWithoutMediaRelationsInput, Prisma.ItemUncheckedCreateWithoutMediaRelationsInput>
+  where?: Prisma.ItemWhereInput
+}
+
+export type ItemUpdateToOneWithWhereWithoutMediaRelationsInput = {
+  where?: Prisma.ItemWhereInput
+  data: Prisma.XOR<Prisma.ItemUpdateWithoutMediaRelationsInput, Prisma.ItemUncheckedUpdateWithoutMediaRelationsInput>
+}
+
+export type ItemUpdateWithoutMediaRelationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  publicId?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  visibility?: Prisma.StringFieldUpdateOperationsInput | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  attributeValues?: Prisma.AttributeValueUpdateManyWithoutItemNestedInput
+  referencingValues?: Prisma.AttributeValueUpdateManyWithoutReferencedItemNestedInput
+  tags?: Prisma.ItemTagUpdateManyWithoutItemNestedInput
+  category?: Prisma.CategoryUpdateOneRequiredWithoutItemsNestedInput
+  lifecycleStatus?: Prisma.LifecycleStatusUpdateOneRequiredWithoutItemsNestedInput
+  uploadSessions?: Prisma.UploadSessionUpdateManyWithoutItemNestedInput
+}
+
+export type ItemUncheckedUpdateWithoutMediaRelationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  publicId?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  categoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  lifecycleStatusId?: Prisma.StringFieldUpdateOperationsInput | string
+  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  visibility?: Prisma.StringFieldUpdateOperationsInput | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  attributeValues?: Prisma.AttributeValueUncheckedUpdateManyWithoutItemNestedInput
+  referencingValues?: Prisma.AttributeValueUncheckedUpdateManyWithoutReferencedItemNestedInput
+  tags?: Prisma.ItemTagUncheckedUpdateManyWithoutItemNestedInput
+  uploadSessions?: Prisma.UploadSessionUncheckedUpdateManyWithoutItemNestedInput
+}
+
+export type ItemCreateWithoutUploadSessionsInput = {
+  id: string
+  publicId: string
+  slug: string
+  storageNodeId?: string | null
+  displayName: string
+  description?: string | null
+  visibility?: string
+  version?: bigint | number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  archivedAt?: Date | string | null
+  attributeValues?: Prisma.AttributeValueCreateNestedManyWithoutItemInput
+  referencingValues?: Prisma.AttributeValueCreateNestedManyWithoutReferencedItemInput
+  tags?: Prisma.ItemTagCreateNestedManyWithoutItemInput
+  category: Prisma.CategoryCreateNestedOneWithoutItemsInput
+  lifecycleStatus: Prisma.LifecycleStatusCreateNestedOneWithoutItemsInput
+  mediaRelations?: Prisma.MediaRelationCreateNestedManyWithoutItemInput
+}
+
+export type ItemUncheckedCreateWithoutUploadSessionsInput = {
+  id: string
+  publicId: string
+  slug: string
+  categoryId: string
+  lifecycleStatusId: string
+  storageNodeId?: string | null
+  displayName: string
+  description?: string | null
+  visibility?: string
+  version?: bigint | number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  archivedAt?: Date | string | null
+  attributeValues?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutItemInput
+  referencingValues?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutReferencedItemInput
+  tags?: Prisma.ItemTagUncheckedCreateNestedManyWithoutItemInput
+  mediaRelations?: Prisma.MediaRelationUncheckedCreateNestedManyWithoutItemInput
+}
+
+export type ItemCreateOrConnectWithoutUploadSessionsInput = {
+  where: Prisma.ItemWhereUniqueInput
+  create: Prisma.XOR<Prisma.ItemCreateWithoutUploadSessionsInput, Prisma.ItemUncheckedCreateWithoutUploadSessionsInput>
+}
+
+export type ItemUpsertWithoutUploadSessionsInput = {
+  update: Prisma.XOR<Prisma.ItemUpdateWithoutUploadSessionsInput, Prisma.ItemUncheckedUpdateWithoutUploadSessionsInput>
+  create: Prisma.XOR<Prisma.ItemCreateWithoutUploadSessionsInput, Prisma.ItemUncheckedCreateWithoutUploadSessionsInput>
+  where?: Prisma.ItemWhereInput
+}
+
+export type ItemUpdateToOneWithWhereWithoutUploadSessionsInput = {
+  where?: Prisma.ItemWhereInput
+  data: Prisma.XOR<Prisma.ItemUpdateWithoutUploadSessionsInput, Prisma.ItemUncheckedUpdateWithoutUploadSessionsInput>
+}
+
+export type ItemUpdateWithoutUploadSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  publicId?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  visibility?: Prisma.StringFieldUpdateOperationsInput | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  attributeValues?: Prisma.AttributeValueUpdateManyWithoutItemNestedInput
+  referencingValues?: Prisma.AttributeValueUpdateManyWithoutReferencedItemNestedInput
+  tags?: Prisma.ItemTagUpdateManyWithoutItemNestedInput
+  category?: Prisma.CategoryUpdateOneRequiredWithoutItemsNestedInput
+  lifecycleStatus?: Prisma.LifecycleStatusUpdateOneRequiredWithoutItemsNestedInput
+  mediaRelations?: Prisma.MediaRelationUpdateManyWithoutItemNestedInput
+}
+
+export type ItemUncheckedUpdateWithoutUploadSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  publicId?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  categoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  lifecycleStatusId?: Prisma.StringFieldUpdateOperationsInput | string
+  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  visibility?: Prisma.StringFieldUpdateOperationsInput | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  attributeValues?: Prisma.AttributeValueUncheckedUpdateManyWithoutItemNestedInput
+  referencingValues?: Prisma.AttributeValueUncheckedUpdateManyWithoutReferencedItemNestedInput
+  tags?: Prisma.ItemTagUncheckedUpdateManyWithoutItemNestedInput
+  mediaRelations?: Prisma.MediaRelationUncheckedUpdateManyWithoutItemNestedInput
 }
 
 export type ItemCreateManyCategoryInput = {
@@ -1134,10 +1404,12 @@ export type ItemUpdateWithoutCategoryInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lifecycleStatus?: Prisma.LifecycleStatusUpdateOneRequiredWithoutItemsNestedInput
   attributeValues?: Prisma.AttributeValueUpdateManyWithoutItemNestedInput
   referencingValues?: Prisma.AttributeValueUpdateManyWithoutReferencedItemNestedInput
   tags?: Prisma.ItemTagUpdateManyWithoutItemNestedInput
+  lifecycleStatus?: Prisma.LifecycleStatusUpdateOneRequiredWithoutItemsNestedInput
+  mediaRelations?: Prisma.MediaRelationUpdateManyWithoutItemNestedInput
+  uploadSessions?: Prisma.UploadSessionUpdateManyWithoutItemNestedInput
 }
 
 export type ItemUncheckedUpdateWithoutCategoryInput = {
@@ -1156,6 +1428,8 @@ export type ItemUncheckedUpdateWithoutCategoryInput = {
   attributeValues?: Prisma.AttributeValueUncheckedUpdateManyWithoutItemNestedInput
   referencingValues?: Prisma.AttributeValueUncheckedUpdateManyWithoutReferencedItemNestedInput
   tags?: Prisma.ItemTagUncheckedUpdateManyWithoutItemNestedInput
+  mediaRelations?: Prisma.MediaRelationUncheckedUpdateManyWithoutItemNestedInput
+  uploadSessions?: Prisma.UploadSessionUncheckedUpdateManyWithoutItemNestedInput
 }
 
 export type ItemUncheckedUpdateManyWithoutCategoryInput = {
@@ -1200,10 +1474,12 @@ export type ItemUpdateWithoutLifecycleStatusInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  category?: Prisma.CategoryUpdateOneRequiredWithoutItemsNestedInput
   attributeValues?: Prisma.AttributeValueUpdateManyWithoutItemNestedInput
   referencingValues?: Prisma.AttributeValueUpdateManyWithoutReferencedItemNestedInput
   tags?: Prisma.ItemTagUpdateManyWithoutItemNestedInput
+  category?: Prisma.CategoryUpdateOneRequiredWithoutItemsNestedInput
+  mediaRelations?: Prisma.MediaRelationUpdateManyWithoutItemNestedInput
+  uploadSessions?: Prisma.UploadSessionUpdateManyWithoutItemNestedInput
 }
 
 export type ItemUncheckedUpdateWithoutLifecycleStatusInput = {
@@ -1222,6 +1498,8 @@ export type ItemUncheckedUpdateWithoutLifecycleStatusInput = {
   attributeValues?: Prisma.AttributeValueUncheckedUpdateManyWithoutItemNestedInput
   referencingValues?: Prisma.AttributeValueUncheckedUpdateManyWithoutReferencedItemNestedInput
   tags?: Prisma.ItemTagUncheckedUpdateManyWithoutItemNestedInput
+  mediaRelations?: Prisma.MediaRelationUncheckedUpdateManyWithoutItemNestedInput
+  uploadSessions?: Prisma.UploadSessionUncheckedUpdateManyWithoutItemNestedInput
 }
 
 export type ItemUncheckedUpdateManyWithoutLifecycleStatusInput = {
@@ -1248,12 +1526,16 @@ export type ItemCountOutputType = {
   attributeValues: number
   referencingValues: number
   tags: number
+  mediaRelations: number
+  uploadSessions: number
 }
 
 export type ItemCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   attributeValues?: boolean | ItemCountOutputTypeCountAttributeValuesArgs
   referencingValues?: boolean | ItemCountOutputTypeCountReferencingValuesArgs
   tags?: boolean | ItemCountOutputTypeCountTagsArgs
+  mediaRelations?: boolean | ItemCountOutputTypeCountMediaRelationsArgs
+  uploadSessions?: boolean | ItemCountOutputTypeCountUploadSessionsArgs
 }
 
 /**
@@ -1287,6 +1569,20 @@ export type ItemCountOutputTypeCountTagsArgs<ExtArgs extends runtime.Types.Exten
   where?: Prisma.ItemTagWhereInput
 }
 
+/**
+ * ItemCountOutputType without action
+ */
+export type ItemCountOutputTypeCountMediaRelationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.MediaRelationWhereInput
+}
+
+/**
+ * ItemCountOutputType without action
+ */
+export type ItemCountOutputTypeCountUploadSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UploadSessionWhereInput
+}
+
 
 export type ItemSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1302,11 +1598,13 @@ export type ItemSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   createdAt?: boolean
   updatedAt?: boolean
   archivedAt?: boolean
-  category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
-  lifecycleStatus?: boolean | Prisma.LifecycleStatusDefaultArgs<ExtArgs>
   attributeValues?: boolean | Prisma.Item$attributeValuesArgs<ExtArgs>
   referencingValues?: boolean | Prisma.Item$referencingValuesArgs<ExtArgs>
   tags?: boolean | Prisma.Item$tagsArgs<ExtArgs>
+  category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
+  lifecycleStatus?: boolean | Prisma.LifecycleStatusDefaultArgs<ExtArgs>
+  mediaRelations?: boolean | Prisma.Item$mediaRelationsArgs<ExtArgs>
+  uploadSessions?: boolean | Prisma.Item$uploadSessionsArgs<ExtArgs>
   _count?: boolean | Prisma.ItemCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["item"]>
 
@@ -1364,11 +1662,13 @@ export type ItemSelectScalar = {
 
 export type ItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "publicId" | "slug" | "categoryId" | "lifecycleStatusId" | "storageNodeId" | "displayName" | "description" | "visibility" | "version" | "createdAt" | "updatedAt" | "archivedAt", ExtArgs["result"]["item"]>
 export type ItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
-  lifecycleStatus?: boolean | Prisma.LifecycleStatusDefaultArgs<ExtArgs>
   attributeValues?: boolean | Prisma.Item$attributeValuesArgs<ExtArgs>
   referencingValues?: boolean | Prisma.Item$referencingValuesArgs<ExtArgs>
   tags?: boolean | Prisma.Item$tagsArgs<ExtArgs>
+  category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
+  lifecycleStatus?: boolean | Prisma.LifecycleStatusDefaultArgs<ExtArgs>
+  mediaRelations?: boolean | Prisma.Item$mediaRelationsArgs<ExtArgs>
+  uploadSessions?: boolean | Prisma.Item$uploadSessionsArgs<ExtArgs>
   _count?: boolean | Prisma.ItemCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ItemIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1383,11 +1683,13 @@ export type ItemIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type $ItemPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Item"
   objects: {
-    category: Prisma.$CategoryPayload<ExtArgs>
-    lifecycleStatus: Prisma.$LifecycleStatusPayload<ExtArgs>
     attributeValues: Prisma.$AttributeValuePayload<ExtArgs>[]
     referencingValues: Prisma.$AttributeValuePayload<ExtArgs>[]
     tags: Prisma.$ItemTagPayload<ExtArgs>[]
+    category: Prisma.$CategoryPayload<ExtArgs>
+    lifecycleStatus: Prisma.$LifecycleStatusPayload<ExtArgs>
+    mediaRelations: Prisma.$MediaRelationPayload<ExtArgs>[]
+    uploadSessions: Prisma.$UploadSessionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1797,11 +2099,13 @@ readonly fields: ItemFieldRefs;
  */
 export interface Prisma__ItemClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  category<T extends Prisma.CategoryDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CategoryDefaultArgs<ExtArgs>>): Prisma.Prisma__CategoryClient<runtime.Types.Result.GetResult<Prisma.$CategoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  lifecycleStatus<T extends Prisma.LifecycleStatusDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LifecycleStatusDefaultArgs<ExtArgs>>): Prisma.Prisma__LifecycleStatusClient<runtime.Types.Result.GetResult<Prisma.$LifecycleStatusPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   attributeValues<T extends Prisma.Item$attributeValuesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Item$attributeValuesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AttributeValuePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   referencingValues<T extends Prisma.Item$referencingValuesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Item$referencingValuesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AttributeValuePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   tags<T extends Prisma.Item$tagsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Item$tagsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ItemTagPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  category<T extends Prisma.CategoryDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CategoryDefaultArgs<ExtArgs>>): Prisma.Prisma__CategoryClient<runtime.Types.Result.GetResult<Prisma.$CategoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  lifecycleStatus<T extends Prisma.LifecycleStatusDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LifecycleStatusDefaultArgs<ExtArgs>>): Prisma.Prisma__LifecycleStatusClient<runtime.Types.Result.GetResult<Prisma.$LifecycleStatusPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  mediaRelations<T extends Prisma.Item$mediaRelationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Item$mediaRelationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MediaRelationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  uploadSessions<T extends Prisma.Item$uploadSessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Item$uploadSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UploadSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2314,6 +2618,54 @@ export type Item$tagsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   take?: number
   skip?: number
   distinct?: Prisma.ItemTagScalarFieldEnum | Prisma.ItemTagScalarFieldEnum[]
+}
+
+/**
+ * Item.mediaRelations
+ */
+export type Item$mediaRelationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MediaRelation
+   */
+  select?: Prisma.MediaRelationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the MediaRelation
+   */
+  omit?: Prisma.MediaRelationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MediaRelationInclude<ExtArgs> | null
+  where?: Prisma.MediaRelationWhereInput
+  orderBy?: Prisma.MediaRelationOrderByWithRelationInput | Prisma.MediaRelationOrderByWithRelationInput[]
+  cursor?: Prisma.MediaRelationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.MediaRelationScalarFieldEnum | Prisma.MediaRelationScalarFieldEnum[]
+}
+
+/**
+ * Item.uploadSessions
+ */
+export type Item$uploadSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UploadSession
+   */
+  select?: Prisma.UploadSessionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UploadSession
+   */
+  omit?: Prisma.UploadSessionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UploadSessionInclude<ExtArgs> | null
+  where?: Prisma.UploadSessionWhereInput
+  orderBy?: Prisma.UploadSessionOrderByWithRelationInput | Prisma.UploadSessionOrderByWithRelationInput[]
+  cursor?: Prisma.UploadSessionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UploadSessionScalarFieldEnum | Prisma.UploadSessionScalarFieldEnum[]
 }
 
 /**

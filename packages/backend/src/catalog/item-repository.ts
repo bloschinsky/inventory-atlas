@@ -151,6 +151,13 @@ export class ItemRepository {
     return row ? toItemCoreRecord(row) : null;
   }
 
+  async findById(id: string, transaction?: ItemTransaction): Promise<ItemCoreRecord | null> {
+    const row = transaction
+      ? await transaction.item.findUnique({ where: { id } })
+      : await this.prisma.item.findUnique({ where: { id } });
+    return row ? toItemCoreRecord(row) : null;
+  }
+
   /**
    * Compare-and-swap on the aggregate version. The row is rewritten only when the caller's
    * expected version still matches, so a concurrent editor can never be overwritten silently.

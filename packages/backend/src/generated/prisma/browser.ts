@@ -90,3 +90,18 @@ export type Tag = Prisma.TagModel
  * 
  */
 export type ItemTag = Prisma.ItemTagModel
+/**
+ * Model MediaAsset
+ * Media assets, relations and upload sessions are Prisma-owned; Kysely owns their DDL.
+ */
+export type MediaAsset = Prisma.MediaAssetModel
+/**
+ * Model MediaRelation
+ * 
+ */
+export type MediaRelation = Prisma.MediaRelationModel
+/**
+ * Model UploadSession
+ * 
+ */
+export type UploadSession = Prisma.UploadSessionModel

@@ -32,6 +32,8 @@ export default [
       'vue/multiline-html-element-content-newline': 'off',
       'vue/html-closing-bracket-newline': 'off',
       'vue/html-indent': 'off',
+      // Prettier owns template formatting and writes void elements self-closing.
+      'vue/html-self-closing': 'off',
       'vue/require-prop-types': 'off',
     },
   },

@@ -410,7 +410,10 @@ export const ModelName = {
   FieldOption: 'FieldOption',
   Item: 'Item',
   Tag: 'Tag',
-  ItemTag: 'ItemTag'
+  ItemTag: 'ItemTag',
+  MediaAsset: 'MediaAsset',
+  MediaRelation: 'MediaRelation',
+  UploadSession: 'UploadSession'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -426,7 +429,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "appSetting" | "installationMetadata" | "user" | "session" | "invitation" | "auditEvent" | "category" | "lifecycleStatus" | "attributeValue" | "fieldDefinition" | "fieldOption" | "item" | "tag" | "itemTag"
+    modelProps: "appSetting" | "installationMetadata" | "user" | "session" | "invitation" | "auditEvent" | "category" | "lifecycleStatus" | "attributeValue" | "fieldDefinition" | "fieldOption" | "item" | "tag" | "itemTag" | "mediaAsset" | "mediaRelation" | "uploadSession"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1466,6 +1469,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    MediaAsset: {
+      payload: Prisma.$MediaAssetPayload<ExtArgs>
+      fields: Prisma.MediaAssetFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MediaAssetFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaAssetPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MediaAssetFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaAssetPayload>
+        }
+        findFirst: {
+          args: Prisma.MediaAssetFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaAssetPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MediaAssetFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaAssetPayload>
+        }
+        findMany: {
+          args: Prisma.MediaAssetFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaAssetPayload>[]
+        }
+        create: {
+          args: Prisma.MediaAssetCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaAssetPayload>
+        }
+        createMany: {
+          args: Prisma.MediaAssetCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MediaAssetCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaAssetPayload>[]
+        }
+        delete: {
+          args: Prisma.MediaAssetDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaAssetPayload>
+        }
+        update: {
+          args: Prisma.MediaAssetUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaAssetPayload>
+        }
+        deleteMany: {
+          args: Prisma.MediaAssetDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MediaAssetUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MediaAssetUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaAssetPayload>[]
+        }
+        upsert: {
+          args: Prisma.MediaAssetUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaAssetPayload>
+        }
+        aggregate: {
+          args: Prisma.MediaAssetAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMediaAsset>
+        }
+        groupBy: {
+          args: Prisma.MediaAssetGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MediaAssetGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MediaAssetCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MediaAssetCountAggregateOutputType> | number
+        }
+      }
+    }
+    MediaRelation: {
+      payload: Prisma.$MediaRelationPayload<ExtArgs>
+      fields: Prisma.MediaRelationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MediaRelationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaRelationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MediaRelationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaRelationPayload>
+        }
+        findFirst: {
+          args: Prisma.MediaRelationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaRelationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MediaRelationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaRelationPayload>
+        }
+        findMany: {
+          args: Prisma.MediaRelationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaRelationPayload>[]
+        }
+        create: {
+          args: Prisma.MediaRelationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaRelationPayload>
+        }
+        createMany: {
+          args: Prisma.MediaRelationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MediaRelationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaRelationPayload>[]
+        }
+        delete: {
+          args: Prisma.MediaRelationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaRelationPayload>
+        }
+        update: {
+          args: Prisma.MediaRelationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaRelationPayload>
+        }
+        deleteMany: {
+          args: Prisma.MediaRelationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MediaRelationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MediaRelationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaRelationPayload>[]
+        }
+        upsert: {
+          args: Prisma.MediaRelationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaRelationPayload>
+        }
+        aggregate: {
+          args: Prisma.MediaRelationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMediaRelation>
+        }
+        groupBy: {
+          args: Prisma.MediaRelationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MediaRelationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MediaRelationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MediaRelationCountAggregateOutputType> | number
+        }
+      }
+    }
+    UploadSession: {
+      payload: Prisma.$UploadSessionPayload<ExtArgs>
+      fields: Prisma.UploadSessionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UploadSessionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UploadSessionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload>
+        }
+        findFirst: {
+          args: Prisma.UploadSessionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UploadSessionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload>
+        }
+        findMany: {
+          args: Prisma.UploadSessionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload>[]
+        }
+        create: {
+          args: Prisma.UploadSessionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload>
+        }
+        createMany: {
+          args: Prisma.UploadSessionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UploadSessionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload>[]
+        }
+        delete: {
+          args: Prisma.UploadSessionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload>
+        }
+        update: {
+          args: Prisma.UploadSessionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload>
+        }
+        deleteMany: {
+          args: Prisma.UploadSessionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UploadSessionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UploadSessionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload>[]
+        }
+        upsert: {
+          args: Prisma.UploadSessionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UploadSessionPayload>
+        }
+        aggregate: {
+          args: Prisma.UploadSessionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUploadSession>
+        }
+        groupBy: {
+          args: Prisma.UploadSessionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UploadSessionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UploadSessionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UploadSessionCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1727,6 +1952,65 @@ export const ItemTagScalarFieldEnum = {
 } as const
 
 export type ItemTagScalarFieldEnum = (typeof ItemTagScalarFieldEnum)[keyof typeof ItemTagScalarFieldEnum]
+
+
+export const MediaAssetScalarFieldEnum = {
+  id: 'id',
+  storageKey: 'storageKey',
+  originalFilename: 'originalFilename',
+  mimeType: 'mimeType',
+  byteSize: 'byteSize',
+  width: 'width',
+  height: 'height',
+  checksumSha256: 'checksumSha256',
+  processingState: 'processingState',
+  sourceAssetId: 'sourceAssetId',
+  metadataJson: 'metadataJson',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deleteAfter: 'deleteAfter'
+} as const
+
+export type MediaAssetScalarFieldEnum = (typeof MediaAssetScalarFieldEnum)[keyof typeof MediaAssetScalarFieldEnum]
+
+
+export const MediaRelationScalarFieldEnum = {
+  id: 'id',
+  assetId: 'assetId',
+  itemId: 'itemId',
+  storageNodeId: 'storageNodeId',
+  role: 'role',
+  position: 'position',
+  altText: 'altText',
+  visibility: 'visibility',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  archivedAt: 'archivedAt'
+} as const
+
+export type MediaRelationScalarFieldEnum = (typeof MediaRelationScalarFieldEnum)[keyof typeof MediaRelationScalarFieldEnum]
+
+
+export const UploadSessionScalarFieldEnum = {
+  id: 'id',
+  actorId: 'actorId',
+  itemId: 'itemId',
+  storageNodeId: 'storageNodeId',
+  declaredFilename: 'declaredFilename',
+  declaredMimeType: 'declaredMimeType',
+  declaredByteSize: 'declaredByteSize',
+  tempStorageKey: 'tempStorageKey',
+  receivedByteSize: 'receivedByteSize',
+  checksumSha256: 'checksumSha256',
+  state: 'state',
+  failureCode: 'failureCode',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  finalizedAt: 'finalizedAt'
+} as const
+
+export type UploadSessionScalarFieldEnum = (typeof UploadSessionScalarFieldEnum)[keyof typeof UploadSessionScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2052,6 +2336,9 @@ export type GlobalOmitConfig = {
   item?: Prisma.ItemOmit
   tag?: Prisma.TagOmit
   itemTag?: Prisma.ItemTagOmit
+  mediaAsset?: Prisma.MediaAssetOmit
+  mediaRelation?: Prisma.MediaRelationOmit
+  uploadSession?: Prisma.UploadSessionOmit
 }
 
 /* Types for Logging */

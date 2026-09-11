@@ -11,7 +11,7 @@ export interface FoundationDatabase {
   };
 }
 
-export const expectedSchemaVersion = '0006_item_aggregate';
+export const expectedSchemaVersion = '0007_media';
 
 export function createDatabase(
   connectionString: string,

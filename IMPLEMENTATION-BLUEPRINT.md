@@ -1528,10 +1528,10 @@ As an Editor, I can upload a primary image and gallery images for Items and cont
 
 Acceptance criteria:
 
-- [ ] Upload session, size/type/checksum validation, and finalize flow work.
-- [ ] Primary-image uniqueness and gallery order are enforced.
-- [ ] Missing media uses a category placeholder.
-- [ ] Delayed cleanup does not delete referenced assets.
+- [x] Upload session, size/type/checksum validation, and finalize flow work.
+- [x] Primary-image uniqueness and gallery order are enforced.
+- [x] Missing media uses a category placeholder.
+- [x] Delayed cleanup does not delete referenced assets.
 
 #### MED-02 Process image variants safely
 

@@ -5,77 +5,6 @@
     "navigation": "Primary navigation",
     "languageSelector": "Language"
   },
-  "nav": {
-    "items": "Items",
-    "storage": "Storage",
-    "scan": "Scan",
-    "labels": "Labels",
-    "portability": "Portability",
-    "admin": "Administration"
-  },
-  "routes": {
-    "home": "Home",
-    "items": "Items",
-    "itemNew": "New item",
-    "itemDetail": "Item details",
-    "itemEdit": "Edit item",
-    "storage": "Storage",
-    "storageDetail": "Storage details",
-    "scan": "Scan",
-    "labels": "Labels",
-    "labelBatch": "Label batch",
-    "portability": "Portability",
-    "adminFields": "Fields",
-    "adminCategories": "Categories",
-    "adminStatuses": "Statuses",
-    "adminUsers": "Users",
-    "adminSettings": "Settings",
-    "adminAudit": "Audit",
-    "error": "Something went wrong",
-    "notFound": "Page not found"
-  },
-  "foundation": {
-    "pending": "This route is ready for its feature story.",
-    "error": "The application could not display this page.",
-    "notFound": "The requested page does not exist."
-  },
-  "common": {
-    "loading": "Loading…",
-    "loadFailed": "Could not load this information.",
-    "saveFailed": "Could not save the change.",
-    "saving": "Saving…",
-    "yes": "Yes",
-    "no": "No"
-  },
-  "locale": {
-    "en": "English",
-    "uk": "Ukrainian",
-    "suggested": "suggested"
-  },
-  "roles": {
-    "viewer": "Viewer",
-    "editor": "Editor",
-    "admin": "Admin",
-    "owner": "Owner"
-  },
-  "statuses": {
-    "active": "Active",
-    "disabled": "Disabled"
-  },
-  "validation": {
-    "required": "This field is required.",
-    "email": "Enter a valid email address.",
-    "invalid": "Check the highlighted fields."
-  },
-  "problems": {
-    "badRequest": "The request is invalid.",
-    "unauthorized": "Sign in to continue.",
-    "forbidden": "You do not have permission to do that.",
-    "notFound": "The requested information was not found.",
-    "conflict": "This information changed. Reload it and try again.",
-    "rateLimited": "Too many attempts. Try again later.",
-    "serverError": "The server could not complete the request."
-  },
   "auth": {
     "acceptInvitation": "Accept invitation",
     "account": "Account",
@@ -150,6 +79,19 @@
       "ukrainian": "The Ukrainian label cannot contain only spaces."
     }
   },
+  "common": {
+    "loading": "Loading…",
+    "loadFailed": "Could not load this information.",
+    "saveFailed": "Could not save the change.",
+    "saving": "Saving…",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "foundation": {
+    "pending": "This route is ready for its feature story.",
+    "error": "The application could not display this page.",
+    "notFound": "The requested page does not exist."
+  },
   "items": {
     "addValue": "Add another value",
     "attributes": "Attributes",
@@ -200,6 +142,89 @@
       "unlisted": "Unlisted"
     },
     "visibility": "Visibility"
+  },
+  "locale": {
+    "en": "English",
+    "uk": "Ukrainian",
+    "suggested": "suggested"
+  },
+  "media": {
+    "choose": "Choose images",
+    "detached": "The image was removed from this item.",
+    "dropHint": "Drag images here or choose them.",
+    "empty": "No images yet. The category placeholder is shown instead.",
+    "errors": {
+      "checksumMismatch": "The uploaded file did not arrive intact. Try again.",
+      "sessionExpired": "The upload took too long. Try again.",
+      "signatureMismatch": "The file content does not match its type.",
+      "signatureUnrecognized": "This file is not a supported image.",
+      "sizeExceeded": "This file is larger than the allowed upload size.",
+      "sizeMismatch": "The uploaded file was incomplete. Try again.",
+      "typeExtensionMismatch": "The file name does not match its image type.",
+      "typeUnsupported": "Only JPEG, PNG, WebP and HEIC images can be uploaded."
+    },
+    "makePrimary": "Make primary",
+    "moveEarlier": "Move {name} earlier",
+    "moveLater": "Move {name} later",
+    "primaryIs": "Primary image: {name}",
+    "primarySet": "The primary image was changed.",
+    "processing": "Processing",
+    "remove": "Remove {name}",
+    "removeAction": "Remove",
+    "reordered": "The gallery order was saved.",
+    "roles": {
+      "containerPhoto": "Container photo",
+      "gallery": "Gallery",
+      "primary": "Primary"
+    },
+    "section": "Images",
+    "uploaded": "The image was attached.",
+    "uploading": "Upload progress",
+    "uploadingPercent": "Uploading: {percent}%"
+  },
+  "nav": {
+    "items": "Items",
+    "storage": "Storage",
+    "scan": "Scan",
+    "labels": "Labels",
+    "portability": "Portability",
+    "admin": "Administration"
+  },
+  "problems": {
+    "badRequest": "The request is invalid.",
+    "unauthorized": "Sign in to continue.",
+    "forbidden": "You do not have permission to do that.",
+    "notFound": "The requested information was not found.",
+    "conflict": "This information changed. Reload it and try again.",
+    "rateLimited": "Too many attempts. Try again later.",
+    "serverError": "The server could not complete the request."
+  },
+  "roles": {
+    "viewer": "Viewer",
+    "editor": "Editor",
+    "admin": "Admin",
+    "owner": "Owner"
+  },
+  "routes": {
+    "home": "Home",
+    "items": "Items",
+    "itemNew": "New item",
+    "itemDetail": "Item details",
+    "itemEdit": "Edit item",
+    "storage": "Storage",
+    "storageDetail": "Storage details",
+    "scan": "Scan",
+    "labels": "Labels",
+    "labelBatch": "Label batch",
+    "portability": "Portability",
+    "adminFields": "Fields",
+    "adminCategories": "Categories",
+    "adminStatuses": "Statuses",
+    "adminUsers": "Users",
+    "adminSettings": "Settings",
+    "adminAudit": "Audit",
+    "error": "Something went wrong",
+    "notFound": "Page not found"
   },
   "schema": {
     "addOption": "Add option",
@@ -297,5 +322,14 @@
       "public": "Public"
     },
     "currency": "Currency"
+  },
+  "statuses": {
+    "active": "Active",
+    "disabled": "Disabled"
+  },
+  "validation": {
+    "required": "This field is required.",
+    "email": "Enter a valid email address.",
+    "invalid": "Check the highlighted fields."
   }
 }

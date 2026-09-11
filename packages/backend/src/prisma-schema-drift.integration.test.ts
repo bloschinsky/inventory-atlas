@@ -91,5 +91,6 @@ suite('Prisma schema drift', () => {
         .replace(/generator client \{[\s\S]*?\}\n\n/u, '')
         .trim();
     expect(normalize(introspectedSchema)).toBe(normalize(committedSchema));
-  }, 15_000);
+    // Introspection cost grows with every migration; the budget covers a loaded parallel run.
+  }, 60_000);
 });

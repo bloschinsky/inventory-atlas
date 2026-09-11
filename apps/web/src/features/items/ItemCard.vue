@@ -5,6 +5,8 @@ import { AppBreadcrumb } from '../../shared/ui/index.js';
 
 const props = defineProps({
   item: { type: Object, required: true },
+  /** Visible media for the Item; the primary image replaces the category placeholder. */
+  media: { type: Array, default: () => [] },
   definitions: { type: Array, default: () => [] },
   category: { type: Object, default: null },
   lifecycleStatus: { type: Object, default: null },
@@ -21,6 +23,12 @@ const statusLabel = computed(
   () => localized(props.lifecycleStatus?.labels) || t('items.unknownStatus'),
 );
 const placeholderInitial = computed(() => categoryLabel.value.trim().charAt(0).toLocaleUpperCase());
+const primaryImage = computed(
+  () =>
+    /** @type {Record<string, unknown>[]} */ (props.media).find(
+      (entry) => entry.role === 'primary',
+    ) ?? null,
+);
 const visibleBreadcrumb = computed(() =>
   props.canViewPrivatePath ? props.breadcrumb : props.publicBreadcrumb,
 );
@@ -85,7 +93,15 @@ function formatSingle(definition, value) {
 
 <template>
   <article class="item-card" :aria-labelledby="`item-${item.publicId}`">
+    <img
+      v-if="primaryImage"
+      class="item-card__media item-card__media--image"
+      :src="String(primaryImage.contentUrl)"
+      :alt="String(primaryImage.altText ?? item.displayName)"
+      loading="lazy"
+    />
     <div
+      v-else
       class="item-card__media"
       role="img"
       :aria-label="t('items.placeholderMedia', { category: categoryLabel })"
@@ -142,6 +158,13 @@ function formatSingle(definition, value) {
   background: var(--ia-color-brand-100);
   font-size: clamp(3rem, 12vw, 7rem);
   font-weight: 700;
+}
+.item-card__media--image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 22rem;
+  object-fit: cover;
 }
 .item-card__body {
   min-width: 0;

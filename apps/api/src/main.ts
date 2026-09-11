@@ -8,18 +8,27 @@ import type { AuthRuntimePort } from './auth.runtime.js';
 import type { CatalogRuntimePort } from './catalog.runtime.js';
 import type { SchemaRuntimePort } from './schema.runtime.js';
 import type { ItemsRuntimePort } from './items.runtime.js';
+import type { MediaRuntimePort } from './media.runtime.js';
 
 export async function createApiApplication(
   runtime: FoundationRuntimePort &
     AuthRuntimePort &
     CatalogRuntimePort &
     SchemaRuntimePort &
-    ItemsRuntimePort,
+    ItemsRuntimePort &
+    MediaRuntimePort,
 ): Promise<NestFastifyApplication> {
-  return NestFactory.create<NestFastifyApplication>(
-    AppModule.register(runtime),
-    new FastifyAdapter({ trustProxy: runtime.trustProxy() }),
-  );
+  const adapter = new FastifyAdapter({ trustProxy: runtime.trustProxy() });
+  // Media content arrives as the raw object, so the body reaches the handler unparsed and is
+  // streamed straight into storage instead of being buffered in memory.
+  adapter
+    .getInstance()
+    .addContentTypeParser(
+      'application/octet-stream',
+      (_request: unknown, payload: unknown, done: (error: Error | null, body?: unknown) => void) =>
+        done(null, payload),
+    );
+  return NestFactory.create<NestFastifyApplication>(AppModule.register(runtime), adapter);
 }
 
 async function main(): Promise<void> {

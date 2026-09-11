@@ -190,6 +190,109 @@ export class ItemDetailDto {
   @ApiProperty({ format: 'date-time', type: String }) declare updatedAt: string;
 }
 
+export class BeginUploadRequestDto {
+  @ApiProperty({ format: 'uuid', type: String })
+  declare itemPublicId: string;
+
+  @ApiProperty({ example: 'front-view.jpg', maxLength: 255, minLength: 1, type: String })
+  declare filename: string;
+
+  @ApiProperty({ enum: ['image/jpeg', 'image/png', 'image/webp', 'image/heic'], type: String })
+  declare mimeType: string;
+
+  @ApiProperty({ description: 'Declared byte size of the file.', minimum: 1, type: Number })
+  declare byteSize: number;
+}
+
+export class UploadSessionDto {
+  @ApiProperty({ format: 'uuid', type: String }) declare sessionId: string;
+
+  @ApiProperty({
+    description: 'Where the raw bytes are streamed with a PUT request.',
+    example: '/api/v1/media/upload-sessions/{id}/content',
+    type: String,
+  })
+  declare uploadUrl: string;
+
+  @ApiProperty({ type: String }) declare declaredFilename: string;
+  @ApiProperty({ type: String }) declare declaredMimeType: string;
+  @ApiProperty({ minimum: 1, type: Number }) declare declaredByteSize: number;
+  @ApiProperty({ format: 'date-time', type: String }) declare expiresAt: string;
+
+  @ApiProperty({
+    enum: ['pending', 'received', 'finalized', 'failed', 'expired'],
+    type: String,
+  })
+  declare state: string;
+}
+
+export class FinalizeUploadRequestDto {
+  @ApiPropertyOptional({
+    description: 'Client-computed SHA-256 of the uploaded bytes; rejected when it disagrees.',
+    nullable: true,
+    pattern: '^[0-9a-f]{64}$',
+    type: String,
+  })
+  declare checksumSha256?: string | null;
+
+  @ApiPropertyOptional({ enum: ['primary', 'gallery', 'container_photo'], type: String })
+  declare role?: string;
+
+  @ApiPropertyOptional({ maxLength: 1000, nullable: true, type: String })
+  declare altText?: string | null;
+
+  @ApiPropertyOptional({ enum: ['public', 'authenticated', 'private'], type: String })
+  declare visibility?: string;
+}
+
+export class MediaItemDto {
+  @ApiProperty({ format: 'uuid', type: String }) declare relationId: string;
+  @ApiProperty({ format: 'uuid', type: String }) declare assetId: string;
+
+  @ApiProperty({ enum: ['primary', 'gallery', 'container_photo'], type: String })
+  declare role: string;
+
+  @ApiProperty({ minimum: 0, type: Number }) declare position: number;
+
+  @ApiPropertyOptional({ nullable: true, type: String }) declare altText: string | null;
+
+  @ApiProperty({ enum: ['public', 'authenticated', 'private'], type: String })
+  declare visibility: string;
+
+  @ApiProperty({ type: String }) declare originalFilename: string;
+  @ApiProperty({ type: String }) declare mimeType: string;
+  @ApiProperty({ minimum: 1, type: Number }) declare byteSize: number;
+  @ApiPropertyOptional({ minimum: 1, nullable: true, type: Number }) declare width: number | null;
+  @ApiPropertyOptional({ minimum: 1, nullable: true, type: Number }) declare height: number | null;
+  @ApiProperty({ pattern: '^[0-9a-f]{64}$', type: String }) declare checksumSha256: string;
+
+  @ApiProperty({ enum: ['pending', 'ready', 'failed'], type: String })
+  declare processingState: string;
+
+  @ApiProperty({ description: 'Where the stored bytes are served from.', type: String })
+  declare contentUrl: string;
+}
+
+export class ReorderMediaRequestDto {
+  @ApiProperty({ format: 'uuid', type: String })
+  declare itemPublicId: string;
+
+  @ApiProperty({
+    description: 'Known Item version; a stale value is rejected instead of reordering.',
+    minimum: 1,
+    type: Number,
+  })
+  declare expectedVersion: number;
+
+  @ApiProperty({
+    description: 'Every active gallery relation exactly once, in the intended order.',
+    items: { format: 'uuid', type: 'string' },
+    minItems: 1,
+    type: 'array',
+  })
+  declare order: string[];
+}
+
 export class ItemSummaryDto {
   @ApiProperty({ example: 'itm_01JBM4V6M9Q5Q2HTY0FQVN3M2D', type: String })
   declare publicId: string;
@@ -248,6 +351,11 @@ export const contractModels = [
   UpdateItemRequestDto,
   UpdatedItemDto,
   ItemDetailDto,
+  BeginUploadRequestDto,
+  UploadSessionDto,
+  FinalizeUploadRequestDto,
+  MediaItemDto,
+  ReorderMediaRequestDto,
   ItemSummaryDto,
   CursorPageDto,
   ItemPageResponseDto,

@@ -22,6 +22,7 @@ import {
   serializeAttributes,
 } from '../features/items/attribute-form.js';
 import ItemAttributeField from '../features/items/ItemAttributeField.vue';
+import ItemMediaManager from '../features/media/ItemMediaManager.vue';
 import { invalidateAfterMutation, routeConflict } from '../shared/api/mutations.js';
 import { useSessionContext } from '../shared/auth/session-context.js';
 import { fieldErrorsFromProblem } from '../shared/lib/form-errors.js';
@@ -456,6 +457,15 @@ function abandonConflict() {
               :error="errors[`attributes.${definition.key}`]"
             />
           </div>
+        </AppFormSection>
+
+        <AppFormSection :title="t('media.section')">
+          <ItemMediaManager
+            :item-public-id="publicId"
+            :expected-version="loadedVersion ?? 0"
+            :csrf-token="session.summary?.csrfToken ?? ''"
+            :can-edit="canEdit"
+          />
         </AppFormSection>
 
         <p v-if="submitError" role="alert">{{ submitError }}</p>

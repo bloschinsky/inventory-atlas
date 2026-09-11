@@ -45,6 +45,7 @@ model User {
   invitationsIssued   Invitation[]        @relation("InvitationInviter")
   movements           Movement[]          @ignore
   sessions            Session[]
+  uploadSessions      UploadSession[]
 
   @@index([role], map: "users_active_role_idx", where: raw("((status = 'active'::text) AND (archived_at IS NULL))"))
   @@map("users")
@@ -294,7 +295,9 @@ model Item {
   tags              ItemTag[]
   category          Category         @relation(fields: [categoryId], references: [id], onUpdate: NoAction)
   lifecycleStatus   LifecycleStatus  @relation(fields: [lifecycleStatusId], references: [id], onUpdate: NoAction)
+  mediaRelations    MediaRelation[]
   movements         Movement[]       @ignore
+  uploadSessions    UploadSession[]
 
   @@index([categoryId, lifecycleStatusId, updatedAt(sort: Desc), id(sort: Desc)], map: "items_category_status_updated_idx", where: raw("(archived_at IS NULL)"))
   @@index([storageNodeId], map: "items_storage_node_idx", where: raw("(storage_node_id IS NOT NULL)"))
@@ -404,4 +407,82 @@ model IdempotencyRecord {
   @@index([leaseExpiresAt], map: "idempotency_reserved_lease_idx", where: raw("((state)::text = 'reserved'::text)"))
   @@map("idempotency_records")
   @@ignore
+}
+
+/// Media assets, relations and upload sessions are Prisma-owned; Kysely owns their DDL.
+model MediaAsset {
+  id               String          @id @db.Uuid
+  storageKey       String          @unique @map("storage_key")
+  originalFilename String          @map("original_filename")
+  mimeType         String          @map("mime_type") @db.VarChar(128)
+  byteSize         BigInt          @map("byte_size")
+  width            Int?
+  height           Int?
+  checksumSha256   String          @map("checksum_sha256") @db.Char(64)
+  processingState  String          @default("pending") @map("processing_state") @db.VarChar(16)
+  sourceAssetId    String?         @map("source_asset_id") @db.Uuid
+  metadataJson     Json            @default("{}") @map("metadata_json")
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime        @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deleteAfter      DateTime?       @map("delete_after") @db.Timestamptz(6)
+  sourceAsset      MediaAsset?     @relation("MediaAssetVariants", fields: [sourceAssetId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  variants         MediaAsset[]    @relation("MediaAssetVariants")
+  relations        MediaRelation[]
+
+  @@index([checksumSha256], map: "media_assets_checksum_idx")
+  @@index([deleteAfter], where: raw("(delete_after IS NOT NULL)"))
+  @@index([processingState], where: raw("((processing_state)::text <> 'ready'::text)"))
+  @@index([sourceAssetId], map: "media_assets_source_idx", where: raw("(source_asset_id IS NOT NULL)"))
+  @@map("media_assets")
+}
+
+model MediaRelation {
+  id            String     @id @db.Uuid
+  assetId       String     @map("asset_id") @db.Uuid
+  itemId        String?    @map("item_id") @db.Uuid
+  storageNodeId String?    @map("storage_node_id") @db.Uuid
+  role          String     @db.VarChar(20)
+  position      Int        @default(0)
+  altText       String?    @map("alt_text")
+  visibility    String     @default("authenticated") @db.VarChar(16)
+  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime   @default(now()) @map("updated_at") @db.Timestamptz(6)
+  archivedAt    DateTime?  @map("archived_at") @db.Timestamptz(6)
+  asset         MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  item          Item?      @relation(fields: [itemId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([itemId, role], map: "media_relations_primary_item_idx", where: raw("(((role)::text = 'primary'::text) AND (archived_at IS NULL) AND (item_id IS NOT NULL))"))
+  @@unique([storageNodeId, role], map: "media_relations_primary_node_idx", where: raw("(((role)::text = 'primary'::text) AND (archived_at IS NULL) AND (storage_node_id IS NOT NULL))"))
+  @@unique([assetId, itemId], map: "media_relations_asset_item_idx", where: raw("((archived_at IS NULL) AND (item_id IS NOT NULL))"))
+  @@unique([assetId, storageNodeId], map: "media_relations_asset_node_idx", where: raw("((archived_at IS NULL) AND (storage_node_id IS NOT NULL))"))
+  @@unique([itemId, role, position], map: "media_relations_item_position_idx", where: raw("((archived_at IS NULL) AND (item_id IS NOT NULL))"))
+  @@unique([storageNodeId, role, position], map: "media_relations_node_position_idx", where: raw("((archived_at IS NULL) AND (storage_node_id IS NOT NULL))"))
+  @@index([assetId], map: "media_relations_asset_idx")
+  @@index([itemId, role, position], map: "media_relations_item_idx", where: raw("(item_id IS NOT NULL)"))
+  @@map("media_relations")
+}
+
+model UploadSession {
+  id               String    @id @db.Uuid
+  actorId          String    @map("actor_id") @db.Uuid
+  itemId           String?   @map("item_id") @db.Uuid
+  storageNodeId    String?   @map("storage_node_id") @db.Uuid
+  declaredFilename String    @map("declared_filename")
+  declaredMimeType String    @map("declared_mime_type") @db.VarChar(128)
+  declaredByteSize BigInt    @map("declared_byte_size")
+  tempStorageKey   String    @unique @map("temp_storage_key")
+  receivedByteSize BigInt?   @map("received_byte_size")
+  checksumSha256   String?   @map("checksum_sha256") @db.Char(64)
+  state            String    @default("pending") @db.VarChar(16)
+  failureCode      String?   @map("failure_code") @db.VarChar(64)
+  expiresAt        DateTime  @map("expires_at") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  finalizedAt      DateTime? @map("finalized_at") @db.Timestamptz(6)
+  actor            User      @relation(fields: [actorId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  item             Item?     @relation(fields: [itemId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([actorId, createdAt(sort: Desc)], map: "upload_sessions_actor_idx")
+  @@index([expiresAt], map: "upload_sessions_open_expiry_idx", where: raw("((state)::text = ANY ((ARRAY['pending'::character varying, 'received'::character varying])::text[]))"))
+  @@map("upload_sessions")
 }

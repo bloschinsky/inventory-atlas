@@ -486,6 +486,9 @@ suite('CAT-02 dynamic schema on PostgreSQL', () => {
   });
 
   it('rolls back the dynamic schema and reapplies cleanly', async () => {
+    // Roll back every migration layered above the dynamic schema first.
+    expect((await migrator.migrateDown()).error).toBeUndefined();
+    expect(await currentSchemaVersion(database)).toBe('0006_item_aggregate');
     expect((await migrator.migrateDown()).error).toBeUndefined();
     expect(await currentSchemaVersion(database)).toBe('0005_dynamic_schema');
     expect((await migrator.migrateDown()).error).toBeUndefined();

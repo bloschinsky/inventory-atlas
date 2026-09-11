@@ -64,7 +64,10 @@ export const ModelName = {
   FieldOption: 'FieldOption',
   Item: 'Item',
   Tag: 'Tag',
-  ItemTag: 'ItemTag'
+  ItemTag: 'ItemTag',
+  MediaAsset: 'MediaAsset',
+  MediaRelation: 'MediaRelation',
+  UploadSession: 'UploadSession'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -305,6 +308,65 @@ export const ItemTagScalarFieldEnum = {
 } as const
 
 export type ItemTagScalarFieldEnum = (typeof ItemTagScalarFieldEnum)[keyof typeof ItemTagScalarFieldEnum]
+
+
+export const MediaAssetScalarFieldEnum = {
+  id: 'id',
+  storageKey: 'storageKey',
+  originalFilename: 'originalFilename',
+  mimeType: 'mimeType',
+  byteSize: 'byteSize',
+  width: 'width',
+  height: 'height',
+  checksumSha256: 'checksumSha256',
+  processingState: 'processingState',
+  sourceAssetId: 'sourceAssetId',
+  metadataJson: 'metadataJson',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deleteAfter: 'deleteAfter'
+} as const
+
+export type MediaAssetScalarFieldEnum = (typeof MediaAssetScalarFieldEnum)[keyof typeof MediaAssetScalarFieldEnum]
+
+
+export const MediaRelationScalarFieldEnum = {
+  id: 'id',
+  assetId: 'assetId',
+  itemId: 'itemId',
+  storageNodeId: 'storageNodeId',
+  role: 'role',
+  position: 'position',
+  altText: 'altText',
+  visibility: 'visibility',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  archivedAt: 'archivedAt'
+} as const
+
+export type MediaRelationScalarFieldEnum = (typeof MediaRelationScalarFieldEnum)[keyof typeof MediaRelationScalarFieldEnum]
+
+
+export const UploadSessionScalarFieldEnum = {
+  id: 'id',
+  actorId: 'actorId',
+  itemId: 'itemId',
+  storageNodeId: 'storageNodeId',
+  declaredFilename: 'declaredFilename',
+  declaredMimeType: 'declaredMimeType',
+  declaredByteSize: 'declaredByteSize',
+  tempStorageKey: 'tempStorageKey',
+  receivedByteSize: 'receivedByteSize',
+  checksumSha256: 'checksumSha256',
+  state: 'state',
+  failureCode: 'failureCode',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  finalizedAt: 'finalizedAt'
+} as const
+
+export type UploadSessionScalarFieldEnum = (typeof UploadSessionScalarFieldEnum)[keyof typeof UploadSessionScalarFieldEnum]
 
 
 export const SortOrder = {
