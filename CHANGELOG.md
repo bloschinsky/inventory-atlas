@@ -6,6 +6,16 @@ The project follows the version policy in `docs/project/versioning.md`.
 
 ## [Unreleased]
 
+### Fixed
+
+- Repaired the compact runtime image, which could not start since the Item and media controllers
+  began validating request bodies with the generated Zod schemas: `@inventory-atlas/contracts`
+  was missing from the production dependency stage, and its `./zod` entry resolved to a
+  TypeScript source file that Node cannot load. The package now exposes a built default entry
+  beside the development/type conditions, and the backend image builds and installs it with the
+  rest of the runtime graph. The CI runtime-smoke image check and the Compose persistence drill
+  cover this again.
+
 ### Changed
 
 - Aligned the Stage-0 catalog fixture with approved schema vocabulary: `integer`
@@ -17,6 +27,31 @@ The project follows the version policy in `docs/project/versioning.md`.
 - Approved the exact development-only Prisma Studio/elkjs license exception and restored Prisma CLI tooling. Patched YAML/esbuild and newly introduced CLI dependency advisories, added CI security/license/tooling gates, and separated backend production dependencies from build tooling with an image-content check.
 
 ### Added
+
+- Completed MED-02 and closed Stage 2 with isolated image processing and the background job
+  foundation it needs. Kysely migration `0008_jobs` adds the Kysely-only queue: versioned
+  payloads, priority, attempt budget, `available_at`/`leased_until`/`heartbeat_at`, worker ID, a
+  unique idempotency key, bounded progress and last-error fields, guarded by check constraints so
+  only a running job holds a worker, a lease and a heartbeat. Claiming is a short transaction
+  using `for update skip locked`; work runs outside it under a heartbeat-extended lease; an
+  expired lease returns to retry or dead state; backoff is exponential with jitter and a per-type
+  maximum; and re-enqueueing one key wakes a waiting job instead of creating a second. The outbox
+  dispatcher turns the `media.process-asset.v1` message MED-01 commits into that job and marks the
+  message published in the same Kysely transaction. Decoding never happens in the API or worker
+  process: `ImageProcessorPort` launches one short-lived `vipsheader`/`vips thumbnail` child per
+  operation through a `ulimit` wrapper that caps address space, CPU time and core dumps, with the
+  input-byte ceiling checked before launch, the decoded-pixel ceiling checked from the header, a
+  wall-clock kill on top of the CPU limit and `VIPS_CONCURRENCY=1`. A crash, an OOM kill or a
+  timeout reaches the caller as a classified value and becomes a retry and then a dead job, while
+  an undecodable image is permanent and marks the asset `failed` with a stable code. Processed
+  assets gain `thumb`/`card`/`preview` WebP renditions under deterministic keys, so reprocessing
+  is idempotent; EXIF, XMP, IPTC and any GPS tag are removed from the produced container bytes
+  (the pinned libvips ignores its own `strip` option for WebP) while EXIF orientation is applied
+  to the pixels and dropped; variants inherit their source's authorization, so a private image
+  cannot be read through its thumbnail; and only a `ready` asset advertises renditions. Both
+  composition roots decode the four committed fixtures at startup and report `mediaCapabilities`
+  through `/health/ready`, and the API claims jobs only in compact mode while the worker container
+  claims only in the expanded profile, from one shared runtime factory.
 
 - Completed MED-01 with the shared media model and the full Item image flow. Kysely migration
   `0007_media` adds Prisma-owned `media_assets`, `media_relations` and `upload_sessions` with

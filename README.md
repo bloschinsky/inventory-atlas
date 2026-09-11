@@ -42,6 +42,11 @@ the pinned monorepo and UI facade, compact Docker deployment, generated OpenAPI
 contracts, authentication and authorization, plus persistent English/Ukrainian
 localization with an MVP coverage gate.
 
+Stage 2 Core catalog is complete: catalog dictionaries, the dynamic field schema
+and typed EAV storage, the versioned Item aggregate with optimistic concurrency,
+safe display-name templates, image uploads with attachments, and isolated image
+processing with the background job queue that drives it.
+
 Current development version: **`0.1.0-dev.1`**.
 
 FND-04 includes Auth/Audit migrations and the tested Argon2id credential adapter.

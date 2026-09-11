@@ -6,6 +6,16 @@ import { pipeline } from 'node:stream/promises';
 import { Transform, type Readable } from 'node:stream';
 import { mediaLimits } from './media-policy.js';
 
+/**
+ * A stored object made available as a real file path. The image processor runs as a separate
+ * process and can only read a path, so every driver must be able to produce one; the local
+ * driver hands out its own file, and a remote driver would stage a copy and clean it up.
+ */
+export interface MaterializedObject {
+  path: string;
+  dispose(): Promise<void>;
+}
+
 /** What the storage adapter observed while it consumed the upload stream. */
 export interface StoredUpload {
   byteSize: number;
@@ -34,6 +44,8 @@ export interface MediaStoragePort {
   /** Moves a verified temporary object into its permanent key. */
   promote(temporaryKey: string, finalKey: string): Promise<void>;
   openRead(key: string): Promise<Readable>;
+  /** Exposes the object to an out-of-process reader such as the image processor. */
+  materialize(key: string): Promise<MaterializedObject>;
   exists(key: string): Promise<boolean>;
   /** Removes an object; a missing object is not an error. */
   remove(key: string): Promise<void>;
@@ -107,6 +119,16 @@ export class LocalMediaStorage implements MediaStoragePort {
     const target = this.resolve(key);
     await stat(target);
     return createReadStream(target);
+  }
+
+  /**
+   * Local objects already are files, so nothing is copied and nothing needs cleaning up. The
+   * processor only ever reads it, and the capped child cannot write outside its own target.
+   */
+  async materialize(key: string): Promise<MaterializedObject> {
+    const target = this.resolve(key);
+    await stat(target);
+    return { path: target, dispose: async () => {} };
   }
 
   async exists(key: string): Promise<boolean> {

@@ -25,15 +25,57 @@ export {
   LocalMediaStorage,
   MediaStorageLimitError,
   temporaryUploadKey,
+  type MaterializedObject,
   type MediaStoragePort,
   type StoredUpload,
 } from './media-storage.js';
+export {
+  isForbiddenMetadataField,
+  metadataPolicy,
+  orientedDimensions,
+  plannedVariants,
+  variantNames,
+  variantPlan,
+  variantStorageKey,
+  type VariantDefinition,
+  type VariantName,
+} from './image-variants.js';
+export {
+  ChildImageProcessor,
+  classifyChildFailure,
+  ImageProcessingError,
+  parseHeaderFields,
+  resourceLimitedCommand,
+  spawnLimitedChild,
+  uprightDimensions,
+  type CapabilityFixture,
+  type CapabilityReport,
+  type CapabilityResult,
+  type ChildLauncher,
+  type ChildOutcome,
+  type ImageProbe,
+  type ImageProcessingCode,
+  type ImageProcessingLimits,
+  type ImageProcessorPort,
+  type RenderRequest,
+  type RenderedVariant,
+} from './image-processor.js';
+export { defaultCapabilityFixtureRoot, mediaCapabilityFixtures } from './capability-fixtures.js';
+export { stripWebpMetadata, webpMetadataChunks, WebpContainerError } from './webp-metadata.js';
+export {
+  JobLeaseLostError,
+  MediaProcessingService,
+  type MediaProcessingLogger,
+  type ProcessAssetOutcome,
+} from './media-processing-service.js';
 export {
   MediaRepository,
   type AttachedMedia,
   type MediaAssetRecord,
   type MediaRelationRecord,
   type MediaTransaction,
+  type MediaVariantInput,
+  type MediaVariantRecord,
   type UploadSessionRecord,
   type UploadSessionState,
 } from './media-repository.js';
@@ -46,6 +88,7 @@ export {
   type MediaOwner,
   type MediaOwnerPort,
   type MediaRequestMetadata,
+  type MediaVariantView,
   type MediaView,
   type UploadSessionView,
 } from './media-service.js';

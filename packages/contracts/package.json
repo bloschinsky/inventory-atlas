@@ -4,9 +4,17 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
+    ".": {
+      "types": "./src/index.ts",
+      "development": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
     "./jsdoc": "./src/generated/jsdoc.gen.js",
-    "./zod": "./src/generated/zod.gen.ts"
+    "./zod": {
+      "types": "./src/generated/zod.gen.ts",
+      "development": "./src/generated/zod.gen.ts",
+      "default": "./dist/generated/zod.gen.js"
+    }
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

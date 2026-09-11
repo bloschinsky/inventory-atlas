@@ -20,7 +20,7 @@ import { fieldErrorsFromProblem } from '../../shared/lib/form-errors.js';
 /**
  * @typedef {{ relationId: string, assetId: string, role: string, position: number,
  *   altText: string|null, originalFilename: string, contentUrl: string,
- *   processingState: string }} MediaItem
+ *   processingState: string, thumbnailUrl: string|null }} MediaItem
  */
 
 const props = defineProps({
@@ -202,8 +202,9 @@ function shift(index, delta) {
 
       <ul v-else class="item-media__list">
         <li v-for="entry in media" :key="entry.relationId" class="item-media__entry">
+          <!-- Prefer the processed thumbnail; the original is the fallback while it is pending. -->
           <img
-            :src="entry.contentUrl"
+            :src="entry.thumbnailUrl ?? entry.contentUrl"
             :alt="entry.altText ?? entry.originalFilename"
             class="item-media__thumbnail"
             width="96"

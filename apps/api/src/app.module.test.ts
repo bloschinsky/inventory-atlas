@@ -94,6 +94,7 @@ const dictionaries = {
 };
 const mediaRelationId = '0198f40c-92f3-7a12-bc9a-653f97786c50';
 const mediaAssetId = '0198f40c-92f3-7a12-bc9a-653f97786c51';
+const mediaVariantId = '0198f40c-92f3-7a12-bc9a-653f97786c52';
 const uploadSessionId = '0198f40c-92f3-7a12-bc9a-653f97786c52';
 const mediaItem = {
   relationId: mediaRelationId,
@@ -108,8 +109,19 @@ const mediaItem = {
   width: null,
   height: null,
   checksumSha256: 'a'.repeat(64),
-  processingState: 'pending',
+  processingState: 'ready',
   contentUrl: `/api/v1/media/assets/${mediaAssetId}/content`,
+  variants: [
+    {
+      name: 'thumb',
+      mimeType: 'image/webp',
+      byteSize: 512,
+      width: 320,
+      height: 240,
+      contentUrl: `/api/v1/media/assets/${mediaVariantId}/content`,
+    },
+  ],
+  thumbnailUrl: `/api/v1/media/assets/${mediaVariantId}/content`,
 };
 const media = {
   beginUpload: vi.fn(async () => ({
@@ -145,7 +157,8 @@ const media = {
       width: null,
       height: null,
       checksumSha256: 'a'.repeat(64),
-      processingState: 'pending' as const,
+      processingState: 'ready' as const,
+      sourceAssetId: null,
       deleteAfter: null,
       createdAt: issuedAt,
     },

@@ -29,6 +29,7 @@ FROM dependencies AS build
 COPY . .
 RUN pnpm --filter @inventory-atlas/backend build \
     && pnpm --filter @inventory-atlas/config build \
+    && pnpm --filter @inventory-atlas/contracts build \
     && pnpm --filter @inventory-atlas/api build \
     && pnpm --filter @inventory-atlas/worker build
 
@@ -41,6 +42,9 @@ COPY apps/api/package.json apps/api/package.json
 COPY apps/worker/package.json apps/worker/package.json
 COPY packages/backend/package.json packages/backend/package.json
 COPY packages/config/package.json packages/config/package.json
+# The API controllers validate request bodies with the generated Zod schemas, so the contracts
+# package is part of the runtime graph, not only of the build.
+COPY packages/contracts/package.json packages/contracts/package.json
 # Prisma Client declares CLI/TypeScript as optional peers. Exclude optional
 # dependencies too; the runtime uses pg's JavaScript driver and bundled Argon2.
 RUN pnpm install --prod --no-optional --frozen-lockfile
@@ -54,6 +58,11 @@ LABEL org.opencontainers.image.title="Inventory Atlas backend" \
 ENV NODE_ENV=production
 ENV PORT=3000
 WORKDIR /app
+# The media pipeline never decodes in-process: it launches `vips`/`vipsheader` in a capped child.
+# Debian's libvips links libheif with libde265, so HEIC decodes; ADR-011 keeps publishing an
+# HEVC-enabled image behind a separate distribution/licensing review.
+RUN apt-get update && apt-get install -y --no-install-recommends libvips-tools \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=runtime-dependencies --chown=node:node /workspace/node_modules ./node_modules
 COPY --from=build --chown=node:node /workspace/package.json ./package.json
 COPY --from=build --chown=node:node /workspace/apps/api/package.json ./apps/api/package.json
@@ -67,6 +76,9 @@ COPY --from=build --chown=node:node /workspace/packages/backend/dist ./packages/
 COPY --from=runtime-dependencies --chown=node:node /workspace/packages/backend/node_modules ./packages/backend/node_modules
 COPY --from=build --chown=node:node /workspace/packages/config/package.json ./packages/config/package.json
 COPY --from=build --chown=node:node /workspace/packages/config/dist ./packages/config/dist
+COPY --from=build --chown=node:node /workspace/packages/contracts/package.json ./packages/contracts/package.json
+COPY --from=build --chown=node:node /workspace/packages/contracts/dist ./packages/contracts/dist
+COPY --from=runtime-dependencies --chown=node:node /workspace/packages/contracts/node_modules ./packages/contracts/node_modules
 COPY --from=build --chown=node:node /workspace/scripts ./scripts
 COPY --from=build --chown=node:node /workspace/db ./db
 RUN install --directory --owner=node --group=node /var/lib/inventory-atlas/media

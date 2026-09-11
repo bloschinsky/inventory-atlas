@@ -576,6 +576,16 @@
           "processingState": { "enum": ["failed", "pending", "ready"], "type": "string" },
           "relationId": { "format": "uuid", "type": "string" },
           "role": { "enum": ["container_photo", "gallery", "primary"], "type": "string" },
+          "thumbnailUrl": {
+            "description": "Smallest completed rendition, or null while only the original exists.",
+            "nullable": true,
+            "type": "string"
+          },
+          "variants": {
+            "description": "Processed renditions; empty while the asset is pending or failed.",
+            "items": { "$ref": "#/components/schemas/MediaVariantDto" },
+            "type": "array"
+          },
           "visibility": { "enum": ["authenticated", "private", "public"], "type": "string" },
           "width": { "minimum": 1, "nullable": true, "type": "number" }
         },
@@ -590,8 +600,24 @@
           "processingState",
           "relationId",
           "role",
+          "variants",
           "visibility"
         ],
+        "type": "object"
+      },
+      "MediaVariantDto": {
+        "properties": {
+          "byteSize": { "minimum": 1, "type": "number" },
+          "contentUrl": {
+            "description": "Where the processed bytes are served from.",
+            "type": "string"
+          },
+          "height": { "minimum": 1, "nullable": true, "type": "number" },
+          "mimeType": { "example": "image/webp", "type": "string" },
+          "name": { "enum": ["card", "preview", "thumb"], "type": "string" },
+          "width": { "minimum": 1, "nullable": true, "type": "number" }
+        },
+        "required": ["byteSize", "contentUrl", "mimeType", "name"],
         "type": "object"
       },
       "ProblemDetailsDto": {
@@ -2884,5 +2910,5 @@
   },
   "servers": [],
   "tags": [],
-  "x-spec-checksum": "0be25fd76d042e48bea43a214da7c758a0cf56f6a62662d707486e7155c7dc10"
+  "x-spec-checksum": "a47ff4825b2b2f63bcb6392bdc66310cb65b0787480edfbc2726b4fb6a45a85e"
 }

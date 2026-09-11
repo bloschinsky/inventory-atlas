@@ -1539,10 +1539,10 @@ As an operator, image processing cannot crash the API.
 
 Acceptance criteria:
 
-- [ ] JPEG, PNG, WebP, and HEIC fixtures pass capability checks.
-- [ ] Compact mode uses a capped one-shot child process.
-- [ ] Pixel, byte, memory, timeout, and concurrency limits are tested.
-- [ ] Child crash causes retry/dead state without API termination.
+- [x] JPEG, PNG, WebP, and HEIC fixtures pass capability checks.
+- [x] Compact mode uses a capped one-shot child process.
+- [x] Pixel, byte, memory, timeout, and concurrency limits are tested.
+- [x] Child crash causes retry/dead state without API termination.
 
 ### EPIC STO - Storage
 

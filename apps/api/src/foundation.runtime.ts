@@ -14,11 +14,10 @@ import {
   initializeInstallationSettings,
   readAdminAuthorizationSettings,
   SessionService,
-  CatalogMediaOwnerAdapter,
+  createJobRuntime,
+  createMediaRuntime,
   ItemRepository,
   ItemService,
-  LocalMediaStorage,
-  MediaRepository,
   MediaService,
   TransactionalAttributeValuePort,
   TransactionalAuditPort,
@@ -27,6 +26,7 @@ import {
   TransactionalOutboxPort,
   TransactionalSearchProjectionPort,
 } from '@inventory-atlas/backend';
+import type { BackgroundRuntime, CapabilityReport } from '@inventory-atlas/backend';
 import {
   parseEnvironment,
   supportedLocales,
@@ -34,7 +34,6 @@ import {
 } from '@inventory-atlas/config';
 import { access, mkdir } from 'node:fs/promises';
 import { constants } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import type { AuthRuntimePort } from './auth.runtime.js';
 import type { CatalogRuntimePort } from './catalog.runtime.js';
 import type { SchemaRuntimePort } from './schema.runtime.js';
@@ -74,6 +73,9 @@ export class FoundationRuntime
     OnApplicationShutdown
 {
   private schemaVersion: string | null = null;
+  private capabilities: CapabilityReport | null = null;
+  private background: BackgroundRuntime | null = null;
+  private checkCapabilities: (() => Promise<CapabilityReport>) | null = null;
   private sessions: SessionService | null = null;
   private administration: AuthAdministrationService | null = null;
   private dictionaries: CatalogDictionaryService | null = null;
@@ -139,14 +141,33 @@ export class FoundationRuntime
         },
         dictionaryRepository,
       );
-      runtime.mediaService = new MediaService(
-        new MediaRepository(settingsClient),
-        new LocalMediaStorage(configuration.mediaLocalPath!),
-        new CatalogMediaOwnerAdapter(itemRepository),
-        { audit: new TransactionalAuditPort(), outbox: new TransactionalOutboxPort() },
-        configuration.mediaMaxUploadBytes,
+      const mediaRuntime = createMediaRuntime(configuration, settingsClient);
+      runtime.mediaService = mediaRuntime.media;
+      runtime.checkCapabilities = mediaRuntime.checkCapabilities;
+      await runtime.verifyMediaStorage();
+      // Startup decode check (blueprint section 12.2): a deployment whose image cannot read an
+      // approved format says so here instead of discovering it on the first upload.
+      runtime.capabilities = await mediaRuntime.checkCapabilities();
+      if (!runtime.capabilities.available) {
+        for (const result of runtime.capabilities.results.filter((entry) => !entry.decoded))
+          Logger.error(
+            `Media capability check failed for ${result.format}: ${result.errorCode}.`,
+            FoundationRuntime.name,
+          );
+      }
+      // Compact mode claims jobs in this process; the expanded profile leaves them to the worker.
+      runtime.background = createJobRuntime(
+        configuration,
+        database,
+        mediaRuntime.backgroundPorts,
+        'api',
+        {
+          info: (message, detail) => Logger.log(formatJobLog(message, detail), 'JobRunner'),
+          warn: (message, detail) => Logger.warn(formatJobLog(message, detail), 'JobRunner'),
+          error: (message, detail) => Logger.error(formatJobLog(message, detail), 'JobRunner'),
+        },
       );
-      await runtime.verifyMedia();
+      runtime.background.start();
       return runtime;
     } catch (error) {
       await database.destroy();
@@ -170,11 +191,11 @@ export class FoundationRuntime
       schemaState = 'unavailable';
     }
     try {
-      await this.verifyMedia();
+      await this.verifyMediaStorage();
     } catch {
       if (this.configuration.mediaDriver === 'local') mediaStorage = 'unavailable';
-      mediaCapabilities = 'unavailable';
     }
+    if (!(await this.mediaCapabilities()).available) mediaCapabilities = 'unavailable';
 
     const components = {
       database: databaseState,
@@ -244,11 +265,17 @@ export class FoundationRuntime
     return this.configuration.cookieSecure;
   }
 
+  /** The decode capabilities this deployment actually has, per approved format. */
+  mediaCapabilityReport(): CapabilityReport | null {
+    return this.capabilities;
+  }
+
   async onApplicationShutdown(): Promise<void> {
+    await this.background?.stop();
     await Promise.all([this.database.destroy(), this.settingsClient.$disconnect()]);
   }
 
-  private async verifyMedia(): Promise<void> {
+  private async verifyMediaStorage(): Promise<void> {
     if (this.configuration.mediaDriver === 's3') {
       throw new Error('S3 media readiness is unavailable until the S3 adapter is installed.');
     }
@@ -256,18 +283,31 @@ export class FoundationRuntime
     if (!mediaPath) throw new Error('MEDIA_LOCAL_PATH is required for local media.');
     await mkdir(mediaPath, { recursive: true });
     await access(mediaPath, constants.R_OK | constants.W_OK);
-    await Promise.all(
-      [
-        'capability-16x16.heic',
-        'capability-16x16.jpg',
-        'capability-16x16.png',
-        'capability-16x16.webp',
-      ].map((name) =>
-        access(
-          fileURLToPath(new URL(`../../../db/fixtures/media/${name}`, import.meta.url)),
-          constants.R_OK,
-        ),
-      ),
-    );
   }
+
+  /**
+   * Readiness reuses the startup report and only re-decodes the fixtures once the cache ages
+   * out: a probe every ten seconds must not spawn a decoder every ten seconds.
+   */
+  private async mediaCapabilities(): Promise<CapabilityReport> {
+    const cached = this.capabilities;
+    if (cached && Date.now() - cached.checkedAt.getTime() < capabilityCacheMs) return cached;
+    if (!this.checkCapabilities) return { available: false, results: [], checkedAt: new Date() };
+    try {
+      this.capabilities = await this.checkCapabilities();
+    } catch {
+      this.capabilities = { available: false, results: [], checkedAt: new Date() };
+    }
+    return this.capabilities;
+  }
+}
+
+const capabilityCacheMs = 5 * 60_000;
+
+/** Job logs carry identifiers and codes only; no payload, filename or decoder output. */
+function formatJobLog(message: string, detail?: Record<string, unknown>): string {
+  if (!detail || !Object.keys(detail).length) return message;
+  return `${message} ${Object.entries(detail)
+    .map(([key, value]) => `${key}=${String(value)}`)
+    .join(' ')}`;
 }

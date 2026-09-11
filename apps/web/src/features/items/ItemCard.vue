@@ -23,6 +23,7 @@ const statusLabel = computed(
   () => localized(props.lifecycleStatus?.labels) || t('items.unknownStatus'),
 );
 const placeholderInitial = computed(() => categoryLabel.value.trim().charAt(0).toLocaleUpperCase());
+/** The processed card rendition is preferred; the original stands in until MED-02 has run. */
 const primaryImage = computed(
   () =>
     /** @type {Record<string, unknown>[]} */ (props.media).find(
@@ -96,7 +97,7 @@ function formatSingle(definition, value) {
     <img
       v-if="primaryImage"
       class="item-card__media item-card__media--image"
-      :src="String(primaryImage.contentUrl)"
+      :src="String(primaryImage.thumbnailUrl ?? primaryImage.contentUrl)"
       :alt="String(primaryImage.altText ?? item.displayName)"
       loading="lazy"
     />

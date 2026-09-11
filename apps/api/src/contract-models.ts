@@ -245,6 +245,17 @@ export class FinalizeUploadRequestDto {
   declare visibility?: string;
 }
 
+export class MediaVariantDto {
+  @ApiProperty({ enum: ['thumb', 'card', 'preview'], type: String }) declare name: string;
+  @ApiProperty({ example: 'image/webp', type: String }) declare mimeType: string;
+  @ApiProperty({ minimum: 1, type: Number }) declare byteSize: number;
+  @ApiPropertyOptional({ minimum: 1, nullable: true, type: Number }) declare width: number | null;
+  @ApiPropertyOptional({ minimum: 1, nullable: true, type: Number }) declare height: number | null;
+
+  @ApiProperty({ description: 'Where the processed bytes are served from.', type: String })
+  declare contentUrl: string;
+}
+
 export class MediaItemDto {
   @ApiProperty({ format: 'uuid', type: String }) declare relationId: string;
   @ApiProperty({ format: 'uuid', type: String }) declare assetId: string;
@@ -271,6 +282,19 @@ export class MediaItemDto {
 
   @ApiProperty({ description: 'Where the stored bytes are served from.', type: String })
   declare contentUrl: string;
+
+  @ApiProperty({
+    description: 'Processed renditions; empty while the asset is pending or failed.',
+    type: [MediaVariantDto],
+  })
+  declare variants: MediaVariantDto[];
+
+  @ApiPropertyOptional({
+    description: 'Smallest completed rendition, or null while only the original exists.',
+    nullable: true,
+    type: String,
+  })
+  declare thumbnailUrl: string | null;
 }
 
 export class ReorderMediaRequestDto {
@@ -354,6 +378,7 @@ export const contractModels = [
   BeginUploadRequestDto,
   UploadSessionDto,
   FinalizeUploadRequestDto,
+  MediaVariantDto,
   MediaItemDto,
   ReorderMediaRequestDto,
   ItemSummaryDto,

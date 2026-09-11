@@ -544,31 +544,31 @@ Suggested pull requests:
 
 Tasks:
 
-- [ ] Implement startup decoding checks for the approved JPEG, PNG, WebP, and HEIC fixtures.
-- [ ] Define variant dimensions/formats and metadata/EXIF policy.
-- [ ] Launch decoding in a one-shot child process through the resource-limit wrapper.
-- [ ] Enforce input bytes, decoded pixels, memory/RSS, timeout, and Sharp concurrency limits.
-- [ ] Implement idempotent variant job keys, leases, heartbeats, retry backoff, and dead state.
-- [ ] Ensure child crash, OOM, malformed image, and timeout cannot terminate the API.
-- [ ] Run the same processor in compact and expanded worker profiles.
-- [ ] Store variant checksums/metadata and expose only completed variants.
-- [ ] Add capability, resource-limit, crash, retry, and container tests.
-- [ ] Record the HEVC-enabled distribution/licensing review gate without making a legal conclusion.
+- [x] Implement startup decoding checks for the approved JPEG, PNG, WebP, and HEIC fixtures.
+- [x] Define variant dimensions/formats and metadata/EXIF policy.
+- [x] Launch decoding in a one-shot child process through the resource-limit wrapper.
+- [x] Enforce input bytes, decoded pixels, memory/RSS, timeout, and Sharp concurrency limits.
+- [x] Implement idempotent variant job keys, leases, heartbeats, retry backoff, and dead state.
+- [x] Ensure child crash, OOM, malformed image, and timeout cannot terminate the API.
+- [x] Run the same processor in compact and expanded worker profiles.
+- [x] Store variant checksums/metadata and expose only completed variants.
+- [x] Add capability, resource-limit, crash, retry, and container tests.
+- [x] Record the HEVC-enabled distribution/licensing review gate without making a legal conclusion.
 
 Acceptance criteria (verbatim from the approved blueprint):
 
-- [ ] JPEG, PNG, WebP, and HEIC fixtures pass capability checks.
-- [ ] Compact mode uses a capped one-shot child process.
-- [ ] Pixel, byte, memory, timeout, and concurrency limits are tested.
-- [ ] Child crash causes retry/dead state without API termination.
+- [x] JPEG, PNG, WebP, and HEIC fixtures pass capability checks.
+- [x] Compact mode uses a capped one-shot child process.
+- [x] Pixel, byte, memory, timeout, and concurrency limits are tested.
+- [x] Child crash causes retry/dead state without API termination.
 
 ### Stage 2 exit checklist
 
-- [ ] CAT-01 through CAT-05 and MED-01 through MED-02 acceptance criteria pass.
-- [ ] Versioned Item aggregate creates and edits atomically in English and Ukrainian.
-- [ ] Dynamic schema, display names, media, and safe projection behavior are integrated.
-- [ ] Item API/UI changes pass authorization, accessibility, mobile, and contract checks.
-- [ ] No Prisma/Kysely client mixing occurs inside a business transaction.
+- [x] CAT-01 through CAT-05 and MED-01 through MED-02 acceptance criteria pass.
+- [x] Versioned Item aggregate creates and edits atomically in English and Ukrainian.
+- [x] Dynamic schema, display names, media, and safe projection behavior are integrated.
+- [x] Item API/UI changes pass authorization, accessibility, mobile, and contract checks.
+- [x] No Prisma/Kysely client mixing occurs inside a business transaction.
 
 ## 7. Stage 3 - Storage
 

@@ -105,6 +105,17 @@ primary per owner and one active relation per owner, role and position; and shor
 `upload_sessions` with the declared file, temporary key, received size, checksum and state.
 `media_relations.storage_node_id` has no foreign key until STO-01 creates `storage_nodes`.
 
+`0008_jobs.mjs` delivers MED-02A with the Kysely-only `jobs` queue: type, versioned payload,
+state, priority, attempt and attempt budget, `available_at`/`leased_until`/`heartbeat_at`, worker
+ID, unique idempotency key, bounded progress and last-error fields, and timestamps. Check
+constraints keep the row honest: only a running job names a worker and holds a lease and a
+heartbeat, only a terminal job has `completed_at`, and `attempt` can never exceed `max_attempts`.
+The partial claim index covers `queued`/`retry_wait` work in priority then age order, a lease
+index bounds expiry scans to running rows, and a dead-job index serves the Admin failed-job view.
+No Prisma transaction may write this table. Rollback drops the queue and therefore every
+scheduled, waiting and dead job; committed source state is unaffected because a job is always
+rebuildable from its outbox message or re-enqueued by hand.
+
 Movement rows are append-only. Search projections include separate authenticated
 and public vectors/attribute objects, while privacy-safe construction stays in
 `SearchProjectionPort`. Idempotency keys and fingerprints are stored only as

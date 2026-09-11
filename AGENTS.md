@@ -26,8 +26,8 @@ Keep this section current. Any change that adds, removes, moves, renames, or mat
 | --- | --- |
 | `apps/api` | NestJS/Fastify HTTP composition root: controllers, API DTOs/OpenAPI decorators, and runtime wiring. Domain and repository logic belongs in `packages/backend`. |
 | `apps/web` | Vue application. `app/` owns bootstrapping, routing, layouts, and UI stores; `pages/` composes routes; `features/` owns user workflows; `entities/` owns reusable domain presentation; `shared/` owns generic API, auth, i18n, UI, and utility code. Playwright specs live in `e2e/`. |
-| `apps/worker` | NestJS background-worker composition root. It wires backend jobs without owning domain logic. |
-| `packages/backend` | Backend domain, application services, ports, and data adapters, grouped by module under `src/` (`auth`, `catalog`, `schema`, `media`, and shared `infrastructure`). Other workspaces import only its public `src/index.ts` surface. |
+| `apps/worker` | NestJS background-worker composition root for the expanded profile. It starts the same backend media and job runtime the API composes in compact mode, without owning domain logic. |
+| `packages/backend` | Backend domain, application services, ports, and data adapters, grouped by module under `src/` (`auth`, `catalog`, `schema`, `media`, `jobs`, and shared `infrastructure`), with `runtime.ts` assembling the media and job runtime both composition roots share. Other workspaces import only its public `src/index.ts` surface. |
 | `packages/config` | Shared environment parsing, validation, and runtime configuration types. |
 | `packages/contracts` | OpenAPI-generated types, Fetch client, JSDoc declarations, and Zod schemas. Files under `src/generated/` are generator-owned. |
 | `packages/i18n` | Locale setup, the MVP message inventory, and English/Ukrainian translations. |

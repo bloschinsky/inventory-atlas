@@ -38,8 +38,33 @@ export interface MediaAssetRecord {
   height: number | null;
   checksumSha256: string;
   processingState: 'pending' | 'ready' | 'failed';
+  sourceAssetId: string | null;
   deleteAfter: Date | null;
   createdAt: Date;
+}
+
+/** A derived image produced by MED-02. The variant name lives in the technical metadata. */
+export interface MediaVariantRecord {
+  id: string;
+  name: string;
+  sourceAssetId: string;
+  storageKey: string;
+  mimeType: string;
+  byteSize: number;
+  width: number | null;
+  height: number | null;
+  checksumSha256: string;
+}
+
+export interface MediaVariantInput {
+  name: string;
+  storageKey: string;
+  mimeType: string;
+  byteSize: number;
+  width: number;
+  height: number;
+  checksumSha256: string;
+  originalFilename: string;
 }
 
 export interface MediaRelationRecord {
@@ -210,6 +235,105 @@ export class MediaRepository {
     return toRelationRecord(row);
   }
 
+  async findAsset(id: string, transaction?: MediaTransaction): Promise<MediaAssetRecord | null> {
+    const row = await (transaction ?? this.prisma).mediaAsset.findUnique({ where: { id } });
+    return row ? toAssetRecord(row) : null;
+  }
+
+  /** The derived images of one source asset, ordered so the smallest is first. */
+  async listVariants(
+    sourceAssetId: string,
+    transaction?: MediaTransaction,
+  ): Promise<MediaVariantRecord[]> {
+    const rows = await (transaction ?? this.prisma).mediaAsset.findMany({
+      where: { sourceAssetId },
+      orderBy: [{ byteSize: 'asc' }, { createdAt: 'asc' }],
+    });
+    return rows.map(toVariantRecord);
+  }
+
+  /** Variants of several sources at once, so a media listing needs one query, not one per asset. */
+  async listVariantsForAssets(
+    sourceAssetIds: readonly string[],
+    transaction?: MediaTransaction,
+  ): Promise<MediaVariantRecord[]> {
+    if (!sourceAssetIds.length) return [];
+    const rows = await (transaction ?? this.prisma).mediaAsset.findMany({
+      where: { sourceAssetId: { in: [...sourceAssetIds] } },
+      orderBy: [{ byteSize: 'asc' }, { createdAt: 'asc' }],
+    });
+    return rows.map(toVariantRecord);
+  }
+
+  /**
+   * Rewrites the variant set of one source asset. Reprocessing is therefore idempotent: the
+   * previous rows are removed in the same transaction that inserts the new ones, and the storage
+   * keys are deterministic, so no orphan object survives a second attempt.
+   */
+  async replaceVariants(
+    transaction: MediaTransaction,
+    sourceAssetId: string,
+    variants: readonly MediaVariantInput[],
+    now: Date,
+  ): Promise<MediaVariantRecord[]> {
+    await transaction.mediaAsset.deleteMany({ where: { sourceAssetId } });
+    const created: MediaVariantRecord[] = [];
+    for (const variant of variants) {
+      const row = await transaction.mediaAsset.create({
+        data: {
+          id: this.newId(),
+          sourceAssetId,
+          storageKey: variant.storageKey,
+          originalFilename: variant.originalFilename,
+          mimeType: variant.mimeType,
+          byteSize: BigInt(variant.byteSize),
+          width: variant.width,
+          height: variant.height,
+          checksumSha256: variant.checksumSha256,
+          processingState: 'ready',
+          metadataJson: { variant: variant.name },
+          createdAt: now,
+          updatedAt: now,
+        },
+      });
+      created.push(toVariantRecord(row));
+    }
+    return created;
+  }
+
+  /** Records the decoded dimensions and technical metadata and publishes the asset. */
+  async markAssetProcessed(
+    transaction: MediaTransaction,
+    id: string,
+    input: { width: number; height: number; metadata: Record<string, unknown>; now: Date },
+  ): Promise<void> {
+    await transaction.mediaAsset.update({
+      where: { id },
+      data: {
+        width: input.width,
+        height: input.height,
+        processingState: 'ready',
+        metadataJson: input.metadata as never,
+        updatedAt: input.now,
+      },
+    });
+  }
+
+  /**
+   * Marks an asset that can never be processed. Only the stable failure code is stored; decoder
+   * output may quote image content and never reaches a row.
+   */
+  async markAssetFailed(id: string, failureCode: string, now: Date): Promise<void> {
+    await this.prisma.mediaAsset.update({
+      where: { id },
+      data: {
+        processingState: 'failed',
+        metadataJson: { failureCode, failedAt: now.toISOString() },
+        updatedAt: now,
+      },
+    });
+  }
+
   async listItemMedia(itemId: string, transaction?: MediaTransaction): Promise<AttachedMedia[]> {
     const rows = await (transaction ?? this.prisma).mediaRelation.findMany({
       where: { itemId, archivedAt: null },
@@ -316,7 +440,8 @@ export class MediaRepository {
   /** Assets whose grace period has passed and are therefore cleanup candidates. */
   async dueAssets(now: Date, limit = 100): Promise<MediaAssetRecord[]> {
     const rows = await this.prisma.mediaAsset.findMany({
-      where: { deleteAfter: { lte: now } },
+      // Variants are reclaimed with their source, never scheduled on their own.
+      where: { deleteAfter: { lte: now }, sourceAssetId: null },
       orderBy: { deleteAfter: 'asc' },
       take: limit,
     });
@@ -392,13 +517,48 @@ function toAssetRecord(row: {
   height: number | null;
   checksumSha256: string;
   processingState: string;
+  sourceAssetId: string | null;
   deleteAfter: Date | null;
   createdAt: Date;
 }): MediaAssetRecord {
   return {
-    ...row,
+    id: row.id,
+    storageKey: row.storageKey,
+    originalFilename: row.originalFilename,
+    mimeType: row.mimeType,
     byteSize: Number(row.byteSize),
+    width: row.width,
+    height: row.height,
+    checksumSha256: row.checksumSha256,
     processingState: row.processingState as MediaAssetRecord['processingState'],
+    sourceAssetId: row.sourceAssetId,
+    deleteAfter: row.deleteAfter,
+    createdAt: row.createdAt,
+  };
+}
+
+function toVariantRecord(row: {
+  id: string;
+  storageKey: string;
+  mimeType: string;
+  byteSize: bigint;
+  width: number | null;
+  height: number | null;
+  checksumSha256: string;
+  sourceAssetId: string | null;
+  metadataJson: unknown;
+}): MediaVariantRecord {
+  const metadata = (row.metadataJson ?? {}) as { variant?: unknown };
+  return {
+    id: row.id,
+    name: typeof metadata.variant === 'string' ? metadata.variant : 'variant',
+    sourceAssetId: row.sourceAssetId!,
+    storageKey: row.storageKey,
+    mimeType: row.mimeType,
+    byteSize: Number(row.byteSize),
+    width: row.width,
+    height: row.height,
+    checksumSha256: row.checksumSha256,
   };
 }
 

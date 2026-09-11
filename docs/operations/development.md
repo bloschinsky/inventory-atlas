@@ -26,6 +26,11 @@ The development database uses synthetic local credentials and `.env.example`
 defaults; it does not require a production `.env`. Only the web development port
 is published, on loopback. Change development overrides in `compose.dev.yml`.
 
+The development and runtime images install Debian's `libvips-tools`. MED-02 decodes images by
+launching `vips`/`vipsheader` in a capped one-shot child process, and the integration suite runs
+the real decoder against the committed fixtures, so the toolchain has to be present inside the
+container rather than on the host.
+
 The checkout is mounted at `/workspace`. Every workspace `node_modules` directory
 is overlaid with a Docker volume; Windows dependencies never become Linux
 dependencies. Generated source, lockfile edits, build output and test reports

@@ -22,6 +22,7 @@ import {
   MediaRepository,
   type AttachedMedia,
   type MediaAssetRecord,
+  type MediaVariantRecord,
   type UploadSessionRecord,
 } from './media-repository.js';
 import {
@@ -94,6 +95,16 @@ export interface UploadSessionView {
   state: string;
 }
 
+/** One processed rendition of an asset, exposed only once MED-02 has written it. */
+export interface MediaVariantView {
+  name: string;
+  mimeType: string;
+  byteSize: number;
+  width: number | null;
+  height: number | null;
+  contentUrl: string;
+}
+
 export interface MediaView {
   relationId: string;
   assetId: string;
@@ -109,6 +120,10 @@ export interface MediaView {
   checksumSha256: string;
   processingState: string;
   contentUrl: string;
+  /** Completed variants only; a pending or failed asset exposes none. */
+  variants: MediaVariantView[];
+  /** The smallest completed variant, or null while only the original exists. */
+  thumbnailUrl: string | null;
 }
 
 export interface MediaRequestMetadata {
@@ -325,10 +340,13 @@ export class MediaService {
   async listItemMedia(actor: SessionActor, itemPublicId: string): Promise<MediaView[]> {
     const owner = await this.requireReadableOwner(actor, itemPublicId);
     const privileged = can(actor.role, 'viewPrivateFields');
-    const attached = await this.repository.listItemMedia(owner.id);
-    return attached
-      .filter((entry) => privileged || entry.relation.visibility !== 'private')
-      .map((entry) => this.mediaView(entry));
+    const attached = (await this.repository.listItemMedia(owner.id)).filter(
+      (entry) => privileged || entry.relation.visibility !== 'private',
+    );
+    const variants = await this.repository.listVariantsForAssets(
+      attached.map((entry) => entry.asset.id),
+    );
+    return attached.map((entry) => this.mediaView(entry, variants));
   }
 
   /**
@@ -472,21 +490,27 @@ export class MediaService {
     });
   }
 
-  /** Streams the stored bytes of one asset to a caller allowed to see the owning relation. */
+  /**
+   * Streams the stored bytes of one asset to a caller allowed to see the owning relation. A
+   * MED-02 variant carries no relation of its own, so it inherits the authorization of the
+   * source asset it was derived from - a private image cannot be read through its thumbnail.
+   */
   async openAssetContent(
     actor: SessionActor,
     assetId: string,
   ): Promise<{ asset: MediaAssetRecord; content: Readable }> {
-    const attached = (await this.repository.findRelationsByAsset(assetId)).filter(
-      (entry) => !entry.relation.archivedAt,
-    );
+    const asset = await this.repository.findAsset(assetId);
+    if (!asset)
+      throw new MediaAccessError('MEDIA_ASSET_NOT_FOUND', 'The media asset does not exist.');
+    const attached = (
+      await this.repository.findRelationsByAsset(asset.sourceAssetId ?? asset.id)
+    ).filter((entry) => !entry.relation.archivedAt);
     const privileged = can(actor.role, 'viewPrivateFields');
     const visible = attached.filter(
       (entry) => privileged || entry.relation.visibility !== 'private',
     );
     if (!visible.length)
       throw new MediaAccessError('MEDIA_ASSET_NOT_FOUND', 'The media asset does not exist.');
-    const asset = visible[0]!.asset;
     return { asset, content: await this.storage.openRead(asset.storageKey) };
   }
 
@@ -505,11 +529,16 @@ export class MediaService {
         retained.push(asset.id);
         continue;
       }
+      // Variant rows cascade with their source, so their keys are read before the delete and
+      // their objects are removed after it.
+      const variantKeys = (await this.repository.listVariants(asset.id)).map(
+        (variant) => variant.storageKey,
+      );
       if (!(await this.repository.deleteAssetIfUnreferenced(asset.id, now))) {
         retained.push(asset.id);
         continue;
       }
-      await this.storage.remove(asset.storageKey);
+      for (const key of [asset.storageKey, ...variantKeys]) await this.storage.remove(key);
       deleted.push(asset.id);
     }
     return { deleted, retained };
@@ -608,7 +637,21 @@ export class MediaService {
     };
   }
 
-  private mediaView(entry: AttachedMedia): MediaView {
+  private mediaView(entry: AttachedMedia, variants: readonly MediaVariantRecord[] = []): MediaView {
+    // Only a `ready` asset may advertise renditions: a half-written variant set must never be
+    // linked from a card.
+    const own =
+      entry.asset.processingState === 'ready'
+        ? variants.filter((variant) => variant.sourceAssetId === entry.asset.id)
+        : [];
+    const views = own.map((variant) => ({
+      name: variant.name,
+      mimeType: variant.mimeType,
+      byteSize: variant.byteSize,
+      width: variant.width,
+      height: variant.height,
+      contentUrl: `${this.publicBasePath}/assets/${variant.id}/content`,
+    }));
     return {
       relationId: entry.relation.id,
       assetId: entry.asset.id,
@@ -624,6 +667,8 @@ export class MediaService {
       checksumSha256: entry.asset.checksumSha256,
       processingState: entry.asset.processingState,
       contentUrl: `${this.publicBasePath}/assets/${entry.asset.id}/content`,
+      variants: views,
+      thumbnailUrl: views[0]?.contentUrl ?? null,
     };
   }
 }

@@ -4,9 +4,10 @@ MED-01 delivers the shared media model, the storage adapter boundary, and the co
 media flow. Kysely migration `0007_media` owns `media_assets`, `media_relations` and
 `upload_sessions`; the Media module writes all three through Prisma.
 
-Image decoding is not part of this step. Finalize enqueues `media.process-asset.v1`, and MED-02
+Image decoding is not part of this step. Finalize enqueues `media.process-asset.v1`; MED-02
 consumes it in an isolated child process to strip metadata, fix orientation and build variants.
-Until then an asset stays in `processing_state = 'pending'` and the original bytes are served.
+Until an asset reaches `processing_state = 'ready'` it exposes no renditions and the original
+bytes are served. See [image processing and background jobs](media-processing.md).
 
 ## Three-step upload
 
@@ -100,13 +101,16 @@ it never deletes bytes inline. `MediaService.collectOrphans` is the reclaim pass
 4. Only after the row is gone are the bytes removed.
 
 `MediaService.expireSessions` performs the same reclaim for abandoned upload sessions. Both are
-plain service methods with integration coverage; the Jobs module will schedule them when it
-lands, which is why neither assumes a worker exists.
+plain service methods with integration coverage; MED-02's `media.cleanup-v1` job schedules them
+every fifteen minutes, and reclaiming a source asset also removes the derived objects MED-02
+wrote for it.
 
 ## Storage adapters
 
-`MediaStoragePort` is the only byte-level contract: `writeTemp`, `promote`, `openRead`, `exists`
-and `remove`. `LocalMediaStorage` is the default and the only mandatory driver. Keys are
+`MediaStoragePort` is the only byte-level contract: `writeTemp`, `promote`, `openRead`,
+`materialize`, `exists` and `remove`. `materialize` exposes an object as a real file path for the
+out-of-process image processor; the local driver hands out its own file, and a remote driver
+would stage a copy and clean it up. `LocalMediaStorage` is the default and the only mandatory driver. Keys are
 server-generated and content-addressed (`assets/<aa>/<bb>/<id>.<ext>`), an unrecognized extension
 is dropped rather than trusted, and the adapter refuses any key that would resolve outside its
 root. An S3-compatible adapter implements the same port without changing a caller; S3 stays

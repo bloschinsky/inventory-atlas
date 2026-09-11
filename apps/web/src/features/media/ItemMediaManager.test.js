@@ -130,6 +130,21 @@ function media(relationId, role, position, originalFilename, altText, processing
     checksumSha256: 'a'.repeat(64),
     processingState,
     contentUrl: `/api/v1/media/assets/${relationId}/content`,
+    variants:
+      processingState === 'ready'
+        ? [
+            {
+              name: 'thumb',
+              mimeType: 'image/webp',
+              byteSize: 512,
+              width: 320,
+              height: 240,
+              contentUrl: `/api/v1/media/assets/${relationId}-thumb/content`,
+            },
+          ]
+        : [],
+    thumbnailUrl:
+      processingState === 'ready' ? `/api/v1/media/assets/${relationId}-thumb/content` : null,
   };
 }
 

@@ -39,6 +39,12 @@ RUN pnpm install --frozen-lockfile \
     && chown -R node:node /workspace /media /pnpm /opt/corepack /home/node/.cache \
     && chmod -R a+rX /ms-playwright \
     && rm -rf /var/lib/apt/lists/*
+# MED-02 decodes images in a capped one-shot child process. Debian's libvips is built against
+# libheif with the libde265 decoder, which is what makes the HEIC capability check pass; ADR-011
+# keeps publishing an HEVC-enabled image behind a separate distribution/licensing review.
+RUN apt-get update && apt-get install -y --no-install-recommends libvips-tools \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --chown=node:node . .
 USER node
 CMD ["pnpm", "dev"]

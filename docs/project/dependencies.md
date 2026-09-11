@@ -98,6 +98,26 @@ scope are documented in [authentication.md](authentication.md).
 | Corepack | `0.36.0` | MIT |
 | pnpm | `11.25.0` | MIT |
 | PostgreSQL | `18.6` | PostgreSQL License |
+| `libvips-tools` / `libvips42` (Debian bookworm) | `8.14.1-3+deb12u3` | LGPL-2.1-or-later |
+| `libheif1` (Debian bookworm) | `1.15.1-1+deb12u1` | LGPL-3.0-or-later |
+| `libde265-0` (Debian bookworm) | `1.0.11-1+deb12u2` | LGPL-3.0-or-later |
+
+## Image decoding components
+
+MED-02 decodes images by launching Debian's `vips`/`vipsheader` in a capped one-shot child
+process; no image library is linked into the API or worker process. These are operating-system
+packages inside the container image, not npm dependencies, so they are not part of the workspace
+lockfile or the generated npm license report. They are recorded here because they ship in the
+published image.
+
+libvips, libheif and libde265 are LGPL libraries used unmodified and dynamically linked from a
+separate process, which is the usage those licenses are written for. libde265 is the HEVC decoder
+that makes the HEIC capability check pass.
+
+**Open release gate.** ADR-011 and blueprint section 12.2 require a separate distribution and
+licensing review before a prebuilt HEVC-enabled image is published to a public registry. That
+review has not been performed and this note reaches no conclusion about it. It is an engineering
+release gate, not legal advice, and it remains open.
 
 ## Compatibility conclusion and limits
 
@@ -116,7 +136,9 @@ with this explicit review.
 
 This is an engineering compatibility review, not legal advice. It does not yet
 approve optional media codecs or providers. In particular, the HEIC/libheif
-image distribution review required by ADR-011 remains a separate release gate.
+image distribution review required by ADR-011 remains a separate release gate;
+MED-02 records the components involved under "Image decoding components" above
+without resolving that gate.
 FND-01 must generate a complete transitive license report from the committed
 lockfile; CI/release must fail on missing, unknown, non-commercial, or denied
 licenses until reviewed.

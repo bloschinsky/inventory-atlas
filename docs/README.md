@@ -29,6 +29,8 @@ This directory contains supporting product, architecture, API, operations, secur
 - [Localization foundation](project/localization.md)
 - [Catalog dictionary foundation](project/catalog-dictionaries.md)
 - [Dynamic field schema and typed EAV](project/dynamic-schema.md)
+- [Media uploads and attachments](project/media-uploads.md)
+- [Image processing and background jobs](project/media-processing.md)
 - [Development setup](operations/development.md)
 - [Transitive dependency license report](project/third-party-licenses.json)
 - [UI facade contracts](frontend/ui-facade-contracts.md)
