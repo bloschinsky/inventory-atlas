@@ -56,6 +56,13 @@ docker compose -f compose.dev.yml run --rm tools pnpm format:check
 docker compose -f compose.dev.yml run --rm tools pnpm test:e2e
 ```
 
+Run these one at a time. `tools` and `docker-tools` share the `install` service,
+so two concurrent `docker compose run` invocations restart it under each other;
+on a Windows bind mount that has left generated output half-written and produced
+spurious `EINVAL` write failures. If contract generation is interrupted, restore
+`packages/contracts/src/generated` with `git checkout --` and run
+`pnpm contracts:generate` before continuing.
+
 Run the build before E2E (Playwright serves the built frontend). Run development
 startup/migrations before `db:verify`. Integration tests receive
 `INTEGRATION_DATABASE_URL` pointing to `test-db`, a separate real PostgreSQL

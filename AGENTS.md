@@ -45,6 +45,7 @@ Keep this section current. Any change that adds, removes, moves, renames, or mat
 
 - Start product work from the matching story in `TODO-ROADMAP.md`, then follow its blueprint sections and ADRs.
 - For an API change, update HTTP contracts/controllers in `apps/api`, implement behavior through the public modules in `packages/backend`, then regenerate `docs/api/openapi.json` and `packages/contracts/src/generated/`.
+- When `apps/api` or `apps/worker` gain a runtime import from a workspace package, add that package to the `runtime-dependencies` and `runtime` stages of `infra/docker/backend.Dockerfile` and give its `exports` entry a built `default` condition. A `.ts` entry resolves only under the `development` condition, so a package that works in tests and `pnpm dev` can still break the deployed image.
 - For a frontend workflow, compose the route in `apps/web/src/pages`, place use-case behavior in `features`, and reuse `shared/ui` rather than importing PrimeVue directly.
 - Keep unit tests beside their source as `*.test.*`, PostgreSQL tests as `*.integration.test.*`, and browser journeys in `apps/web/e2e`.
 - Treat `dist/`, `node_modules/`, `.pnpm-store/`, `test-results/`, and generated source directories as outputs, not implementation entry points.

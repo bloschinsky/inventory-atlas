@@ -5,6 +5,13 @@ installation-setting store required by FND-02. Run all pending migrations with
 `pnpm db:migrate`; deployment runs the same migration code in the one-shot
 `migrate` container before starting the API.
 
+A new migration is not finished until three things outside this directory follow
+it: `expectedSchemaVersion` in `packages/backend/src/database.ts`, the
+introspected model in `db/prisma/schema.prisma` (the drift test compares the
+committed schema against `prisma db pull`), and the rollback ladder in
+`packages/backend/src/schema/dynamic-schema.integration.test.ts`, which steps
+down one migration at a time and names each expected version.
+
 `0002_auth.mjs` starts FND-04A with users, hashed-token session/invitation stores,
 and append-only audit events. Existing settings and initialization metadata are
 preserved. Auth tables use application-generated UUIDs, UTC timestamps, checked
