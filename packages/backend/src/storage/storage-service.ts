@@ -1,5 +1,6 @@
+import { randomUUID } from 'node:crypto';
 import { can, type SessionActor } from '../auth/index.js';
-import type { AuditPort, OutboxPort } from '../infrastructure/index.js';
+import type { AuditPort, MovementHistoryPort, OutboxPort } from '../infrastructure/index.js';
 import type { StorageProjectionPort } from '../infrastructure/transaction-ports.js';
 import type {
   AttributeValueAssignment,
@@ -43,6 +44,11 @@ export interface UpdateStorageNodeInput {
   attributes?: Readonly<Record<string, unknown>>;
 }
 
+export interface MoveStorageNodeInput {
+  targetParentPublicId: string;
+  reason?: string;
+}
+
 export interface StorageNodeSummary {
   publicId: string;
   parentPublicId: string | null;
@@ -74,6 +80,7 @@ export class StorageAccessError extends Error {
 interface StoragePorts {
   attributes: AttributeValuePort;
   audit: AuditPort;
+  movements: MovementHistoryPort;
   outbox: OutboxPort;
   search: StorageProjectionPort;
 }
@@ -202,6 +209,117 @@ export class StorageService {
         ? await this.nodes.findById(result.after.parentId, transaction)
         : null;
       return summary(result.after, parent?.publicId ?? null);
+    });
+  }
+
+  async move(
+    actor: SessionActor,
+    publicId: string,
+    expectedVersion: number,
+    input: MoveStorageNodeInput,
+    metadata: { correlationId?: string; requestId?: string } = {},
+  ): Promise<StorageNodeSummary> {
+    this.requireEditor(actor);
+    if (!Number.isSafeInteger(expectedVersion) || expectedVersion < 1)
+      throw new StoragePolicyError(
+        'STORAGE_VERSION_CONFLICT',
+        'expectedVersion',
+        'Expected version must be positive.',
+      );
+    const reason = normalizeMoveReason(input.reason);
+    return this.nodes.transaction(async (transaction) => {
+      const locked = await this.nodes.lockMoveNodes(
+        transaction,
+        publicId,
+        input.targetParentPublicId,
+      );
+      if (locked.source.archivedAt)
+        throw new StoragePolicyError('STORAGE_NOT_FOUND', 'publicId', 'StorageNode was not found.');
+      if (locked.target.archivedAt)
+        throw new StoragePolicyError(
+          'STORAGE_NOT_FOUND',
+          'targetParentPublicId',
+          'The destination StorageNode was not found.',
+        );
+      if (locked.source.version !== expectedVersion)
+        throw new StoragePolicyError(
+          'STORAGE_VERSION_CONFLICT',
+          'expectedVersion',
+          'StorageNode changed since it was loaded.',
+          locked.source.version,
+        );
+
+      await this.nodes.lockRoots(transaction, [locked.source.treeRootId, locked.target.treeRootId]);
+      const privileged = can(actor.role, 'viewPrivateFields');
+      const source = await this.nodes.findAccessibleByPublicId(publicId, privileged, transaction);
+      const target = await this.nodes.findAccessibleByPublicId(
+        input.targetParentPublicId,
+        privileged,
+        transaction,
+      );
+      if (!source)
+        throw new StoragePolicyError('STORAGE_NOT_FOUND', 'publicId', 'StorageNode was not found.');
+      if (!target)
+        throw new StoragePolicyError(
+          'STORAGE_NOT_FOUND',
+          'targetParentPublicId',
+          'The destination StorageNode was not found.',
+        );
+      if (source.parentId === target.id)
+        throw new StoragePolicyError(
+          'STORAGE_MOVE_NO_CHANGE',
+          'targetParentPublicId',
+          'StorageNode is already at that destination.',
+        );
+      if (await this.nodes.targetIsInSubtree(transaction, source.path, target.path))
+        throw new StoragePolicyError(
+          'STORAGE_MOVE_CYCLE',
+          'targetParentPublicId',
+          'A StorageNode cannot be moved into its own subtree.',
+        );
+
+      const movedAt = this.now();
+      const moved = await this.nodes.moveSubtree(transaction, source, target, movedAt);
+      const context = { kind: 'kysely' as const, trx: transaction };
+      const correlationId = moveCorrelationId(metadata);
+      await this.ports.movements.append(context, {
+        entityType: 'storage_node',
+        itemId: null,
+        storageNodeId: source.id,
+        fromNodeId: source.parentId,
+        toNodeId: target.id,
+        fromPathSnapshot: source.path,
+        toPathSnapshot: moved.path,
+        actorUserId: actor.id,
+        ...(reason ? { reason } : {}),
+        occurredAt: movedAt,
+        correlationId,
+      });
+      await this.ports.search.syncStorageSubtree(context, moved.id, movedAt);
+      await this.ports.audit.record(context, {
+        actorId: actor.id,
+        action: 'storage_node.moved',
+        entityType: 'storage_node',
+        entityId: moved.id,
+        ...metadata,
+        before: safeMoveAudit(source),
+        after: safeMoveAudit(moved),
+        createdAt: movedAt,
+      });
+      await this.ports.outbox.enqueue(context, {
+        topic: 'search.rebuild-items.v1',
+        aggregateType: 'storage_node',
+        aggregateId: moved.id,
+        payload: {
+          publicId: moved.publicId,
+          version: moved.version,
+          event: 'NodeMoved',
+          subtreeRootId: moved.id,
+        },
+        deduplicationKey: `storage-node-moved:${moved.id}:${moved.version}`,
+        createdAt: movedAt,
+      });
+      return summary(moved, target.publicId);
     });
   }
 
@@ -341,4 +459,30 @@ function safeAudit(
       .filter((definition) => definition.visibility !== 'private')
       .map((definition) => definition.key),
   };
+}
+
+function safeMoveAudit(node: StorageNodeRecord): Record<string, unknown> {
+  return {
+    publicId: node.publicId,
+    parentId: node.parentId,
+    treeRootId: node.treeRootId,
+    depth: node.depth,
+    version: node.version,
+  };
+}
+
+function normalizeMoveReason(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const normalized = value.trim();
+  if (!normalized || normalized.length > 512)
+    throw new StoragePolicyError(
+      'STORAGE_MOVE_REASON_INVALID',
+      'reason',
+      'Move reason must contain between 1 and 512 characters.',
+    );
+  return normalized;
+}
+
+function moveCorrelationId(metadata: { correlationId?: string; requestId?: string }): string {
+  return (metadata.correlationId ?? metadata.requestId)?.trim().slice(0, 128) || randomUUID();
 }

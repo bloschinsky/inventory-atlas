@@ -296,6 +296,16 @@ const storageNodes = {
     attributes: {},
     updatedAt: issuedAt.toISOString(),
   })),
+  move: vi.fn(async () => ({
+    publicId: storagePublicId,
+    parentPublicId: '0198f40c-92f3-7a12-bc9a-653f97786c62',
+    nodeType: 'site' as const,
+    title: 'Workshop',
+    code: null,
+    visibility: 'authenticated' as const,
+    depth: 1,
+    version: 2,
+  })),
   update: vi.fn(async () => ({
     publicId: storagePublicId,
     parentPublicId: null,
@@ -412,6 +422,7 @@ describe('API composition root', () => {
       'listLifecycleStatuses',
       'listStorageNodes',
       'listUsers',
+      'moveStorageNode',
       'previewCategoryDisplayName',
       'previewFieldDefinitionConversion',
       'readMediaAsset',
@@ -435,6 +446,7 @@ describe('API composition root', () => {
       CreatedItemDto: expect.any(Object),
       CreateItemRequestDto: expect.any(Object),
       CreateStorageNodeRequestDto: expect.any(Object),
+      MoveStorageNodeRequestDto: expect.any(Object),
       BeginUploadRequestDto: expect.any(Object),
       ItemDetailDto: expect.any(Object),
       MediaItemDto: expect.any(Object),
@@ -1287,6 +1299,36 @@ describe('API composition root', () => {
       { title: 'Main workshop' },
       expect.any(Object),
     );
+
+    const targetPublicId = '0198f40c-92f3-7a12-bc9a-653f97786c62';
+    const moved = await app.inject({
+      method: 'POST',
+      url: `/api/v1/storage-nodes/${storagePublicId}/move`,
+      headers: { cookie, 'x-csrf-token': csrfToken, 'if-match': '"1"' },
+      payload: { targetParentPublicId: targetPublicId, reason: 'Reorganize workshop' },
+    });
+    expect(moved.statusCode).toBe(200);
+    expect(moved.headers.etag).toBe('"2"');
+    expect(storageNodes.move).toHaveBeenCalledWith(
+      actor,
+      storagePublicId,
+      1,
+      { targetParentPublicId: targetPublicId, reason: 'Reorganize workshop' },
+      expect.any(Object),
+    );
+
+    storageNodes.move.mockRejectedValueOnce(
+      Object.assign(new Error('deadlock detail must stay private'), { code: '40P01' }),
+    );
+    const conflictedMove = await app.inject({
+      method: 'POST',
+      url: `/api/v1/storage-nodes/${storagePublicId}/move`,
+      headers: { cookie, 'x-csrf-token': csrfToken, 'if-match': '"1"' },
+      payload: { targetParentPublicId: targetPublicId },
+    });
+    expect(conflictedMove.statusCode).toBe(409);
+    expect(conflictedMove.json()).toMatchObject({ code: 'STORAGE_MOVE_CONFLICT', status: 409 });
+    expect(conflictedMove.body).not.toContain('deadlock detail');
     await app.close();
   });
 

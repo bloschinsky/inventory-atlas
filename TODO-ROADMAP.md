@@ -653,24 +653,24 @@ Suggested pull requests:
 
 Tasks:
 
-- [ ] Implement deterministic UUID row-lock ordering for source and target.
-- [ ] Implement transaction-level advisory locks for affected roots in deterministic order.
-- [ ] Reject missing, archived, and own-descendant targets before subtree mutation.
-- [ ] Update parent, materialized path prefix, depth delta, and root ID for the complete subtree.
-- [ ] Append movement snapshots through the Kysely adapter.
-- [ ] Synchronize affected path/public-path/effective-visibility projections in the same transaction.
-- [ ] Record audit and vector-rebuild outbox rows in the same transaction.
-- [ ] Implement conflict/error mapping without partial tree disclosure.
-- [ ] Build destination picker, confirmation, progress/error, and refreshed-tree UI.
-- [ ] Test cycle rejection, cross-root moves, forced rollback, opposing moves, and rename/move interaction; keep the 1,000/10,000-descendant performance matrix post-validation.
+- [x] Implement deterministic UUID row-lock ordering for source and target.
+- [x] Implement transaction-level advisory locks for affected roots in deterministic order.
+- [x] Reject missing, archived, and own-descendant targets before subtree mutation.
+- [x] Update parent, materialized path prefix, depth delta, and root ID for the complete subtree.
+- [x] Append movement snapshots through the Kysely adapter.
+- [x] Synchronize affected path/public-path/effective-visibility projections in the same transaction.
+- [x] Record audit and vector-rebuild outbox rows in the same transaction.
+- [x] Implement conflict/error mapping without partial tree disclosure.
+- [x] Build destination picker, confirmation, progress/error, and refreshed-tree UI.
+- [x] Test cycle rejection, cross-root moves, forced rollback, opposing moves, and rename/move interaction; keep the 1,000/10,000-descendant performance matrix post-validation.
 
 Acceptance criteria (verbatim from the approved blueprint):
 
-- [ ] Row and advisory locks follow deterministic ordering.
-- [ ] Own-descendant target is rejected.
-- [ ] `parent_id`, `path`, `depth`, and `tree_root_id` update for the subtree.
-- [ ] Movement, safe search projections, audit, and outbox share one Kysely transaction.
-- [ ] Concurrent opposing moves retain a valid tree.
+- [x] Row and advisory locks follow deterministic ordering.
+- [x] Own-descendant target is rejected.
+- [x] `parent_id`, `path`, `depth`, and `tree_root_id` update for the subtree.
+- [x] Movement, safe search projections, audit, and outbox share one Kysely transaction.
+- [x] Concurrent opposing moves retain a valid tree.
 
 ### STO-03 Move an Item and show history
 
@@ -1304,14 +1304,14 @@ Every mandatory test from blueprint section 20.2 has an explicit delivery owner 
 
 | Gate | Critical acceptance test (verbatim) | Owner | `0.1.0` disposition |
 | --- | --- | --- | --- |
-| [ ] | Reject moving a node into its own descendant without partial updates. | STO-02 | Required |
-| [ ] | Serialize opposing concurrent moves and retain an acyclic connected tree. | STO-02 | Required |
-| [ ] | Update `path`, `depth`, and `tree_root_id` for every descendant on cross-root move. | STO-02 | Required |
+| [x] | Reject moving a node into its own descendant without partial updates. | STO-02 | Required |
+| [x] | Serialize opposing concurrent moves and retain an acyclic connected tree. | STO-02 | Required |
+| [x] | Update `path`, `depth`, and `tree_root_id` for every descendant on cross-root move. | STO-02 | Required |
 | [x] | Rename a container and synchronously update breadcrumbs for all nested Items. | STO-01 + SRCH-01 | Required |
 | [ ] | Keep allowed catalog rows visible while vector rebuild marks them stale. | SRCH-01 | Required |
 | [x] | Create/update an Item through Prisma and atomically write projection/outbox through ports in the same transaction. | CAT-03 + CAT-04 | Required; inherited |
 | [x] | Roll back source, projection, and outbox together when either port fails. | CAT-03 + CAT-04 | Required; inherited |
-| [ ] | Move a node through Kysely with no Prisma client query inside the transaction; movement, audit, projection, and outbox ports use the supplied Kysely handle. | STO-02 | Required |
+| [x] | Move a node through Kysely with no Prisma client query inside the transaction; movement, audit, projection, and outbox ports use the supplied Kysely handle. | STO-02 | Required |
 | [ ] | Move an Item through Prisma and atomically update destination, movement history, audit, projection, and outbox through Prisma-aware ports. | STO-03 | Required |
 | [ ] | Reject an archived/missing Item destination when the projection path-resolution statement finds no writable node, rolling back the entire Prisma transaction. | STO-03 | Required |
 | [ ] | Serialize a concurrent Item create/move against destination-node move/rename with the shared root advisory lock and commit only a path consistent with the final tree state. | CAT-03 + STO-03 | Required |

@@ -638,6 +638,15 @@
         "required": ["byteSize", "contentUrl", "mimeType", "name"],
         "type": "object"
       },
+      "MoveStorageNodeRequestDto": {
+        "properties": {
+          "expectedVersion": { "minimum": 1, "type": "number" },
+          "reason": { "maxLength": 512, "minLength": 1, "type": "string" },
+          "targetParentPublicId": { "format": "uuid", "type": "string" }
+        },
+        "required": ["expectedVersion", "targetParentPublicId"],
+        "type": "object"
+      },
       "ProblemDetailsDto": {
         "properties": {
           "code": { "example": "VALIDATION_FAILED", "type": "string" },
@@ -3232,6 +3241,71 @@
         "tags": ["storage"]
       }
     },
+    "/api/v1/storage-nodes/{publicId}/move": {
+      "post": {
+        "operationId": "moveStorageNode",
+        "parameters": [
+          { "in": "header", "name": "If-Match", "required": false, "schema": { "type": "string" } },
+          {
+            "in": "path",
+            "name": "publicId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MoveStorageNodeRequestDto" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StorageNodeSummaryDto" }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["storage"]
+      }
+    },
     "/health/live": {
       "get": {
         "operationId": "getLiveness",
@@ -3266,5 +3340,5 @@
   },
   "servers": [],
   "tags": [],
-  "x-spec-checksum": "fbb338334cbb5ee93faeff7d9cb0d767d649cc740acd3648e7b199753e628787"
+  "x-spec-checksum": "10314b4059539e550af7a0d1438abd91b5a5a880149e059ddb40bfeade134a0e"
 }

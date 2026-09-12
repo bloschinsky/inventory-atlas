@@ -154,6 +154,7 @@ export class FoundationRuntime
       runtime.storageService = new StorageService(storageRepository, fieldRepository, {
         attributes: attributeValues,
         audit: new TransactionalAuditPort(),
+        movements: new TransactionalMovementHistoryPort(),
         outbox: new TransactionalOutboxPort(),
         search: new TransactionalSearchProjectionPort(),
       });

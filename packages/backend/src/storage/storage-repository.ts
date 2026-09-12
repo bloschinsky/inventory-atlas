@@ -79,6 +79,9 @@ export type StoragePolicyCode =
   | 'STORAGE_PARENT_NOT_FOUND'
   | 'STORAGE_NOT_FOUND'
   | 'STORAGE_VERSION_CONFLICT'
+  | 'STORAGE_MOVE_CYCLE'
+  | 'STORAGE_MOVE_NO_CHANGE'
+  | 'STORAGE_MOVE_REASON_INVALID'
   | 'STORAGE_CURSOR_INVALID';
 
 export class StoragePolicyError extends Error {
@@ -262,6 +265,89 @@ export class StorageRepository {
     return { before, after: rowToRecord(rows[0]) };
   }
 
+  async lockMoveNodes(
+    transaction: StorageTransaction,
+    sourcePublicId: string,
+    targetPublicId: string,
+  ): Promise<{ source: StorageNodeRecord; target: StorageNodeRecord }> {
+    const { rows } = await sql<
+      StorageRow & { requested_role: 'source' | 'source_parent' | 'target' }
+    >`
+      with source as (
+        select id, parent_id from storage_nodes where public_id = ${sourcePublicId}::uuid
+      ), target as (
+        select id from storage_nodes where public_id = ${targetPublicId}::uuid
+      ), requested(requested_role, id) as (
+        select 'source', id from source
+        union all
+        select 'source_parent', parent_id from source where parent_id is not null
+        union all
+        select 'target', id from target
+      )
+      select requested.requested_role, node.id::text, node.public_id::text,
+        node.parent_id::text, node.path::text, node.depth, node.tree_root_id::text,
+        node.node_type, node.title, node.code, node.visibility, node.version,
+        node.created_at, node.updated_at, node.archived_at
+      from requested join storage_nodes node on node.id = requested.id
+      order by node.id
+      for update of node
+    `.execute(transaction);
+    const source = rows.find((row) => row.requested_role === 'source');
+    const target = rows.find((row) => row.requested_role === 'target');
+    if (!source)
+      throw new StoragePolicyError('STORAGE_NOT_FOUND', 'publicId', 'StorageNode was not found.');
+    if (!target)
+      throw new StoragePolicyError(
+        'STORAGE_NOT_FOUND',
+        'targetParentPublicId',
+        'The destination StorageNode was not found.',
+      );
+    return { source: rowToRecord(source), target: rowToRecord(target) };
+  }
+
+  async lockRoots(transaction: StorageTransaction, rootIds: readonly string[]): Promise<void> {
+    for (const rootId of orderedUniqueUuids(rootIds)) await this.lockRoot(transaction, rootId);
+  }
+
+  async targetIsInSubtree(
+    transaction: StorageTransaction,
+    sourcePath: string,
+    targetPath: string,
+  ): Promise<boolean> {
+    const { rows } = await sql<{ is_descendant: boolean }>`
+      select ${targetPath}::ltree <@ ${sourcePath}::ltree as is_descendant
+    `.execute(transaction);
+    return rows[0]?.is_descendant ?? false;
+  }
+
+  async moveSubtree(
+    transaction: StorageTransaction,
+    source: StorageNodeRecord,
+    target: StorageNodeRecord,
+    movedAt: Date,
+  ): Promise<StorageNodeRecord> {
+    const newPath = `${target.path}.${storageNodeLabel(source.id)}`;
+    const depthDelta = target.depth + 1 - source.depth;
+    const { rows } = await sql<StorageRow>`
+      update storage_nodes set
+        parent_id = case when id = ${source.id}::uuid then ${target.id}::uuid else parent_id end,
+        path = case
+          when path = ${source.path}::ltree then ${newPath}::ltree
+          else ${newPath}::ltree || subpath(path, nlevel(${source.path}::ltree))
+        end,
+        depth = depth + ${depthDelta}, tree_root_id = ${target.treeRootId}::uuid,
+        version = version + 1, updated_at = ${movedAt}
+      where path <@ ${source.path}::ltree
+      returning id::text, public_id::text, parent_id::text, path::text, depth,
+        tree_root_id::text, node_type, title, code, visibility, version, created_at,
+        updated_at, archived_at
+    `.execute(transaction);
+    const moved = rows.find((row) => row.id === source.id);
+    if (!moved)
+      throw new StoragePolicyError('STORAGE_NOT_FOUND', 'publicId', 'StorageNode was not found.');
+    return rowToRecord(moved);
+  }
+
   async findByPublicId(
     publicId: string,
     transaction?: StorageTransaction,
@@ -428,6 +514,12 @@ export class StorageRepository {
   async lockRoot(transaction: StorageTransaction, rootId: string): Promise<void> {
     await sql`select pg_advisory_xact_lock(hashtextextended(${rootId}, 0))`.execute(transaction);
   }
+}
+
+export function orderedUniqueUuids(values: readonly string[]): string[] {
+  return [...new Set(values.map((value) => value.toLowerCase()))].sort((left, right) =>
+    left < right ? -1 : left > right ? 1 : 0,
+  );
 }
 
 function requiredTitle(value: string): string {

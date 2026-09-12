@@ -7,6 +7,7 @@ import { migrateToLatest } from '../database.js';
 import { createDatabase } from '../database.js';
 import {
   TransactionalAuditPort,
+  TransactionalMovementHistoryPort,
   TransactionalOutboxPort,
   TransactionalSearchProjectionPort,
 } from '../infrastructure/index.js';
@@ -34,7 +35,7 @@ let requiredFieldId: string;
 let categoryId: string;
 let lifecycleStatusId: string;
 
-suite('STO-01 Storage tree', () => {
+suite('STO-01/STO-02 Storage tree', () => {
   beforeAll(async () => {
     const parsed = new URL(integrationDatabaseUrl!);
     adminPool = new Pool({ connectionString: parsed.toString(), max: 1 });
@@ -112,6 +113,7 @@ suite('STO-01 Storage tree', () => {
       {
         attributes: new TransactionalAttributeValuePort(),
         audit: new TransactionalAuditPort(),
+        movements: new TransactionalMovementHistoryPort(),
         outbox: new TransactionalOutboxPort(),
         search: new TransactionalSearchProjectionPort(),
       },
@@ -380,6 +382,260 @@ suite('STO-01 Storage tree', () => {
     expect(new Set(ids).size).toBe(5);
     expect(third.contents.nextCursor).toBeNull();
   });
+
+  it('moves a complete subtree across roots and commits history, projections, audit and outbox', async () => {
+    const rootA = await createNode('Move source root');
+    const source = await createNode('Move source', rootA.publicId);
+    const descendant = await createNode('Move descendant', source.publicId);
+    const rootB = await createNode('Move target root');
+    const target = await createNode('Move target', rootB.publicId);
+    const sourceBefore = await repository.findByPublicId(source.publicId);
+    const descendantBefore = await repository.findByPublicId(descendant.publicId);
+    const targetRow = await repository.findByPublicId(target.publicId);
+    const rootBRow = await repository.findByPublicId(rootB.publicId);
+    const itemId = await createProjectedItem(descendant.publicId, 'Moved item');
+    const contexts: string[] = [];
+    const movementPort = new TransactionalMovementHistoryPort();
+    const searchPort = new TransactionalSearchProjectionPort();
+    const auditPort = new TransactionalAuditPort();
+    const outboxPort = new TransactionalOutboxPort();
+    const moveService = new StorageService(
+      repository,
+      {
+        async listDefinitions() {
+          throw new Error('Move must not query the Prisma-owned schema repository.');
+        },
+      },
+      {
+        attributes: new TransactionalAttributeValuePort(),
+        movements: {
+          async append(context, movement) {
+            contexts.push(`movement:${context.kind}`);
+            await movementPort.append(context, movement);
+          },
+        },
+        search: {
+          async syncStorageSubtree(context, storageNodeId, indexedAt) {
+            contexts.push(`projection:${context.kind}`);
+            await searchPort.syncStorageSubtree(context, storageNodeId, indexedAt);
+          },
+        },
+        audit: {
+          async record(context, event) {
+            contexts.push(`audit:${context.kind}`);
+            await auditPort.record(context, event);
+          },
+        },
+        outbox: {
+          async enqueue(context, message) {
+            contexts.push(`outbox:${context.kind}`);
+            await outboxPort.enqueue(context, message);
+          },
+        },
+      },
+      () => now,
+    );
+
+    const moved = await moveService.move(
+      editor,
+      source.publicId,
+      source.version,
+      { targetParentPublicId: target.publicId, reason: 'Rebalance storage' },
+      { correlationId: 'sto-02-cross-root' },
+    );
+
+    expect(moved).toMatchObject({
+      parentPublicId: target.publicId,
+      depth: target.depth + 1,
+      version: source.version + 1,
+    });
+    expect(contexts).toEqual([
+      'movement:kysely',
+      'projection:kysely',
+      'audit:kysely',
+      'outbox:kysely',
+    ]);
+    const sourceAfter = await repository.findByPublicId(source.publicId);
+    const descendantAfter = await repository.findByPublicId(descendant.publicId);
+    expect(sourceAfter).toMatchObject({
+      parentId: targetRow!.id,
+      depth: targetRow!.depth + 1,
+      treeRootId: rootBRow!.id,
+      version: sourceBefore!.version + 1,
+    });
+    expect(descendantAfter).toMatchObject({
+      depth: targetRow!.depth + 2,
+      treeRootId: rootBRow!.id,
+      version: descendantBefore!.version + 1,
+    });
+    expect(descendantAfter!.path.startsWith(`${sourceAfter!.path}.`)).toBe(true);
+    expect(
+      (
+        await pool.query('select path_text, visibility from item_search where item_id = $1', [
+          itemId,
+        ])
+      ).rows[0],
+    ).toEqual({
+      path_text: 'Move target root / Move target / Move source / Move descendant',
+      visibility: 'authenticated',
+    });
+    expect(
+      (
+        await pool.query(
+          `select storage_node_id::text, from_node_id::text, to_node_id::text,
+             from_path_snapshot, to_path_snapshot, reason, correlation_id
+           from movements where storage_node_id = $1`,
+          [sourceAfter!.id],
+        )
+      ).rows,
+    ).toEqual([
+      {
+        storage_node_id: sourceAfter!.id,
+        from_node_id: sourceBefore!.parentId,
+        to_node_id: targetRow!.id,
+        from_path_snapshot: sourceBefore!.path,
+        to_path_snapshot: sourceAfter!.path,
+        reason: 'Rebalance storage',
+        correlation_id: 'sto-02-cross-root',
+      },
+    ]);
+    expect(
+      (
+        await pool.query(
+          "select count(*)::int as count from audit_events where action = 'storage_node.moved'",
+        )
+      ).rows[0].count,
+    ).toBe(1);
+    expect(
+      (
+        await pool.query(
+          "select payload_json from outbox where topic = 'search.rebuild-items.v1' and aggregate_id = $1",
+          [sourceAfter!.id],
+        )
+      ).rows[0].payload_json,
+    ).toMatchObject({ event: 'NodeMoved', subtreeRootId: sourceAfter!.id });
+  });
+
+  it('rejects own-descendant and unavailable targets without partial updates', async () => {
+    const root = await createNode('Cycle root');
+    const source = await createNode('Cycle source', root.publicId);
+    const descendant = await createNode('Cycle descendant', source.publicId);
+    const archivedTarget = await createNode('Archived move target');
+    await service.update(editor, archivedTarget.publicId, archivedTarget.version, {
+      archived: true,
+    });
+    const before = await repository.subtree(source.publicId);
+    const countsBefore = await movementEffectCounts();
+
+    await expect(
+      service.move(editor, source.publicId, source.version, {
+        targetParentPublicId: descendant.publicId,
+      }),
+    ).rejects.toMatchObject({ code: 'STORAGE_MOVE_CYCLE' });
+    await expect(
+      service.move(editor, source.publicId, source.version, {
+        targetParentPublicId: archivedTarget.publicId,
+      }),
+    ).rejects.toMatchObject({ code: 'STORAGE_NOT_FOUND' });
+    await expect(
+      service.move(editor, source.publicId, source.version, {
+        targetParentPublicId: randomUUID(),
+      }),
+    ).rejects.toMatchObject({ code: 'STORAGE_NOT_FOUND' });
+
+    expect(await repository.subtree(source.publicId)).toEqual(before);
+    expect(await movementEffectCounts()).toEqual(countsBefore);
+  });
+
+  it('rolls back the subtree and every side effect when a supplied Kysely port fails', async () => {
+    const sourceRoot = await createNode('Rollback source root');
+    const source = await createNode('Rollback move source', sourceRoot.publicId);
+    const descendant = await createNode('Rollback move descendant', source.publicId);
+    const target = await createNode('Rollback move target');
+    const itemId = await createProjectedItem(descendant.publicId, 'Rollback moved item');
+    const before = await repository.subtree(source.publicId);
+    const projectionBefore = (
+      await pool.query('select path_text, visibility from item_search where item_id = $1', [itemId])
+    ).rows[0];
+    const countsBefore = await movementEffectCounts();
+    const outbox = new TransactionalOutboxPort();
+    const failingService = new StorageService(
+      repository,
+      new FieldDefinitionRepository(prisma),
+      {
+        attributes: new TransactionalAttributeValuePort(),
+        audit: new TransactionalAuditPort(),
+        movements: new TransactionalMovementHistoryPort(),
+        search: new TransactionalSearchProjectionPort(),
+        outbox: {
+          async enqueue(context, message) {
+            await outbox.enqueue(context, message);
+            throw new Error('synthetic outbox failure');
+          },
+        },
+      },
+      () => now,
+    );
+
+    await expect(
+      failingService.move(editor, source.publicId, source.version, {
+        targetParentPublicId: target.publicId,
+      }),
+    ).rejects.toThrow('synthetic outbox failure');
+    expect(await repository.subtree(source.publicId)).toEqual(before);
+    expect(
+      (
+        await pool.query('select path_text, visibility from item_search where item_id = $1', [
+          itemId,
+        ])
+      ).rows[0],
+    ).toEqual(projectionBefore);
+    expect(await movementEffectCounts()).toEqual(countsBefore);
+  });
+
+  it('serializes opposing moves and a concurrent rename while retaining a valid tree projection', async () => {
+    const rootA = await createNode('Concurrent root A');
+    const childA = await createNode('Concurrent child A', rootA.publicId);
+    const rootB = await createNode('Concurrent root B');
+    const childB = await createNode('Concurrent child B', rootB.publicId);
+
+    await Promise.all([
+      service.move(editor, childA.publicId, childA.version, {
+        targetParentPublicId: rootB.publicId,
+      }),
+      service.move(editor, childB.publicId, childB.version, {
+        targetParentPublicId: rootA.publicId,
+      }),
+    ]);
+    const allNodes = [
+      ...(await repository.subtree(rootA.publicId)),
+      ...(await repository.subtree(rootB.publicId)),
+    ];
+    expect(new Set(allNodes.map((node) => node.id)).size).toBe(4);
+    expect(allNodes.every((node) => node.depth === node.path.split('.').length - 1)).toBe(true);
+    expect((await repository.findByPublicId(childA.publicId))!.treeRootId).toBe(
+      (await repository.findByPublicId(rootB.publicId))!.id,
+    );
+    expect((await repository.findByPublicId(childB.publicId))!.treeRootId).toBe(
+      (await repository.findByPublicId(rootA.publicId))!.id,
+    );
+
+    const renameTarget = await createNode('Old concurrent target');
+    const renameSourceRoot = await createNode('Rename source root');
+    const renameSource = await createNode('Rename move source', renameSourceRoot.publicId);
+    const itemId = await createProjectedItem(renameSource.publicId, 'Concurrent moved item');
+    await Promise.all([
+      service.update(editor, renameTarget.publicId, renameTarget.version, {
+        title: 'New concurrent target',
+      }),
+      service.move(editor, renameSource.publicId, renameSource.version, {
+        targetParentPublicId: renameTarget.publicId,
+      }),
+    ]);
+    expect(
+      (await pool.query('select path_text from item_search where item_id = $1', [itemId])).rows[0],
+    ).toEqual({ path_text: 'New concurrent target / Rename move source' });
+  });
 });
 
 function actorFor(id: string, role: 'editor' | 'owner'): SessionActor {
@@ -395,6 +651,54 @@ function actorFor(id: string, role: 'editor' | 'owner'): SessionActor {
 
 async function counts() {
   const tables = ['storage_nodes', 'attribute_values', 'audit_events', 'outbox'];
+  return Object.fromEntries(
+    await Promise.all(
+      tables.map(async (table) => [
+        table,
+        Number((await pool.query(`select count(*)::int as count from ${table}`)).rows[0].count),
+      ]),
+    ),
+  );
+}
+
+async function createNode(title: string, parentPublicId?: string) {
+  return service.create(editor, {
+    ...(parentPublicId ? { parentPublicId } : {}),
+    nodeType: parentPublicId ? 'container' : 'site',
+    title,
+    attributes: { climate_note: 'Synthetic' },
+  });
+}
+
+async function createProjectedItem(storagePublicId: string, displayName: string): Promise<string> {
+  const storage = await repository.findByPublicId(storagePublicId);
+  const itemId = randomUUID();
+  await prisma.item.create({
+    data: {
+      id: itemId,
+      publicId: randomUUID(),
+      slug: displayName.toLowerCase().replaceAll(/[^a-z0-9]+/gu, '-'),
+      categoryId,
+      lifecycleStatusId,
+      storageNodeId: storage!.id,
+      displayName,
+      createdAt: now,
+      updatedAt: now,
+    },
+  });
+  await pool.query(
+    `insert into item_search (
+      item_id, display_name, category_id, lifecycle_status_id, search_vector,
+      public_search_vector, visibility, item_updated_at, indexed_at
+    ) values ($1, $2, $3, $4, to_tsvector('simple', $2),
+      to_tsvector('simple', ''), 'authenticated', $5, $5)`,
+    [itemId, displayName, categoryId, lifecycleStatusId, now],
+  );
+  return itemId;
+}
+
+async function movementEffectCounts() {
+  const tables = ['movements', 'audit_events', 'outbox'];
   return Object.fromEntries(
     await Promise.all(
       tables.map(async (table) => [

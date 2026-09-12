@@ -6,6 +6,7 @@ export const storageKeys = {
   children: (parentPublicId) => /** @type {const} */ (['storage', 'children', parentPublicId]),
   /** @param {string} publicId */
   detail: (publicId) => /** @type {const} */ (['storage', publicId]),
+  destinations: /** @type {const} */ (['storage', 'destinations']),
 };
 
 /** @param {{ parentPublicId?: string|null, limit?: number, cursor?: string|null }} [query] */
@@ -51,4 +52,53 @@ export function updateStorageNode(publicId, expectedVersion, input, csrfToken) {
     },
     { csrfToken },
   );
+}
+
+/** @param {string} publicId @param {number} expectedVersion @param {{targetParentPublicId:string, reason?:string}} input @param {string} csrfToken */
+export function moveStorageNode(publicId, expectedVersion, input, csrfToken) {
+  return apiRequest(
+    `/storage-nodes/${publicId}/move`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'If-Match': `"${expectedVersion}"` },
+      body: JSON.stringify({ ...input, expectedVersion }),
+    },
+    { csrfToken },
+  );
+}
+
+export async function listStorageDestinations() {
+  const destinations =
+    /** @type {Array<Record<string, any> & {publicId:string, parentPublicId:string|null, title:string, pathLabel:string, ancestorPublicIds:string[]}>} */ ([]);
+  const pending =
+    /** @type {Array<{parentPublicId:string|null, ancestorTitles:string[], ancestorPublicIds:string[]}>} */ ([
+      { parentPublicId: null, ancestorTitles: [], ancestorPublicIds: [] },
+    ]);
+  while (pending.length) {
+    const branch = pending.shift();
+    if (!branch) break;
+    let cursor = null;
+    do {
+      const page = await listStorageNodes({
+        parentPublicId: branch.parentPublicId,
+        limit: 100,
+        cursor,
+      });
+      for (const node of page.entries) {
+        const titles = [...branch.ancestorTitles, node.title];
+        destinations.push({
+          ...node,
+          pathLabel: titles.join(' / '),
+          ancestorPublicIds: branch.ancestorPublicIds,
+        });
+        pending.push({
+          parentPublicId: node.publicId,
+          ancestorTitles: titles,
+          ancestorPublicIds: [...branch.ancestorPublicIds, node.publicId],
+        });
+      }
+      cursor = page.nextCursor;
+    } while (cursor);
+  }
+  return destinations;
 }

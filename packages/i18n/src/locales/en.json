@@ -337,6 +337,19 @@
     "edit": "Edit location",
     "empty": "No storage locations found.",
     "emptyContents": "This location has no direct contents.",
+    "move": {
+      "action": "Move location",
+      "title": "Move storage location",
+      "description": "Choose the location that will become the new parent.",
+      "destination": "New parent location",
+      "reason": "Reason (optional)",
+      "review": "Review move",
+      "back": "Back",
+      "confirm": "Move location",
+      "moving": "Moving…",
+      "confirmation": "Move {source} into {destination}?",
+      "subtreeNotice": "Every nested location and item will move with it."
+    },
     "kinds": { "node": "Location", "item": "Item" },
     "types": {
       "site": "Site",

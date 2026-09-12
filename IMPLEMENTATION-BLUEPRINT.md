@@ -1705,11 +1705,11 @@ As an Editor, I can move a subtree without cycles or partial updates.
 
 Acceptance criteria:
 
-- [ ] Row and advisory locks follow deterministic ordering.
-- [ ] Own-descendant target is rejected.
-- [ ] `parent_id`, `path`, `depth`, and `tree_root_id` update for the subtree.
-- [ ] Movement, safe search projections, audit, and outbox share one Kysely transaction.
-- [ ] Concurrent opposing moves retain a valid tree.
+- [x] Row and advisory locks follow deterministic ordering.
+- [x] Own-descendant target is rejected.
+- [x] `parent_id`, `path`, `depth`, and `tree_root_id` update for the subtree.
+- [x] Movement, safe search projections, audit, and outbox share one Kysely transaction.
+- [x] Concurrent opposing moves retain a valid tree.
 
 #### STO-03 Move an Item and show history
 

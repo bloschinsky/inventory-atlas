@@ -6,6 +6,7 @@ import {
   ForbiddenException,
   Get,
   Headers,
+  HttpCode,
   Inject,
   NotFoundException,
   Param,
@@ -24,6 +25,7 @@ import {
   storageNodeTypes,
   storageVisibilities,
   type CreateStorageNodeInput,
+  type MoveStorageNodeInput,
   type SessionActor,
   type UpdateStorageNodeInput,
 } from '@inventory-atlas/backend';
@@ -47,6 +49,7 @@ import { readSessionCookie } from './auth.http.js';
 import { AUTH_RUNTIME, type AuthRuntimePort } from './auth.runtime.js';
 import {
   CreateStorageNodeRequestDto,
+  MoveStorageNodeRequestDto,
   ProblemDetailsDto,
   StorageNodeDetailDto,
   StorageNodePageDto,
@@ -184,6 +187,44 @@ export class StorageNodesController {
     }
   }
 
+  @Post(':publicId/move')
+  @HttpCode(200)
+  @ApiOperation({ operationId: 'moveStorageNode' })
+  @ApiParam({ format: 'uuid', name: 'publicId', type: String })
+  @ApiHeader({ name: 'If-Match', required: false })
+  @ApiBody({ type: MoveStorageNodeRequestDto })
+  @ApiOkResponse({ type: StorageNodeSummaryDto })
+  @ApiBadRequestResponse({ type: ProblemDetailsDto })
+  @ApiConflictResponse({ type: ProblemDetailsDto })
+  @ApiNotFoundResponse({ type: ProblemDetailsDto })
+  async move(
+    @Param('publicId') publicId: string,
+    @Body() body: unknown,
+    @Headers('cookie') cookie: string | undefined,
+    @Headers('x-csrf-token') csrf: string | undefined,
+    @Headers('if-match') ifMatch: string | undefined,
+    @Req() request: { headers: Record<string, string | undefined> },
+    @Res({ passthrough: true }) response: { header(name: string, value: string): void },
+  ): Promise<StorageNodeSummaryDto> {
+    try {
+      requireUuid(publicId, 'publicId');
+      const parsed = readMove(body, ifMatch);
+      const node = await this.runtime
+        .storage()
+        .move(
+          await this.actor(cookie, csrf),
+          publicId,
+          parsed.expectedVersion,
+          parsed.input,
+          requestMetadata(request.headers),
+        );
+      response.header('ETag', `"${node.version}"`);
+      return node;
+    } catch (error) {
+      throw mapStorageError(error, request.headers['x-request-id']);
+    }
+  }
+
   private async reader(cookie: string | undefined): Promise<SessionActor> {
     const token = readSessionCookie(cookie);
     if (!token) throw new SessionError('AUTH_SESSION_INVALID', 'Session is invalid or expired.');
@@ -265,6 +306,42 @@ function readUpdate(
   if (body.attributes !== undefined) input.attributes = record(body.attributes);
   if (!Object.keys(input).length) bad('$');
   return { expectedVersion, input };
+}
+
+function readMove(
+  value: unknown,
+  ifMatch: string | undefined,
+): { expectedVersion: number; input: MoveStorageNodeInput } {
+  const body = record(value);
+  const headerVersion = ifMatch
+    ? positiveVersion(ifMatch.replace(/^W\//u, '').replaceAll('"', ''))
+    : null;
+  const bodyVersion =
+    body.expectedVersion === undefined ? null : positiveVersion(body.expectedVersion);
+  if (headerVersion !== null && bodyVersion !== null && headerVersion !== bodyVersion)
+    throw new StoragePolicyError(
+      'STORAGE_VERSION_CONFLICT',
+      'expectedVersion',
+      'If-Match and expectedVersion must agree.',
+    );
+  const expectedVersion = headerVersion ?? bodyVersion;
+  if (expectedVersion === null)
+    throw new StoragePolicyError(
+      'STORAGE_VERSION_CONFLICT',
+      'expectedVersion',
+      'Expected version is required.',
+    );
+  const targetParentPublicId = stringValue(body.targetParentPublicId, 'targetParentPublicId');
+  requireUuid(targetParentPublicId, 'targetParentPublicId');
+  const reason = optionalNullableString(body.reason, 'reason');
+  if (reason !== undefined && reason !== null && reason.length > 512) bad('reason');
+  return {
+    expectedVersion,
+    input: {
+      targetParentPublicId,
+      ...(reason === undefined || reason === null ? {} : { reason }),
+    },
+  };
 }
 
 function record(value: unknown): Record<string, unknown> {
@@ -381,5 +458,19 @@ function mapStorageError(error: unknown, requestId = 'unknown'): Error {
       title: 'Request validation failed',
       type: 'https://inventory-atlas.local/problems/validation-failed',
     });
+  if (isStorageConcurrencyError(error))
+    return new ConflictException({
+      code: 'STORAGE_MOVE_CONFLICT',
+      detail: 'The storage tree changed during this request. Reload it and try again.',
+      requestId,
+      status: 409,
+      title: 'Storage tree conflict',
+      type: 'https://inventory-atlas.local/problems/storage-move-conflict',
+    });
   return error as Error;
+}
+
+function isStorageConcurrencyError(error: unknown): boolean {
+  if (!error || typeof error !== 'object' || !('code' in error)) return false;
+  return error.code === '40001' || error.code === '40P01';
 }

@@ -421,6 +421,17 @@ export class UpdateStorageNodeRequestDto {
   declare attributes?: Record<string, unknown>;
 }
 
+export class MoveStorageNodeRequestDto {
+  @ApiProperty({ minimum: 1, type: Number })
+  declare expectedVersion: number;
+
+  @ApiProperty({ format: 'uuid', type: String })
+  declare targetParentPublicId: string;
+
+  @ApiPropertyOptional({ maxLength: 512, minLength: 1, type: String })
+  declare reason?: string;
+}
+
 export class StorageNodeSummaryDto {
   @ApiProperty({ format: 'uuid', type: String }) declare publicId: string;
   @ApiPropertyOptional({ format: 'uuid', nullable: true, type: String })
@@ -492,6 +503,7 @@ export const contractModels = [
   VersionConflictProblemDto,
   CreateStorageNodeRequestDto,
   UpdateStorageNodeRequestDto,
+  MoveStorageNodeRequestDto,
   StorageNodeSummaryDto,
   StorageBreadcrumbDto,
   StorageContentDto,

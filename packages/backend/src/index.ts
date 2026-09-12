@@ -344,6 +344,7 @@ export { lifecycleStatusSeeds, runSeeds, seedLifecycleStatuses } from './seed.js
 export {
   normalizeStorageType,
   normalizeStorageVisibility,
+  orderedUniqueUuids,
   StorageAccessError,
   StoragePolicyError,
   StorageRepository,
@@ -352,6 +353,7 @@ export {
   storageNodeTypes,
   storageVisibilities,
   type CreateStorageNodeInput,
+  type MoveStorageNodeInput,
   type StorageBreadcrumb,
   type StorageContentRow,
   type StorageDatabase,
