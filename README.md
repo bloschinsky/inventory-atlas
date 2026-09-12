@@ -47,6 +47,12 @@ and typed EAV storage, the versioned Item aggregate with optimistic concurrency,
 safe display-name templates, image uploads with attachments, and isolated image
 processing with the background job queue that drives it.
 
+The audited path to the first usable release is now Storage, Lean Search,
+operational backup/restore, and at least seven elapsed calendar days of
+dogfooding. Saved views/bulk actions, full Labels/Scanner, portable interchange,
+and scale certification remain designed for post-validation revalidation and the
+`1.0.0 Production Baseline`.
+
 Current development version: **`0.1.0-dev.1`**.
 
 FND-04 includes Auth/Audit migrations and the tested Argon2id credential adapter.
@@ -55,16 +61,17 @@ completed behavior, checks and remaining dependencies.
 See [localization foundation](docs/project/localization.md) for locale resolution,
 persistence, formatting and coverage rules.
 
-First release target: **`0.1.0` Technical Demo**.
+First release target: **`0.1.0 Usable Validation Release`**.
 
 ## Versioning
 
 Before `1.0.0`:
 
-- A completed feature step increments the middle number: `0.1.0` -> `0.2.0`.
+- `0.1.0-dev.N` may aggregate multiple work packages before the first normal release.
+- `0.1.0` is the complete Usable Validation Release, not one individual feature step.
+- After `0.1.0`, a completed normal feature step increments the middle number: `0.1.0` -> `0.2.0`.
 - Small fixes and maintenance increment the last number: `0.1.0` -> `0.1.1`.
-- Development builds may use `0.1.0-dev.N`.
-- `1.0.0` is reserved for the complete stable MVP.
+- `1.0.0` is reserved for the complete Production Baseline.
 
 See the [versioning policy](docs/project/versioning.md) for the full policy.
 
@@ -75,6 +82,7 @@ See the [versioning policy](docs/project/versioning.md) for the full policy.
 - [Documentation index](docs/README.md)
 - [Product design](docs/product/inventory-atlas-design-document-v0.3.1.pdf)
 - [Versioning policy](docs/project/versioning.md)
+- [MVP scope-simplification audit](docs/project/mvp-scope-simplification-audit.md)
 - [Agent instructions](AGENTS.md), loaded by Claude Code through [CLAUDE.md](CLAUDE.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)

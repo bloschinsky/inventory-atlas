@@ -86,7 +86,7 @@ Keep this section current. Any change that adds, removes, moves, renames, or mat
 - Integration: real PostgreSQL, never SQLite or an in-memory substitute for database behavior.
 - API contract: Nest test application plus normalized OpenAPI checks.
 - E2E and visual: Playwright.
-- Physical label and recovery drills remain explicit release gates.
+- Recovery is a `0.1.0` release gate; the physical label matrix gates the `1.0.0 Production Baseline` when LAB stories are revalidated and shipped.
 
 ## Engineering principles
 
@@ -108,8 +108,9 @@ Keep this section current. Any change that adds, removes, moves, renames, or mat
 5. Add or update unit, integration, contract, E2E, security, localization, and operational checks as applicable.
 6. Run the narrow relevant checks, then the required root checks.
 7. Update generated contracts, documentation, and tracking checkboxes only when the implementation evidence exists. When a completion item is represented by a checkbox in both `TODO-ROADMAP.md` and `IMPLEMENTATION-BLUEPRINT.md`, update both marks in the same change so their states remain identical. This includes duplicated acceptance criteria and bootstrap/adoption items. Preserve verbatim acceptance-criterion text, and do not turn normative blueprint lists into tracking checklists.
-8. Review the diff for unrelated edits, secrets, private values, generated drift, and ownership violations.
-9. Create a local commit only under the commit policy below.
+8. If an audit cannot confirm a status, mark it `unverified` and refer it to the owner; do not infer `not implemented` from missing evidence. Removing an existing completion checkbox requires separate owner confirmation before the documentation diff is merged.
+9. Review the diff for unrelated edits, secrets, private values, generated drift, and ownership violations.
+10. Create a local commit only under the commit policy below.
 
 ## Git policy
 
@@ -136,11 +137,12 @@ Permission to implement or commit is not permission to push. Ask before any remo
 
 Inventory Atlas uses a SemVer-compatible pre-`1.0.0` policy:
 
-- `0.1.0` is the first Technical Demo.
-- A completed normal feature step increments the middle counter and resets patch: `0.1.0` -> `0.2.0`.
+- `0.1.0-dev.N` may aggregate multiple pre-release work packages before the first normal release.
+- `0.1.0` is the first Usable Validation Release: the complete safe inventory loop defined by blueprint v0.3.
+- After `0.1.0`, a completed normal feature step increments the middle counter and resets patch: `0.1.0` -> `0.2.0`.
 - Small fixes, documentation corrections, tests, safe refactors, and maintenance increment patch: `0.1.0` -> `0.1.1`.
-- Pre-demo snapshots use `0.1.0-dev.N`; release candidates may use `X.Y.Z-rc.N`.
-- `1.0.0` is reserved for the complete stable MVP after every MVP release gate passes.
+- Release candidates may use `X.Y.Z-rc.N`.
+- `1.0.0` is reserved for the complete Production Baseline after every production gate passes.
 
 Version changes must stay synchronized across root package metadata, `README.md`, `TODO-ROADMAP.md`, and `CHANGELOG.md`. Creating or pushing a version tag requires explicit owner permission.
 

@@ -35,7 +35,7 @@ inputs, not new behavior.
 
 ## Performance acceptance dataset
 
-The 100,000-Item performance dataset from blueprint section 20.3 is generated,
+The 100,000-Item performance dataset from blueprint section 20.4 is generated,
 not committed as a large binary. Its shape (100k Items, 1,000 storage nodes with
 at least one eight-level subtree, 30 field definitions, 10-20 attribute values
 per average Item, mixed English/Ukrainian labels) and the warm-homelab targets

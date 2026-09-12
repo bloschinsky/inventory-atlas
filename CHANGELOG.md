@@ -18,6 +18,15 @@ The project follows the version policy in `docs/project/versioning.md`.
 
 ### Changed
 
+- Revised blueprint and roadmap delivery horizons from a single Stage 0-6 MVP chain to an audited
+  Implemented Foundation, `0.1.0 Usable Validation Release`, Post-validation Backlog, and `1.0.0
+  Production Baseline`. The validation critical path is Storage, authenticated role-safe Lean
+  Search, operational backup/restore, and seven elapsed calendar days of dogfooding. Full
+  Labels/Scanner, portable interchange, saved views/bulk, generic filter breadth, and scale
+  certification retain their original stories and acceptance criteria for revalidation. The
+  accompanying audit records partial database/job/Search foundations, status corrections, the
+  CAT-03 destination-task move, and the unresolved Search job-identifier mismatch.
+
 - Aligned the Stage-0 catalog fixture with approved schema vocabulary: `integer`
   and `decimal` became `number` with `validation.integer`, `publicVisibility`
   became three-value `visibility`, `unit` became plain text, the category list
@@ -157,12 +166,12 @@ The project follows the version policy in `docs/project/versioning.md`.
 
 ## Planned
 
-### [0.1.0] - Technical Demo
+### [0.1.0] - Usable Validation Release
 
-- Clean Docker Compose deployment.
-- Database migrations and generated API contracts.
-- Owner bootstrap, sign-in, roles, and session handling.
-- English default and selectable Ukrainian localization foundation.
-- Frontend application shell and semantic UI facade.
+- Preserve the verified Foundation, Catalog, Schema, Item/media, contract, localization, and job/outbox work.
+- Deliver nested Storage with atomic node/Item moves, breadcrumbs, history, and mandatory integrity tests.
+- Deliver authenticated Lean Search for Viewer, Editor, Owner, and Admin with shipped filters, current permitted location, all eight invalidators, restart-safe rebuild, and negative privacy coverage.
+- Deliver and record a clean operational restore of PostgreSQL, media, and non-secret configuration with secrets handled separately.
+- Complete at least seven elapsed calendar days of representative dogfooding and record ranked findings.
 
 Release dates and comparison links are added only when a release is actually published.

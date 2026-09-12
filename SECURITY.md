@@ -2,7 +2,7 @@
 
 ## Project status
 
-Inventory Atlas is under active development. There is no supported production release before `1.0.0`; security fixes may still be issued for the latest Technical Demo and development line when practical.
+Inventory Atlas is under active development. There is no supported production release before `1.0.0`; security fixes may still be issued for the latest Usable Validation Release and development line when practical.
 
 ## Reporting a vulnerability
 
@@ -33,4 +33,3 @@ Pay particular attention to:
 ## Disclosure and fixes
 
 The project owner will validate the report, determine affected versions, coordinate remediation, and decide disclosure timing. A security fix must include regression tests and must not silently weaken an approved security or privacy requirement.
-

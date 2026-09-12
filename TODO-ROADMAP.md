@@ -1,13 +1,26 @@
 # Inventory Atlas TODO Roadmap
 
-> Status: Ready for execution  
-> Roadmap version: 0.2  
-> Source of truth: `IMPLEMENTATION-BLUEPRINT.md`, approved blueprint v0.2  
+> Status: Ready for execution
+>
+> Roadmap version: 0.3
+>
+> Source of truth: `IMPLEMENTATION-BLUEPRINT.md`, approved blueprint v0.3
+>
 > Product baseline: `docs/product/inventory-atlas-design-document-v0.3.1.pdf`  
-> Prepared: 2026-08-28  
+> Prepared: 2026-08-28; scope revision: 2026-09-12
+>
 > Current development version: `0.1.0-dev.1`
 > Default product locale: English  
 > Required MVP locale: Ukrainian
+
+## Changes in roadmap v0.3
+
+| Review item | Implemented correction |
+| --- | --- |
+| MVP-S1 | Replaced the single Stage 0-6 MVP chain with Implemented Foundation, `0.1.0 Usable Validation Release`, Post-validation Backlog, and `1.0.0 Production Baseline` |
+| MVP-S2 | Put Storage, Lean Search, operational recovery, and seven-day dogfooding on the validation critical path; made convenience QR non-blocking |
+| MVP-S3 | Kept all original story IDs and verbatim production acceptance criteria while moving saved views/bulk, Labels/Scanner, portable interchange, and scale certification to post-validation revalidation |
+| Audit | Recorded implementation evidence, partial work, and checkbox corrections in `docs/project/mvp-scope-simplification-audit.md` |
 
 ## Changes in roadmap v0.2
 
@@ -28,41 +41,45 @@ Execution rules:
 
 - Story acceptance criteria are copied verbatim from blueprint section 23 and are immutable in this file.
 - A changed acceptance criterion requires an approved blueprint change before this roadmap is updated.
-- Complete stages in order unless a dependency explicitly allows parallel work.
+- Within a delivery horizon, follow the dependency graph rather than numeric stage order. The v0.3 horizon map explicitly lets the operational PORT-03 subset follow Lean Search without completing post-validation Stage 5.
 - Keep pull requests independently reviewable, migration-safe, and releasable behind inaccessible routes or disabled composition where necessary.
 - Do not mark a story complete until every acceptance criterion and every applicable Definition of Done item passes.
 - Check a task only after its code, tests, generated artifacts, and required documentation are committed.
-- Deferred P1/P2 modules remain outside this MVP roadmap.
+- Post-validation stories retain their IDs and verbatim production acceptance criteria but do not block `0.1.0` until revalidated.
+- Deferred P1/P2 modules remain outside the `1.0.0 Production Baseline` roadmap.
 
 Checkbox meaning:
 
 - `[ ]` not started
 - `[x]` completed and verified
+- `unverified` means the audit lacked enough evidence to decide; it is referred to the owner and is never treated as `not implemented` automatically
 - A blocked task stays unchecked and receives a short linked blocker note in the project tracker or pull request.
+- Removing an existing `[x]` requires separate owner confirmation before the documentation diff is merged. Adding `[x]` still requires code, tests, contracts, localization, documentation, and applicable Definition of Done evidence.
 
 ## 2. Delivery map
 
 ```mermaid
 flowchart TD
-    S0["Stage 0: Discovery"] --> S1["Stage 1: Foundation"]
-    S1 --> S2["Stage 2: Core catalog"]
-    S2 --> S3["Stage 3: Storage"]
-    S3 --> S4["Stage 4: Find"]
-    S4 --> S5["Stage 5: Labels and scan"]
-    S5 --> S6["Stage 6: Portability"]
+    F["Implemented Foundation: verified Stages 0-2"] --> S["Storage"]
+    S --> Q["Lean Search"]
+    Q --> B["Operational backup / restore"]
+    B --> D["Seven-day dogfooding"]
+    D --> V["0.1.0 Usable Validation Release"]
+    V --> P["Post-validation revalidation"]
+    P --> R["1.0.0 Production Baseline"]
 ```
 
-| Stage | Stories / work packages | Estimate | Exit gate |
+| Horizon / step | Stories / work packages | Forecast | Exit gate |
 | --- | --- | ---: | --- |
-| 0. Discovery | HND-01 through HND-04 | 1 week | Deferred product choices cannot block schema v1 |
-| 1. Foundation | FND-01 through FND-05 | 3-4 weeks | Clean deploy, sign-in, migrations, generated contracts |
-| 2. Core catalog | CAT-01 through CAT-05, MED-01 through MED-02 | 5-7 weeks | Versioned Item aggregate works in English and Ukrainian |
-| 3. Storage | STO-01 through STO-03 | 3-4 weeks | Concurrency and cycle tests pass |
-| 4. Find | SRCH-01 through SRCH-04 | 4-6 weeks | 100k dataset search and privacy tests pass |
-| 5. Labels and scan | LAB-01 through LAB-03 | 3-4 weeks | Physical label matrix passes |
-| 6. Portability | PORT-01 through PORT-03 | 3-4 weeks | Fresh-instance round trip passes |
+| Implemented Foundation | Verified HND, FND, CAT, and MED work | Complete at audited baseline | Existing changed-area checks remain green |
+| `0.1.0` Storage | STO-01 through STO-03, with node attributes conditional as one complete contract | About 3-4 person-weeks | Mandatory integrity and mobile workflow tests pass |
+| `0.1.0` Lean Search | SRCH-01, shipped subset of SRCH-02, authenticated subset of SRCH-03 | Included in 7-11 total; main uncertainty | Shipped filters, all eight invalidators, role/privacy, rebuild, and location tests pass |
+| `0.1.0` Recovery | Operational subset of PORT-03 | Included in 7-11 total | Clean disposable restore smoke passes |
+| `0.1.0` Dogfooding | VAL-01 | At least 7 elapsed calendar days | Findings and next candidates recorded |
+| Stretch | QR-CONV-01 convenience QR | No critical-path allocation | Included only if it cannot delay blocking work |
+| Post-validation | Remaining SRCH-02/03, SRCH-04, LAB-01 through LAB-03, PORT-01/02 and remaining PORT-03 hardening | Re-estimate after validation | Original production criteria revalidated |
 
-The approved total remains 22-30 weeks for one experienced full-time developer.
+The remaining `0.1.0` forecast is 7-11 person-weeks and roughly 8-12 calendar weeks for one experienced full-time developer. Re-estimate after this audit and after the first Search schema/query/invalidation vertical slice. Forecasts are not acceptance criteria.
 
 ## 3. Dependency register
 
@@ -87,12 +104,16 @@ The approved total remains 22-30 weeks for one experienced full-time developer.
 | SRCH-02 | SRCH-01, CAT-03, STO-01 | SRCH-03 |
 | SRCH-03 | SRCH-01, authorization matrix | SRCH-02 |
 | SRCH-04 | SRCH-02, CAT-04, idempotency protocol | SRCH-03 |
+| QR-CONV-01 | CAT-03, STO-01, authenticated canonical routes | No blocking work; stretch only |
 | LAB-01 | CAT-03, STO-01, authorization | LAB-02 template groundwork |
 | LAB-02 | LAB-01, jobs, media artifact storage | LAB-03 |
 | LAB-03 | LAB-01, public/direct card routes | LAB-02 |
 | PORT-01 | All source tables stable through LAB | PORT-03 documentation |
 | PORT-02 | PORT-01, SRCH-01 rebuild | PORT-03 automation |
 | PORT-03 | FND-02, migration stream, media layout | PORT-01, PORT-02 |
+| VAL-01 | STO-03, delivered SRCH-01/02/03 scope, operational PORT-03 subset | Development/fixes during the seven-day observation window |
+
+For `0.1.0`, the hard chain is the audited foundation -> STO-01/02/03 -> SRCH-01 plus the delivered SRCH-02/03 subset -> the operational subset of PORT-03 -> VAL-01. SRCH-04, LAB-01/02/03, PORT-01/02, deferred SRCH-02/03 scope, and the remaining PORT-03 production hardening have no edge into the validation-release graph. QR-CONV-01 is a stretch leaf only.
 
 ## 4. Stage 0 - Discovery and handoff
 
@@ -160,7 +181,7 @@ Tasks:
 - [x] Configure formatting, linting, unit tests, backend type checking, and frontend `checkJs`.
 - [x] Define module public entry points and forbidden import patterns.
 - [x] Implement `verify-module-boundaries.mjs` and add positive/negative fixtures.
-- [x] Complete the frontend infrastructure workstream in section 11, owned by FND-01D, before Stage 1 exits and before CAT-01 begins.
+- [x] Complete the frontend infrastructure workstream in section 12, owned by FND-01D, before Stage 1 exits and before CAT-01 begins.
 - [x] Add minimal build and test smoke cases for every workspace package.
 - [x] Document prerequisites and verify setup in a clean checkout/container.
 
@@ -415,12 +436,13 @@ Tasks:
 - [x] Implement the Prisma-source Item transaction from blueprint section 9.1.
 - [x] Validate and replace attributes through `AttributeValuePort` in the same transaction.
 - [x] Write display name and the complete synchronous search projection before commit.
-- [ ] Resolve a destination path through `SearchProjectionPort` under the shared root lock when applicable.
 - [x] Write safe audit, movement, and outbox records through transaction-aware ports.
 - [x] Return stable field-key validation errors and the new ETag/version.
 - [x] Build category-driven mobile-first form controls using the UI facade.
 - [x] Build the Item card with core fields, dynamic values, breadcrumb policy, and placeholder media.
 - [x] Add atomic rollback, duplicate-request, public-ID, localization, authorization, and E2E tests.
+
+Conditional ownership note: destination path resolution could not exist before the Storage aggregate. The unchecked CAT-03 task moved without scope loss to STO-03, which owns the Item destination mutation and shared root-lock race tests. This keeps the verified Stage 2 acceptance criteria complete without claiming the later Storage dependency is implemented.
 
 Acceptance criteria (verbatim from the approved blueprint):
 
@@ -572,6 +594,8 @@ Acceptance criteria (verbatim from the approved blueprint):
 
 ## 7. Stage 3 - Storage
 
+**Horizon:** blocking for `0.1.0`. StorageNode dynamic attributes and extended node-media UX may move only with their whole owned contract to Post-validation; all tree, move, location, authorization, and privacy behavior remains blocking.
+
 ### STO-01 Build and browse the storage tree
 
 As a user, I can model Warehouse -> Box -> Case with arbitrary supported depth.
@@ -594,9 +618,11 @@ Tasks:
 - [ ] Implement indexed breadcrumb, ancestor, children, subtree, and paged direct-content queries.
 - [ ] Ensure rename changes display data but never rewrites `storage_nodes.path`.
 - [ ] Enforce exact-path privacy and safe public breadcrumb behavior.
-- [ ] Build mobile-first tree browser and full container card with attributes, media, code area, child nodes, and direct Items.
+- [ ] Build the mobile-first tree browser and core container card with breadcrumb, child nodes, and direct Items; include attributes, node media, and convenience QR only when their complete conditional packages ship.
 - [ ] Complete StorageNode-specific media authorization, attachment/reorder UI wiring, and integration/E2E cases against the shared MED-01 implementation.
 - [ ] Add deep-tree, pagination, rename, privacy, node-attribute rollback, and index-plan tests.
+
+Conditional package: if StorageNode dynamic attributes do not ship in `0.1.0`, defer the node-attribute mutation task, node attribute UI, and owned rollback test together. Extended StorageNode media UI may also remain post-validation. Neither deferral permits the release to claim those container-card capabilities.
 
 Acceptance criteria (verbatim from the approved blueprint):
 
@@ -628,7 +654,7 @@ Tasks:
 - [ ] Record audit and vector-rebuild outbox rows in the same transaction.
 - [ ] Implement conflict/error mapping without partial tree disclosure.
 - [ ] Build destination picker, confirmation, progress/error, and refreshed-tree UI.
-- [ ] Test cycle rejection, cross-root moves, forced rollback, opposing moves, rename/move interaction, and large subtrees.
+- [ ] Test cycle rejection, cross-root moves, forced rollback, opposing moves, and rename/move interaction; keep the 1,000/10,000-descendant performance matrix post-validation.
 
 Acceptance criteria (verbatim from the approved blueprint):
 
@@ -655,7 +681,7 @@ Tasks:
 - [ ] Require the expected Item version and validate move authorization.
 - [ ] Use the Prisma source transaction and transaction-aware movement, projection, audit, outbox, and idempotency ports.
 - [ ] Acquire the destination root advisory lock inside the projection adapter.
-- [ ] Resolve only writable destination path/visibility/root data through the named projection exception.
+- [ ] Resolve a destination path through `SearchProjectionPort` under the shared root lock, including only writable destination path/visibility/root data through the named projection exception. This task moved from CAT-03 because STO-01 supplies the destination aggregate.
 - [ ] Reject missing/archived destinations by rolling back the complete mutation.
 - [ ] Persist before/after node and path snapshots in append-only movement history.
 - [ ] Increment Item version and return a new ETag.
@@ -674,12 +700,16 @@ Acceptance criteria (verbatim from the approved blueprint):
 
 - [ ] STO-01 through STO-03 acceptance criteria pass.
 - [ ] Cycle, cross-root, opposing-move, and Item/node race tests pass on real PostgreSQL.
-- [ ] Container cards include attributes, media, children, direct Items, and authorized path display.
+- [ ] Container cards include children, direct Items, and authorized path display; attributes and node media are required only when their complete conditional packages ship.
 - [ ] Storage mutations preserve source/projection/history/audit/outbox atomicity.
 
-## 8. Stage 4 - Search and bulk work
+## 8. Stage 4 - Lean Search and post-validation search work
+
+**Horizon:** SRCH-01, the delivered SRCH-02 subset, and authenticated SRCH-03 block `0.1.0`. Remaining generic typed-filter breadth, 100k certification, Public Search, saved views, and bulk actions are `post-validation / revalidation required` under their original stories.
 
 ### SRCH-01 Maintain the search projection
+
+**Horizon:** blocking for `0.1.0`; all eight invalidator paths and shipped rebuild contracts are included.
 
 As the system, I maintain one safe `item_search` row for every active Item.
 
@@ -693,16 +723,26 @@ Suggested pull requests:
 
 Tasks:
 
-- [ ] Add `pg_trgm`/`unaccent`, `item_search`, vector, JSONB, cursor, category/status, and trigram indexes.
+- [x] Preserve the existing `item_search` table with full/public vectors, JSONB attrs, stable-order, and category/status indexes.
+- [ ] Add `pg_trgm`/`unaccent` plus the trigram/expression indexes actually used by delivered queries.
 - [ ] Implement role-safe full/public vectors and typed attrs/public attrs builders.
 - [ ] Implement Prisma and Kysely `SearchProjectionPort` adapters with equivalent SQL semantics.
 - [ ] Resolve Storage path fields only through the named statement/lock exception.
-- [ ] Register and integration-test all eight invalidator paths from blueprint section 9.4.
+- [ ] Complete and regression-test `ItemCreated` / `AttributeChanged` full-row projection writes against the SRCH builder.
+- [ ] Implement `NodeMoved` path/visibility synchronization and subtree-vector rebuild enqueue.
+- [ ] Implement `NodeRenamed` synchronous nested-Item breadcrumbs and subtree-vector rebuild enqueue.
+- [ ] Implement `NodeVisibilityChanged` effective visibility and public-projection synchronization.
+- [ ] Preserve `CategoryRenamed` outbox emission and implement/test its affected-Item rebuild consumer.
+- [ ] Preserve `FieldDefinitionChanged` outbox emission and implement/test affected attrs/vector rebuild.
+- [ ] Preserve `FieldOptionLabelChanged` outbox emission and implement/test its affected-Item vector rebuild.
+- [ ] Complete and regression-test `ItemVisibilityChanged` removal/update of public projections.
 - [ ] Keep safety-critical rows/columns synchronous with the source transaction.
 - [ ] Implement idempotent resumable vector rebuild jobs with stale markers and bounded batches.
 - [ ] Exclude stale rows only from relevance mode, not from safe catalog listing.
-- [ ] Add stale count/age metrics and operational rebuild controls.
+- [ ] Post-validation: add stale count/age dashboards and broad operational rebuild controls; `0.1.0` still requires safe retry/restart operation for shipped jobs.
 - [ ] Add source/projection rollback, adapter parity, privacy, restart, and reconciliation tests.
+
+Category and option label rebuilds are asynchronous. Operator guidance MUST document the bounded prior-label window, while retry/restart tests prove the idempotent jobs eventually close it. Container breadcrumbs and visibility-sensitive projections remain synchronous.
 
 Acceptance criteria (verbatim from the approved blueprint):
 
@@ -712,6 +752,8 @@ Acceptance criteria (verbatim from the approved blueprint):
 - [ ] Rebuild is idempotent and resumable.
 
 ### SRCH-02 Search and filter items
+
+**Horizon:** split. The Lean Search subset blocks `0.1.0`; generic typed-filter breadth, extensive relevance tuning, and 100k certification are `post-validation / revalidation required`.
 
 As a user, I can search all permitted fields and combine typed filters.
 
@@ -736,6 +778,8 @@ Tasks:
 - [ ] Generate the 100k Item acceptance dataset and record query plans/reference hardware.
 - [ ] Add API contract, authorization, cursor-stability, localization, and performance tests.
 
+`0.1.0` blocks on authenticated text search, category/lifecycle/storage filters, stable bounded cursors, current permitted location, and only the typed filter kinds exposed by its API/UI. The remaining generic typed-filter builder, extensive relevance tuning, and 100k performance suite stay under SRCH-02 as `post-validation / revalidation required`.
+
 Acceptance criteria (verbatim from the approved blueprint):
 
 - [ ] English and Ukrainian labels match in one vector.
@@ -745,6 +789,8 @@ Acceptance criteria (verbatim from the approved blueprint):
 - [ ] 100k acceptance dataset meets recorded reference targets.
 
 ### SRCH-03 Enforce visibility without inference leaks
+
+**Horizon:** blocking on every shipped `0.1.0` Search surface. The Public-search acceptance criterion is `post-validation / revalidation required` because Public Search is disabled for validation.
 
 As an Owner, I know lower roles cannot infer private values.
 
@@ -766,6 +812,8 @@ Tasks:
 - [ ] Remove values synchronously from safe public projections when visibility changes.
 - [ ] Add role-by-visibility matrix integration and E2E tests, including negative inference cases.
 
+`0.1.0` role decision: Viewer and Editor use the authenticated Search surface over public/authenticated vectors, attrs, locations, filters, and counts. Owner and Admin also receive a separately authorized exact private-EAV lookup. Public Search is disabled: unauthenticated API requests are rejected and no public Search UI route is shipped. Test Viewer and Editor private-value non-inference, Owner/Admin exact-lookup authorization, and Public negative unavailability. A future Public Search surface inherits the full SRCH-03 suite before it can ship.
+
 Acceptance criteria (verbatim from the approved blueprint):
 
 - [ ] Public sees only public vector/attrs.
@@ -774,6 +822,8 @@ Acceptance criteria (verbatim from the approved blueprint):
 - [ ] Unlisted direct access follows authorization but does not appear in lower-role lists.
 
 ### SRCH-04 Save views and perform bulk actions
+
+**Horizon:** `post-validation / revalidation required`; all original acceptance criteria below remain intact.
 
 As an Editor, I can save a search and apply an action to many Items safely.
 
@@ -790,7 +840,7 @@ Tasks:
 - [ ] Add saved-view schema, ownership, visibility, version, and archive behavior.
 - [ ] Store schema-versioned filters and validate/migrate/reject them against active definitions.
 - [ ] Implement saved-view list/create/update/archive APIs and responsive UI.
-- [ ] Define supported MVP bulk actions without adding new domain behavior.
+- [ ] Define supported production-baseline bulk actions without adding new domain behavior.
 - [ ] Require expected version per Item and one request idempotency key.
 - [ ] Process each Item in an independent business transaction.
 - [ ] Preserve already successful effects on later conflicts/failures.
@@ -809,15 +859,39 @@ Acceptance criteria (verbatim from the approved blueprint):
 
 ### Stage 4 exit checklist
 
-- [ ] SRCH-01 through SRCH-04 acceptance criteria pass.
+- [ ] `0.1.0` SRCH-01 and shipped SRCH-02/SRCH-03 acceptance scope passes; deferred portions remain explicitly tracked under their original stories.
 - [ ] All invalidators and both transaction-source adapters pass real-PostgreSQL integration tests.
-- [ ] Privacy tests prove no lower-role inference through search, filters, lists, facets, or counts.
-- [ ] The 100k reference dataset meets recorded p95 targets on recorded hardware.
-- [ ] Saved views and bulk actions preserve optimistic concurrency and idempotency.
+- [ ] Viewer/Editor privacy tests, Owner/Admin exact-lookup authorization, and Public Search unavailability pass for every shipped surface.
+- [ ] Post-validation: the 100k reference dataset meets recorded p95 targets on recorded hardware.
+- [ ] Post-validation: saved views and bulk actions preserve optimistic concurrency and idempotency.
 
 ## 9. Stage 5 - Labels and scan
 
+**Horizon:** LAB-01 through LAB-03 are `post-validation / revalidation required` and do not block `0.1.0`. QR-CONV-01 below is the only optional validation-release QR scope.
+
+### QR-CONV-01 Add an authenticated convenience QR
+
+**Horizon:** non-blocking `0.1.0` stretch goal. Start only when it cannot delay Storage, Lean Search, recovery, or dogfooding.
+
+As an authenticated user, I can open a permitted Item or StorageNode route from a convenience QR.
+
+Tasks:
+
+- [ ] Encode the canonical authenticated Item/StorageNode route using its stable public ID.
+- [ ] Make the native phone camera open that route and return the user to the target after sign-in.
+- [ ] Label the output as an authenticated convenience link, never as a public/revocable scan token.
+- [ ] Prove a display-name or container rename leaves the public-ID route valid.
+
+Acceptance criteria:
+
+- [ ] A native phone camera opens the canonical route.
+- [ ] Authentication returns the user to the requested permitted target.
+- [ ] The QR remains valid after rename because the stable public ID is unchanged.
+- [ ] No LAB-01 token, generation, revocation, key-ring, Code 128, batch, or scanner behavior is claimed.
+
 ### LAB-01 Issue stable codes
+
+**Horizon:** `post-validation / revalidation required`; QR-CONV-01 does not satisfy this story.
 
 As an Editor, I can issue/revoke QR and Code 128 codes for Items and containers.
 
@@ -857,6 +931,8 @@ Acceptance criteria (verbatim from the approved blueprint):
 
 ### LAB-02 Render printable batches
 
+**Horizon:** `post-validation / revalidation required`.
+
 As a user, I can select entities, choose a template, and download a repeatable label PDF.
 
 Suggested pull requests:
@@ -891,6 +967,8 @@ Acceptance criteria (verbatim from the approved blueprint):
 - [ ] Physical scan test matrix passes.
 
 ### LAB-03 Scan on mobile
+
+**Horizon:** `post-validation / revalidation required`.
 
 As a mobile user, I can scan a QR/barcode and open the permitted entity card.
 
@@ -930,9 +1008,13 @@ Acceptance criteria (verbatim from the approved blueprint):
 - [ ] Mobile scanning and manual fallback pass supported iOS/Android checks.
 - [ ] Printed URLs/codes remain stable after entity rename.
 
-## 10. Stage 6 - Portability and operations
+## 10. Stage 6 - Operational recovery and post-validation portability
+
+**Horizon:** the operational subset of PORT-03 blocks `0.1.0`. PORT-01, PORT-02, and remaining PORT-03 production hardening are `post-validation / revalidation required`.
 
 ### PORT-01 Export a portable archive
+
+**Horizon:** `post-validation / revalidation required`; original acceptance criteria remain intact.
 
 As an Owner, I can export database content and media into a versioned archive.
 
@@ -966,6 +1048,8 @@ Acceptance criteria (verbatim from the approved blueprint):
 - [ ] Secrets, sessions, and password hashes are excluded.
 
 ### PORT-02 Validate and apply an import
+
+**Horizon:** `post-validation / revalidation required`; original acceptance criteria remain intact.
 
 As an Owner, I can inspect a dry-run report before importing.
 
@@ -1002,6 +1086,8 @@ Acceptance criteria (verbatim from the approved blueprint):
 
 ### PORT-03 Back up and restore operations
 
+**Horizon:** split. Tasks marked `0.1.0` form the blocking recovery subset; the rest remain production-baseline hardening under this story.
+
 As an operator, I can restore the installation after database or host loss.
 
 Suggested pull requests:
@@ -1014,17 +1100,17 @@ Suggested pull requests:
 
 Tasks:
 
-- [ ] Document the distinction between portable export/import and operational backup/restore.
-- [ ] Create a versioned PostgreSQL dump procedure compatible with the migration stream.
-- [ ] Create a media snapshot/checksum-copy procedure consistent with the database backup point.
-- [ ] Capture non-secret configuration and release/schema versions.
-- [ ] Document separate secure handling and recovery requirements for secrets and scan key ring.
-- [ ] Create the backup Compose profile/commands and retention example.
-- [ ] Create clean-disposable-environment restore commands and verification script.
-- [ ] Verify database schema, counts, media checksums, settings version, health, sign-in, scan resolution, and representative search after restore.
-- [ ] Require backup before non-trivially reversible migrations.
-- [ ] Add quarterly/manual restore-drill record and release-candidate gate for migration releases.
-- [ ] Add failure/recovery tests and an operator troubleshooting section.
+- [ ] `0.1.0`: document the distinction between portable export/import and operational backup/restore.
+- [ ] `0.1.0`: create a versioned PostgreSQL dump procedure compatible with the migration stream.
+- [ ] `0.1.0`: create a media snapshot/checksum-copy procedure consistent with the database backup point.
+- [ ] `0.1.0`: capture non-secret configuration and release/schema versions.
+- [ ] `0.1.0`: document separate secure handling and recovery requirements for secrets; retain scan-key handling for the production Labels horizon.
+- [ ] Post-validation: create the backup Compose profile/commands and retention example.
+- [ ] `0.1.0`: create clean-disposable-environment restore commands and a verification script.
+- [ ] `0.1.0`: verify database schema, representative counts, media availability/checksums, settings version, health, sign-in, and representative Lean Search after restore; add scan resolution when LAB ships.
+- [ ] Post-validation: require backup before non-trivially reversible migrations as a recurring release control.
+- [ ] Post-validation: add quarterly/manual restore-drill cadence and the recurring release-candidate gate for migration releases.
+- [ ] `0.1.0`: add recovery smoke coverage and operator troubleshooting for the delivered procedure; extend it with deferred surfaces when they ship.
 
 Acceptance criteria (verbatim from the approved blueprint):
 
@@ -1035,13 +1121,31 @@ Acceptance criteria (verbatim from the approved blueprint):
 
 ### Stage 6 exit checklist
 
-- [ ] PORT-01 through PORT-03 acceptance criteria pass.
-- [ ] Portable export/import succeeds on a clean instance with matching counts, relations, ordering, and checksums.
-- [ ] Operational backup restore succeeds in a disposable environment.
-- [ ] Search rebuild finishes before import success is reported.
-- [ ] The latest restore drill is recorded for the release gate.
+- [ ] `0.1.0`: the operational PORT-03 subset restores database, media, and configuration versions in a clean disposable environment.
+- [ ] `0.1.0`: secrets are handled separately and a restore smoke is recorded.
+- [ ] Post-validation: PORT-01 through PORT-03 production acceptance criteria pass.
+- [ ] Post-validation: portable export/import succeeds on a clean instance with matching counts, relations, ordering, and checksums.
+- [ ] Post-validation: Search rebuild finishes before import success is reported.
 
-## 11. Cross-cutting infrastructure workstream
+## 11. Validation and release observation
+
+### VAL-01 Dogfood the blocking inventory loop
+
+As the installation owner, I can validate the core hypothesis with representative real inventory before `0.1.0` is declared usable.
+
+Hard dependency: the blocking Storage, Lean Search, and operational recovery scope is deployable. Development and fixes may continue during observation, but elapsed calendar evidence cannot be compressed into engineering effort.
+
+Tasks and acceptance criteria:
+
+- [ ] Enter 50-100 representative real Items across several categories.
+- [ ] Create at least three storage levels.
+- [ ] Move Items and at least one container.
+- [ ] Find Items by name, delivered searchable values, and location.
+- [ ] Perform and record one clean restore smoke.
+- [ ] Use the installation for at least seven elapsed calendar days.
+- [ ] Record observed friction and rank the next feature candidates.
+
+## 12. Cross-cutting infrastructure workstream
 
 These tasks are scheduled alongside the first story that needs them and remain shared infrastructure, not new product stories.
 
@@ -1126,23 +1230,27 @@ Stable token names:
 
 ### Database and transaction infrastructure
 
-- [ ] Establish Kysely as the sole migration runner for the complete schema.
-- [ ] Prevent Prisma Migrate from running in deployment.
-- [ ] Apply all migrations to a clean PostgreSQL database in CI.
+- [x] Establish Kysely as the sole migration runner for the complete schema.
+- [x] Prevent Prisma Migrate from running in deployment.
+- [x] Apply all migrations to a clean PostgreSQL database in CI.
 - [ ] Generate and drift-check Prisma and Kysely clients/types after migration.
-- [ ] Implement `TransactionContext` and Prisma/Kysely adapters for SearchProjection, Outbox, MovementHistory, Audit, AttributeValue, and Idempotency ports.
+- [x] Implement `TransactionContext` and Prisma/Kysely adapters for SearchProjection, Outbox, MovementHistory, Audit, AttributeValue, and Idempotency ports.
 - [ ] Prove every port uses only the supplied transaction and never opens or commits one.
-- [ ] Maintain a table-owner/read-client/write-path verification test or reviewed registry.
+- [x] Maintain a table-owner/read-client/write-path verification test or reviewed registry.
+
+Audit boundary: the generic dual-client adapters and reviewed ownership registry exist. The unchecked proof still requires the unshipped Storage/Search call paths and their forced-rollback tests; current Item/Schema use does not certify those future paths.
 
 ### Jobs and outbox
 
-- [ ] Add PostgreSQL queue/outbox migrations, indexes, state constraints, and deduplication keys.
-- [ ] Implement `FOR UPDATE SKIP LOCKED` claim, lease, heartbeat, retry backoff, dead, and cancellation behavior.
-- [ ] Implement transactional outbox dispatch to idempotent job creation/wakeup.
-- [ ] Add per-job-type concurrency and compact/expanded runner switches.
-- [ ] Register exactly the initial MVP job types `search.rebuild-items.v1`, `search.rebuild-subtree-v1`, `media.process-v1`, `labels.render-batch-v1`, `portability.export-v1`, `portability.import-validate-v1`, `portability.import-apply-v1`, and `media.cleanup-v1`.
+- [x] Add PostgreSQL queue/outbox migrations, indexes, state constraints, and deduplication keys.
+- [x] Implement `FOR UPDATE SKIP LOCKED` claim, lease, heartbeat, retry backoff, dead, and cancellation behavior.
+- [x] Implement transactional outbox dispatch to idempotent job creation/wakeup.
+- [x] Add per-job-type concurrency and compact/expanded runner switches.
+- [ ] Register exactly the initial job type identifiers `search.rebuild-items.v1`, `search.rebuild-subtree-v1`, `media.process-v1`, `labels.render-batch-v1`, `portability.export-v1`, `portability.import-validate-v1`, `portability.import-apply-v1`, and `media.cleanup-v1`; only handlers owned by shipped horizons are required to run.
 - [ ] Document and test the payload version, deduplication/idempotency key, safe retry boundary, progress contract, concurrency limit, and permanent-validation-error behavior for each initial job type.
-- [ ] Add restart, expired-lease, duplicate-message, and dead-letter tests.
+- [x] Add restart/expired-lease, duplicate-message, and dead-letter foundation tests.
+
+Audit boundary: media process/cleanup handlers are wired and tested. The job policy currently declares `search.rebuild-items-v1`, while source outbox producers and the approved contract use `search.rebuild-items.v1`; this roadmap mismatch remains open for the first Search slice rather than being treated as a verified registration. The two Search rebuild handlers block `0.1.0`; Labels and Portability handlers move with their post-validation stories. The remaining per-type contract checkbox stays open until every delivered handler has its own evidence.
 
 ### Observability and operations
 
@@ -1163,36 +1271,42 @@ Stable token names:
 
 ### Critical acceptance test ownership
 
-Every mandatory test from blueprint section 20.2 has an explicit delivery owner. A shared owner means the final test is merged with the later-listed story after both sides of the scenario exist.
+Every mandatory test from blueprint section 20.2 has an explicit delivery owner and `0.1.0` disposition. A shared owner means the final test is merged with the later-listed story after both sides of the scenario exist. The original production test text remains verbatim.
 
-| Gate | Critical acceptance test (verbatim) | Owner |
-| --- | --- | --- |
-| [ ] | Reject moving a node into its own descendant without partial updates. | STO-02 |
-| [ ] | Serialize opposing concurrent moves and retain an acyclic connected tree. | STO-02 |
-| [ ] | Update `path`, `depth`, and `tree_root_id` for every descendant on cross-root move. | STO-02 |
-| [ ] | Rename a container and synchronously update breadcrumbs for all nested Items. | STO-01 + SRCH-01 |
-| [ ] | Keep allowed catalog rows visible while vector rebuild marks them stale. | SRCH-01 |
-| [x] | Create/update an Item through Prisma and atomically write projection/outbox through ports in the same transaction. | CAT-03 + CAT-04 |
-| [x] | Roll back source, projection, and outbox together when either port fails. | CAT-03 + CAT-04 |
-| [ ] | Move a node through Kysely with no Prisma client query inside the transaction; movement, audit, projection, and outbox ports use the supplied Kysely handle. | STO-02 |
-| [ ] | Move an Item through Prisma and atomically update destination, movement history, audit, projection, and outbox through Prisma-aware ports. | STO-03 |
-| [ ] | Reject an archived/missing Item destination when the projection path-resolution statement finds no writable node, rolling back the entire Prisma transaction. | STO-03 |
-| [ ] | Serialize a concurrent Item create/move against destination-node move/rename with the shared root advisory lock and commit only a path consistent with the final tree state. | CAT-03 + STO-03 |
-| [ ] | Replace StorageNode attributes through the Kysely `AttributeValuePort`; required-field failure rolls back node, values, version, projection, audit, and outbox together. | STO-01 |
-| [x] | Persist multiselect as ordered scalar option rows only; reject wrong-field options, duplicates, gaps, and any array-shaped persistence representation. | CAT-02 |
-| [ ] | Reprint the same active scan token, invalidate its prior generation on revoke/reissue, and resolve retained key versions during rotation. | LAB-01 |
-| [x] | Apply bootstrap/database configuration precedence and fail startup on production conflicts for canonical base URL or public catalog mode. | FND-02 |
-| [ ] | Remove a field value from public projections after `public_visibility` changes. | SRCH-03 |
-| [ ] | Prevent Viewer inference of a private value through text search, typed filter, or result count. | SRCH-03 |
-| [ ] | Exclude unlisted entities from Public/Viewer/Editor lists while permitted direct URLs/tokens work. | SRCH-03 |
-| [ ] | Keep public ID and QR valid after display-name changes. | CAT-05 + LAB-01 |
-| [ ] | Return per-item bulk success/conflict/failure without replaying successful effects. | SRCH-04 |
-| [ ] | Resume reindex/import after worker restart without duplicate final effects. | SRCH-01 + PORT-02 |
-| [ ] | Restore export/import counts, relations, media ordering, and checksums. | PORT-02 |
-| [ ] | Reject an incorrect generated-client runtime type before mutation and reject it again at backend DTO validation. | FND-03 + CAT-03 |
-| [ ] | Start in English; switch to complete Ukrainian UI without restart. | FND-05 |
+| Gate | Critical acceptance test (verbatim) | Owner | `0.1.0` disposition |
+| --- | --- | --- | --- |
+| [ ] | Reject moving a node into its own descendant without partial updates. | STO-02 | Required |
+| [ ] | Serialize opposing concurrent moves and retain an acyclic connected tree. | STO-02 | Required |
+| [ ] | Update `path`, `depth`, and `tree_root_id` for every descendant on cross-root move. | STO-02 | Required |
+| [ ] | Rename a container and synchronously update breadcrumbs for all nested Items. | STO-01 + SRCH-01 | Required |
+| [ ] | Keep allowed catalog rows visible while vector rebuild marks them stale. | SRCH-01 | Required |
+| [x] | Create/update an Item through Prisma and atomically write projection/outbox through ports in the same transaction. | CAT-03 + CAT-04 | Required; inherited |
+| [x] | Roll back source, projection, and outbox together when either port fails. | CAT-03 + CAT-04 | Required; inherited |
+| [ ] | Move a node through Kysely with no Prisma client query inside the transaction; movement, audit, projection, and outbox ports use the supplied Kysely handle. | STO-02 | Required |
+| [ ] | Move an Item through Prisma and atomically update destination, movement history, audit, projection, and outbox through Prisma-aware ports. | STO-03 | Required |
+| [ ] | Reject an archived/missing Item destination when the projection path-resolution statement finds no writable node, rolling back the entire Prisma transaction. | STO-03 | Required |
+| [ ] | Serialize a concurrent Item create/move against destination-node move/rename with the shared root advisory lock and commit only a path consistent with the final tree state. | CAT-03 + STO-03 | Required |
+| [ ] | Replace StorageNode attributes through the Kysely `AttributeValuePort`; required-field failure rolls back node, values, version, projection, audit, and outbox together. | STO-01 | Conditional if node attributes ship |
+| [x] | Persist multiselect as ordered scalar option rows only; reject wrong-field options, duplicates, gaps, and any array-shaped persistence representation. | CAT-02 | Required; inherited |
+| [ ] | Reprint the same active scan token, invalidate its prior generation on revoke/reissue, and resolve retained key versions during rotation. | LAB-01 | Deferred with LAB-01 |
+| [x] | Apply bootstrap/database configuration precedence and fail startup on production conflicts for canonical base URL or public catalog mode. | FND-02 | Required; inherited |
+| [ ] | Remove a field value from public projections after `public_visibility` changes. | SRCH-03 | Required |
+| [ ] | Prevent Viewer inference of a private value through text search, typed filter, or result count. | SRCH-03 | Required; repeat for Editor |
+| [ ] | Exclude unlisted entities from Public/Viewer/Editor lists while permitted direct URLs/tokens work. | SRCH-03 | Required on every shipped relevant surface |
+| [ ] | Keep public ID and QR valid after display-name changes. | CAT-05 + QR-CONV-01/LAB-01 | Conditional if convenience QR ships; full token case stays with LAB-01 |
+| [ ] | Return per-item bulk success/conflict/failure without replaying successful effects. | SRCH-04 | Deferred with SRCH-04 |
+| [ ] | Resume reindex/import after worker restart without duplicate final effects. | SRCH-01 + PORT-02 | Split: reindex required; import deferred |
+| [ ] | Restore export/import counts, relations, media ordering, and checksums. | PORT-02 | Deferred with PORT-02 |
+| [x] | Reject an incorrect generated-client runtime type before mutation and reject it again at backend DTO validation. | FND-03 + CAT-03 | Required; inherited |
+| [x] | Start in English; switch to complete Ukrainian UI without restart. | FND-05 | Required; inherited |
 
-## 12. Definition of Done
+Additional validation-scope tests required by the explicit role decision:
+
+- [ ] Reject unauthenticated/Public access to every `0.1.0` Search API and keep the Public Search UI unavailable.
+- [ ] Prove both Viewer and Editor cannot infer a private value through hits, shipped filters, or result counts.
+- [ ] Permit the separate exact private-EAV lookup only to Owner/Admin and exclude its values from shared vectors, facets, and counts.
+
+## 13. Definition of Done
 
 A story is complete only when every applicable item below passes. This checklist is copied verbatim from blueprint section 24.
 
@@ -1209,19 +1323,39 @@ A story is complete only when every applicable item below passes. This checklist
 - [ ] Unit, integration, contract, E2E smoke, build, and container checks pass.
 - [ ] No frozen ADR or module ownership boundary is violated.
 
-## 13. MVP release checklist
+## 14. Release checklists
 
-- [ ] All Stage 0-6 exit checklists are complete.
-- [ ] All FND, CAT, MED, STO, SRCH, LAB, and PORT acceptance criteria are complete.
+### `0.1.0 Usable Validation Release`
+
+- [x] Implementation audit is recorded and verified roadmap mismatches are resolved without removing an owner-approved completion mark.
+- [ ] Verified inherited Foundation/Catalog/Media checks remain green for changed areas.
+- [ ] Clean compact Docker Compose installation starts; Owner signs in; English/Ukrainian switching works.
+- [ ] Item create/edit with custom fields and image works.
+- [ ] Nested Storage create/browse and Item/container moves work with the mandatory integrity tests in Stage 3.
+- [ ] Lean Search ships the Stage 4 validation subset; all eight invalidator paths are integrated and tested.
+- [ ] Search results show the current permitted location; container rename/move and Item move cannot leave committed visible breadcrumbs stale.
+- [ ] Viewer/Editor cannot infer private values or exact paths, Public cannot access Search, and Owner/Admin exact private lookup is independently authorized.
+- [ ] PostgreSQL, media, and non-secret configuration restore successfully in a clean disposable environment; secrets are handled separately.
+- [ ] Required and conditional critical tests pass according to section 12 ownership.
+- [ ] VAL-01 records at least seven elapsed calendar days of representative real use and ranked findings.
+- [ ] Known limitations name deferred Labels/Scanner, portable interchange, saved views/bulk, generic filter breadth, and scale certification.
+- [ ] The release graph has no dependency on QR-CONV-01, LAB-01 through LAB-03, SRCH-04, PORT-01/02, portable import/export, or 100k certification.
+
+Convenience QR is intentionally absent from the blocking checklist.
+
+### `1.0.0 Production Baseline`
+
+- [ ] Every post-validation story is revalidated against dogfooding evidence before implementation or explicit deferral by an approved superseding decision.
+- [ ] All retained FND, CAT, MED, STO, SRCH, LAB, and PORT production acceptance criteria pass.
 - [ ] Every applicable Definition of Done item passes for every completed story.
-- [ ] All 24 critical acceptance test gates in section 11 are complete.
+- [ ] All 24 production critical acceptance test gates in section 12 are complete.
 - [ ] All 18 `App*` facade components and the stable semantic token set are present, direct PrimeVue imports outside `packages/ui` are rejected, and `docs/frontend/ui-facade-gaps.md` has no open entries.
 - [ ] The reference 100k dataset meets recorded p95 Item-read and default-search targets.
 - [ ] Storage move performance is recorded for 10, 100, 1,000, and 10,000 affected nodes/items.
 - [ ] Physical A4 and 50x30 mm QR/Code 128 scan matrix passes on the recorded devices.
 - [ ] English starts by default and complete Ukrainian remains selectable without restart.
-- [ ] Public/authenticated/private/unlisted negative security tests pass.
+- [ ] Public/authenticated/private/unlisted negative security tests pass on every shipped surface.
 - [ ] Fresh installation, previous-release upgrade, portable round trip, and operational restore pass.
 - [ ] Release images, SBOM, dependency/license report, migration notes, changelog, backup compatibility note, and checksums are produced.
-- [ ] No deferred P1/P2 functionality has become an MVP blocker.
+- [ ] No deferred P1/P2 functionality has become a Production Baseline blocker.
 - [ ] Approved design document, blueprint, roadmap, ADRs, API contract, and operator documentation are mutually consistent.

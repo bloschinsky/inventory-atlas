@@ -1,12 +1,26 @@
 # Inventory Atlas Implementation Blueprint
 
-> Status: Approved for implementation  
-> Blueprint version: 0.2  
+> Status: Approved for implementation
+>
+> Blueprint version: 0.3
+>
 > Source baseline: `docs/product/inventory-atlas-design-document-v0.3.1.pdf`  
 > Source status: Final and approved after errata E1  
-> Prepared: 2026-08-28  
+> Prepared: 2026-08-28; scope revision: 2026-09-12
+>
 > Default product locale: English  
 > Required MVP locale: Ukrainian
+
+## Changes in blueprint v0.3
+
+| Review item | Implemented correction |
+| --- | --- |
+| MVP-S1 | Split delivery into verified Implemented Foundation, `0.1.0 Usable Validation Release`, Post-validation Backlog, and `1.0.0 Production Baseline` |
+| MVP-S2 | Put Storage, role-scoped Lean Search, operational backup/restore, and seven-day dogfooding on the `0.1.0` critical path |
+| MVP-S3 | Kept saved views/bulk, full Labels/Scanner, portable interchange, and scale certification under their original story IDs for post-validation revalidation |
+| MVP-S4 | Assigned critical acceptance tests to shipped dependencies and separated validation-release gates from production-baseline gates |
+| MVP-S5 | Corrected pre-`0.1.0` version aggregation and replaced the remaining-work estimate with a 7-11 person-week forecast plus a seven-day observation gate |
+| Audit | Recorded the implementation inspection and checkbox corrections in `docs/project/mvp-scope-simplification-audit.md` |
 
 ## Changes in blueprint v0.2
 
@@ -29,14 +43,14 @@ The approved design document remains authoritative for product behavior and arch
 
 Normative terms:
 
-- **MUST**: required for correctness, security, portability, or the MVP release gate.
+- **MUST**: required for correctness, security, portability, or the release gate that owns the requirement.
 - **SHOULD**: expected default; deviation requires a documented engineering reason.
 - **MAY**: optional within the approved scope.
-- **Deferred**: explicitly outside the MVP implementation sequence and must not block it.
+- **Deferred**: outside `0.1.0`; retained under its original story and subject to post-validation revalidation before the production baseline.
 
 ## 2. Approved baseline
 
-The following decisions are frozen for schema v1 and the MVP:
+The following decisions are frozen for schema v1 and both release horizons:
 
 | Area | Binding decision |
 | --- | --- |
@@ -58,7 +72,7 @@ The following decisions are frozen for schema v1 and the MVP:
 | Localization | English source/default; complete Ukrainian UI selectable in MVP |
 | Deployment | Docker Compose for local, homelab, and dedicated server use |
 | Public access | Configurable; exact storage path and sensitive fields private by default |
-| MVP estimate | 22-30 weeks for one experienced full-time developer |
+| Remaining `0.1.0` forecast | 7-11 person-weeks for one experienced full-time developer, followed by at least seven elapsed calendar days of dogfooding |
 
 Forbidden implementation drift:
 
@@ -69,34 +83,86 @@ Forbidden implementation drift:
 - Do not add offline mutations, automatic marketplace publication, or carrier shipment creation to MVP.
 - Do not use both Prisma and Kysely clients inside one database transaction.
 
-## 3. Delivery scope
+## 3. Delivery scope and horizons
 
-### 3.1 MVP scope
+The product hypothesis for the first usable release is:
 
-MVP is stages 0-6 and MUST include:
+> A user can create an Item, describe it with configurable fields and photos, place it in an arbitrarily nested storage location, later find it quickly, see exactly where it is, and recover the installation without losing the inventory.
 
-- One-command Docker Compose deployment.
-- Owner bootstrap, authentication, users, and roles.
-- Item catalog with versioned edits, categories, lifecycle statuses, tags, and typed dynamic fields.
-- Arbitrarily nested storage nodes with safe atomic moves and movement history.
-- Main image, image gallery, thumbnails, metadata policy, and HEIC/HEIF support.
-- Public/authenticated/private/unlisted visibility behavior.
-- PostgreSQL search, typed filters, stable cursors, bounded relevance mode, saved views, and bulk actions.
-- QR and Code 128 label generation, printable PDF batches, scan resolution, and mobile scanner mode.
-- Portable export/import including media and an operational backup/restore procedure.
-- English as the default UI and complete Ukrainian localization selectable without restart.
-- Automated tests, CI, health checks, structured logs, and release artifacts.
+| Horizon | Meaning |
+| --- | --- |
+| Implemented Foundation | Work verified in the 2026-09-12 audit and inherited by both releases; it is not scheduled for replacement merely to simplify delivery |
+| `0.1.0 Usable Validation Release` | Smallest safe end-to-end release that can test the product hypothesis with real inventory |
+| Post-validation Backlog | Designed work removed from the `0.1.0` critical path, retained under its original story/ADR, and marked `post-validation / revalidation required` |
+| `1.0.0 Production Baseline` | Complete retained design after post-validation stories and every production release gate pass |
 
-### 3.2 Post-MVP scope already modeled
+### 3.1 Implemented Foundation
 
-These capabilities MAY have schema/contracts reserved but MUST NOT delay the MVP:
+The audited inherited baseline includes Stages 0-2: repository/toolchain and Docker foundations, auth/RBAC, English/Ukrainian localization, generated contracts, Catalog and typed EAV, versioned Item and media flows, transaction-aware ports used by those flows, synchronous CAT-owned `item_search` writes, and the PostgreSQL jobs/outbox runtime used by media. The exact evidence and partial cross-cutting work are recorded in [the scope-simplification audit](docs/project/mvp-scope-simplification-audit.md).
 
-- Inventory count sessions.
-- Manual shipment tracking, then Nova Poshta and Ukrposhta tracking adapters.
-- Listing drafts and marketplace adapters.
-- Separate worker deployment, S3/MinIO, and read replicas when metrics justify them.
+Verified implementation MUST be preserved and reused. A cross-cutting workstream is complete only to the extent demonstrated by its own evidence; use by one completed feature does not prove every future adapter, job handler, or operational surface.
 
-### 3.3 Explicit non-goals
+### 3.2 `0.1.0 Usable Validation Release`
+
+`0.1.0` MUST include:
+
+- the Implemented Foundation and its existing checks;
+- nested StorageNode create, edit, archive, browse, breadcrumb, children, and paged direct contents;
+- Item assignment/move, append-only movement history, and current permitted location on Item cards and search results;
+- safe container/subtree moves with complete path/depth/root updates and shared root-lock serialization;
+- Lean Search over permitted names and delivered searchable values, with category, lifecycle-status, and storage-location filters plus stable bounded cursors;
+- authenticated search for Viewer, Editor, Owner, and Admin, with the explicit role behavior in section 16.1; no Public search surface;
+- role-safe full/public projection builders, all eight invalidation registry paths, and restart-safe rebuild jobs needed by shipped mutations;
+- mobile-width Storage and Search flows with complete English/Ukrainian loading, empty, error, and result states;
+- operational backup and restore of PostgreSQL, media, non-secret configuration, release/schema version, and separately handled secrets into a clean disposable environment;
+- every critical acceptance test owned by a shipped story or exercised dependency; and
+- 50-100 representative real Items, at least three storage levels, representative Item/container moves and searches, one recorded clean restore, and at least seven elapsed calendar days of use with ranked findings.
+
+StorageNode dynamic attributes may move as a complete acceptance contract to the Post-validation Backlog. A partial node aggregate that claims attribute support is not permitted. Extended StorageNode media UX, non-essential card polish, saved views/bulk, complete generic typed-filter richness, 100k search certification, the 1,000/10,000-descendant move matrix, full Labels/Scanner, and portable interchange do not block `0.1.0`.
+
+The delivery forecast from the inspected baseline is 7-11 person-weeks of engineering for one experienced full-time developer. Storage is forecast at about 3-4 person-weeks; Search is the largest uncertainty. Dogfooding adds at least seven elapsed calendar days, with an expected total calendar duration of roughly 8-12 weeks where observation and fixes overlap. Re-estimate after the first Search schema/query/invalidation vertical slice. Estimates are planning forecasts, not acceptance criteria.
+
+### 3.3 Storage correctness contract for `0.1.0`
+
+The approved `parent_id + ltree path + depth + tree_root_id` model, Kysely ownership, single-client transactions, and transaction-aware ports remain binding. Shipped mutations MUST:
+
+- reject moving a node into its own descendant without partial updates;
+- deterministically serialize opposing moves and retain an acyclic connected tree;
+- update `parent_id`, `path`, `depth`, and `tree_root_id` for the complete affected subtree;
+- keep source writes, movement, projection, audit, and outbox atomic through the correct client;
+- reject missing or archived Item destinations and roll back the complete mutation;
+- serialize Item create/move against destination-node move/rename under the shared root-lock rule; and
+- commit an Item breadcrumb consistent with the final tree state.
+
+### 3.4 Lean Search and invalidation contract for `0.1.0`
+
+The existing `item_search` table/index foundation and CAT-owned synchronous writes are inherited, but SRCH-01 is only partially implemented. Required extensions/indexes, production-ready builders, both source-client adapter behavior, Storage invalidations, rebuild handlers, query execution, cursors, filters, API, UI, authorization, and PostgreSQL integration tests still require implementation or fresh verification.
+
+Lean Search MUST deliver `pg_trgm`/`unaccent` and the indexes used by shipped queries; role-safe full/public vector and typed-attribute builders; Prisma and Kysely projection behavior; authenticated text search; category, lifecycle-status, and storage-location filters; stable bounded pagination; current permitted location; mobile English/Ukrainian UI states; server-side authorization; and query/rollback/rebuild tests on real PostgreSQL. Only filter types exposed by the `0.1.0` API/UI block the release; the complete generic typed-filter contract remains with SRCH-02 in the Post-validation Backlog.
+
+All eight section 9.4 invalidator paths apply to shipped mutable data. `ItemCreated`/`AttributeChanged`, `NodeMoved`, `NodeRenamed`, `NodeVisibilityChanged`, and `ItemVisibilityChanged` retain their synchronous correctness duties. `CategoryRenamed`, `FieldDefinitionChanged`, and `FieldOptionLabelChanged` use transactional outbox plus idempotent affected-Item rebuild handlers. Category and option label changes may show their prior label until that job completes; this bounded eventual-consistency window MUST be documented in operator guidance and MUST close after retry or process restart. It cannot expose private values, hide committed source data permanently, or affect mutation atomicity. Container rename remains synchronous for every nested Item breadcrumb visible in default results.
+
+### 3.5 Operational recovery contract for `0.1.0`
+
+Operational backup/restore is distinct from portable interchange. `0.1.0` requires a migration-compatible PostgreSQL dump, a media snapshot/checksum-copy consistent with the database point, non-secret configuration plus release/schema version, separate secure handling of secrets, clean-environment restore commands, and one recorded smoke covering health, sign-in, representative counts, and media availability. PORT-01 and PORT-02 retain canonical portable manifests, hostile-archive dry runs, resumable import/export, checkpoints, full checksums, and application UI for the production baseline.
+
+### 3.6 Convenience QR stretch goal
+
+Convenience QR is non-blocking. If delivered before the `0.1.0` cut, it encodes the canonical authenticated Item/StorageNode route by stable public ID, opens through a native phone camera, and returns the signed-in user to the target. It MUST be described as an authenticated convenience link, not a public or revocable scan token.
+
+This stretch goal does not complete LAB-01. LAB-01 through LAB-03 and ADR-025 remain intact for the Post-validation Backlog: HMAC token derivation, revocation/reissue, key rotation, Code 128, template/batch persistence, server PDF rendering, the physical scan matrix, and the in-app scanner.
+
+### 3.7 Post-validation Backlog and `1.0.0 Production Baseline`
+
+The following original stories retain their acceptance criteria and ADR traceability but are `post-validation / revalidation required`: the unshipped generic typed-filter portion of SRCH-02; SRCH-04 saved views and bulk actions; LAB-01 through LAB-03; PORT-01 and PORT-02; scale certification and non-essential operational dashboards/metrics. PORT-03 remains split: its `0.1.0` operational recovery subset ships first, while quarterly/release hardening and checks tied only to deferred scan/import surfaces remain for the production baseline.
+
+`1.0.0` requires those revalidated stories plus the complete production test, performance, physical-label, portability, release-artifact, and operational gates in sections 20-24. Inventory count sessions, shipments/providers, listings, mandatory S3, read replicas, and a separate worker remain post-`1.0.0` candidates unless a later approved decision changes their horizon.
+
+### 3.8 Audit status governance
+
+Planning audits use `verified complete`, `partially complete`, `not implemented`, `roadmap mismatch`, and `unverified`. `Not implemented` requires affirmative evidence that the promised surface is absent. When evidence is insufficient, use `unverified` and place the item before the owner for a decision; never infer absence from missing audit evidence. Removing an existing completion checkbox requires separate owner confirmation before the documentation diff is merged. Adding a completion checkbox still requires implementation plus all applicable tests, contracts, localization, documentation, and Definition of Done evidence.
+
+### 3.9 Explicit non-goals
 
 - Native mobile applications.
 - Offline-first synchronization or offline mutations.
@@ -554,6 +620,8 @@ Short-lived upload authorization with expected size/type, owner, temp storage ke
 
 ### 8.8 Search read model
 
+**Delivery horizon:** the `item_search` foundation is inherited; the Lean Search subset ships in `0.1.0`; saved-view schema and complete typed-filter/scale certification are post-validation.
+
 #### `item_search`
 
 One row per Item:
@@ -585,6 +653,8 @@ Indexes:
 - Trigram expression indexes for configured contains/similarity fields.
 
 ### 8.9 Labels, scans, and saved views
+
+**Delivery horizon:** this schema is retained for the `1.0.0 Production Baseline` and is `post-validation / revalidation required`. It is not a dependency of `0.1.0`; the optional convenience QR in section 3.6 creates no `entity_codes` contract.
 
 #### `entity_codes`
 
@@ -741,6 +811,8 @@ Rules:
 
 `stale` excludes a row only from relevance mode. It remains visible in permitted catalog/default-search results.
 
+The `CategoryRenamed` and `FieldOptionLabelChanged` rebuilds may expose the previous label until their idempotent job succeeds. This documented eventual-consistency window closes across retry and worker restart; the source transaction still commits its deduplicated outbox record atomically. Node breadcrumbs, visibility-sensitive public projections, and Item mutation projections have no such window.
+
 ### 9.5 Search execution
 
 Default mode:
@@ -838,6 +910,8 @@ Bulk response shape:
 | GET | `/storage-nodes/{publicId}/movements` | Paged append-only history |
 
 ### 10.6 Media, labels, scan, and portability
+
+The media routes are inherited by `0.1.0`. Label, scan, export, and import routes remain `post-validation / revalidation required`; an optional convenience-QR link uses the normal authenticated Item/StorageNode route rather than `/scan/{token}`.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
@@ -1017,6 +1091,8 @@ Contrast, focus visibility, keyboard operation, touch targets, reduced motion, a
 
 ## 13. Labels and scanning
 
+**Delivery horizon:** LAB-01 through LAB-03 and this complete section belong to the Post-validation Backlog and `1.0.0 Production Baseline`. Section 3.6 is the only optional `0.1.0` QR scope and does not satisfy any LAB acceptance criterion.
+
 ### 13.1 Codes
 
 - QR is default and encodes a short HTTPS URL with an opaque token.
@@ -1033,7 +1109,7 @@ Contrast, focus visibility, keyboard operation, touch targets, reduced motion, a
 
 Label PDFs are rendered server-side from a versioned template snapshot. Required template parameters: page size, label width/height, margins, row/column gap, code type, error correction, text fields, font size, and safe padding.
 
-The MVP physical test matrix includes:
+The `1.0.0 Production Baseline` physical test matrix includes:
 
 - A4 grid and 50x30 mm labels.
 - QR and Code 128.
@@ -1072,11 +1148,15 @@ portability.import-apply-v1
 media.cleanup-v1
 ```
 
+`0.1.0` registers and runs the two media types plus the two search rebuild types. Label and portability job declarations stay reserved, but their handlers and complete per-type contracts move with LAB-02, PORT-01, and PORT-02 to the Post-validation Backlog.
+
 P1 adds carrier tracking jobs. P2 adds marketplace synchronization jobs only after a provider contract is approved.
 
 ## 15. Portability, backup, and restore
 
 ### 15.1 Portable archive
+
+**Delivery horizon:** PORT-01 and PORT-02 are `post-validation / revalidation required` and target the `1.0.0 Production Baseline`.
 
 Use a ZIP archive with this logical layout:
 
@@ -1106,6 +1186,8 @@ No import result is declared complete until search projections are rebuilt.
 
 ### 15.2 Operational backup
 
+**Delivery horizon:** the clean recovery subset in section 3.5 blocks `0.1.0`; quarterly cadence, deferred scan/import verification, and broader release hardening remain production-baseline work.
+
 Operational backup is separate from portable export:
 
 - PostgreSQL dump in a versioned backup directory.
@@ -1123,6 +1205,7 @@ Operational backup is separate from portable export:
 | View public listed cards | Configurable | Yes | Yes | Yes | Yes |
 | View authenticated fields | No | Yes | Yes | Yes | Yes |
 | View private fields/path | No | No | No | Yes | Yes |
+| Use `0.1.0` Lean Search | No | Yes | Yes | Yes | Yes |
 | Create/edit items | No | No | Yes | Yes | Yes |
 | Move items/nodes | No | No | Yes | Yes | Yes |
 | Manage schema | No | No | No | Yes | Yes |
@@ -1132,6 +1215,8 @@ Operational backup is separate from portable export:
 | Audit/job administration | No | No | No | Yes | By permission* |
 
 Owner is the highest installation role and retains every capability. `*` Admin permissions are installation-configurable and never allow an Admin to delete the last Owner, remove the last Owner's role, assume Owner-only authority, or bypass explicit Owner confirmation for a last-Owner change.
+
+For `0.1.0`, Viewer and Editor search the same authenticated surface and receive only public/authenticated vectors, attributes, locations, filters, and counts. Owner and Admin use that surface and may additionally invoke the separately authorized exact private-EAV lookup; private values never enter shared vectors, facets, or counts. Public has no Search API or UI surface in `0.1.0`: unauthenticated requests are rejected server-side and the public route is absent or inaccessible. Tests MUST cover private-value non-inference on the Viewer and Editor surfaces, authorization of the Owner/Admin exact lookup, and negative unavailability for Public. Any later public-search surface becomes a newly shipped lower-role surface and inherits the complete SRCH-03 negative suite.
 
 ### 16.2 Visibility behavior
 
@@ -1306,7 +1391,9 @@ Do not use entity IDs, tokens, item names, or user emails as metric labels.
 
 SQLite, mocks, or in-memory repositories must not replace PostgreSQL in integration tests for tree, JSONB, search, transaction, or queue behavior.
 
-### 20.2 Critical acceptance tests
+### 20.2 Production-baseline critical acceptance tests
+
+The original 24-test list remains the complete `1.0.0 Production Baseline` gate:
 
 - Reject moving a node into its own descendant without partial updates.
 - Serialize opposing concurrent moves and retain an acyclic connected tree.
@@ -1333,7 +1420,20 @@ SQLite, mocks, or in-memory repositories must not replace PostgreSQL in integrat
 - Reject an incorrect generated-client runtime type before mutation and reject it again at backend DTO validation.
 - Start in English; switch to complete Ukrainian UI without restart.
 
-### 20.3 Performance acceptance dataset
+### 20.3 `0.1.0` critical-test ownership
+
+`0.1.0` requires every critical acceptance test owned by a shipped story or exercised dependency. Tests owned only by deferred stories move with those stories; no integrity or privacy test may be dropped merely because the full production gate is deferred.
+
+| Disposition | Critical tests |
+| --- | --- |
+| Required for `0.1.0` | Own-descendant move rejection; opposing-move serialization; full subtree path/depth/root update; container rename updates nested Item breadcrumbs; stale rows remain safely listable during rebuild; Prisma source/projection/outbox commit and rollback; Kysely node move uses the supplied transaction; Prisma Item move atomically updates destination/history/audit/projection/outbox; archived/missing destination rollback; Item/node race serialization; multiselect scalar-row integrity; configuration precedence; public-projection removal after visibility changes; private-value non-inference on the shipped Viewer and Editor Search surfaces; negative Public Search unavailability; Owner/Admin exact-private-lookup authorization; unlisted exclusion/direct-access behavior on every shipped relevant surface; generated-client runtime validation; English/Ukrainian switching |
+| Conditional on shipped scope | StorageNode attribute rollback only if node attributes ship; public-ID/convenience-QR rename only if convenience QR ships |
+| Split | Reindex restart/idempotency is required; import restart remains with PORT-02 |
+| Deferred with owner story | Label-token reprint/revocation/key rotation; bulk mixed-outcome replay; portable export/import round trip |
+
+If another test is exercised by a `0.1.0` path, it joins the required subset. This table is a minimum, not a waiver.
+
+### 20.4 Performance acceptance dataset
 
 Reference dataset:
 
@@ -1383,19 +1483,39 @@ Run in this order where dependencies allow parallel execution:
 - Fresh-install smoke test and upgrade-from-previous-release test.
 - Backup/restore drill for release candidates containing migration changes.
 
+### 21.3 Release gates by horizon
+
+`0.1.0 Usable Validation Release` requires:
+
+- the implementation audit and approved checkbox corrections;
+- green changed-area checks for the inherited Foundation/Catalog/Media baseline;
+- clean compact Compose startup, Owner sign-in, and English/Ukrainian switching;
+- Item create/edit with custom fields and image;
+- the section 3.3 Storage loop and its mandatory integrity tests;
+- the section 3.4 Lean Search scope, all eight invalidator paths, role matrix, and restart-safe reindex;
+- current permitted location in Item/search results with no committed stale breadcrumb after node or Item moves;
+- no private-value or exact-path inference through any shipped route;
+- clean disposable restore of PostgreSQL, media, and non-secret configuration with secrets handled separately;
+- all required/conditional section 20.3 tests that apply; and
+- seven elapsed calendar days of representative use with recorded findings and known limitations.
+
+Convenience QR is absent from this blocking gate.
+
+`1.0.0 Production Baseline` additionally requires every revalidated post-validation story, all 24 section 20.2 tests, the section 20.4 performance gates, physical label/scan certification, portable interchange round trip, production release artifacts, and the full operational hardening contract.
+
 ## 22. Implementation sequence
 
-| Stage | Result | Estimate | Exit gate |
+| Horizon / step | Result | Forecast | Exit gate |
 | --- | --- | ---: | --- |
-| 0. Discovery | Defaults, reference fixtures, label proof, hardware profile | 1 week | Deferred product choices cannot block schema v1 |
-| 1. Foundation | Monorepo, Vue/Nest, PostgreSQL, auth, i18n, Docker, CI | 3-4 weeks | Clean deploy, sign-in, migrations, generated contracts |
-| 2. Core catalog | Items, fields, schema forms, display names, media/HEIC | 5-7 weeks | Versioned item aggregate works in en/uk |
-| 3. Storage | `ltree` tree, moves, breadcrumbs, history, container cards | 3-4 weeks | Concurrency and cycle tests pass |
-| 4. Find | `item_search`, visibility, filters, cursors, saved views, bulk | 4-6 weeks | 100k dataset search and privacy tests pass |
-| 5. Labels and scan | QR, Code 128, templates, PDF, scanner | 3-4 weeks | Physical label matrix passes |
-| 6. Portability | Export/import, backup docs, restore and round trip | 3-4 weeks | Fresh-instance round trip passes |
+| Implemented Foundation | Verified Stages 0-2 and their shared infrastructure | Complete at audited baseline | Existing changed-area checks stay green |
+| `0.1.0` / Storage | Nested tree, atomic node/Item moves, breadcrumbs, history | About 3-4 person-weeks | Section 3.3 correctness and owned tests pass |
+| `0.1.0` / Lean Search | Authenticated role-safe search, shipped filters, location, invalidations/rebuild | Included in 7-11 total; primary uncertainty | Sections 3.4, 16, and 20.3 pass |
+| `0.1.0` / Recovery | Operational backup/restore into a clean environment | Included in 7-11 total | Recorded restore smoke passes |
+| `0.1.0` / Dogfooding | 50-100 real Items and representative use | At least 7 elapsed calendar days | Findings and next candidates recorded |
+| Post-validation | Saved views/bulk, Labels/Scanner, portable interchange, scale and broader hardening | Re-estimate after validation | Original story gates retained and revalidated |
+| `1.0.0` | Complete Production Baseline | Re-estimate from evidence | Section 21.3 production gate passes |
 
-Stages 0-6 total 22-30 weeks for one experienced full-time developer. Each stage ends in a deployable increment.
+The remaining `0.1.0` forecast is 7-11 person-weeks and roughly 8-12 calendar weeks for one experienced full-time developer, depending on overlap between dogfooding and fixes. Re-estimate after the first Search schema/query/invalidation vertical slice.
 
 ## 23. Epic and user-story backlog
 
@@ -1548,6 +1668,8 @@ Acceptance criteria:
 
 #### STO-01 Build and browse the storage tree
 
+**Delivery horizon:** `0.1.0`, except StorageNode dynamic attributes may move only as their complete contract to the Post-validation Backlog.
+
 As a user, I can model Warehouse -> Box -> Case with arbitrary supported depth.
 
 Acceptance criteria:
@@ -1558,6 +1680,8 @@ Acceptance criteria:
 - [ ] Exact path is private by default.
 
 #### STO-02 Move a node atomically
+
+**Delivery horizon:** blocking for `0.1.0`.
 
 As an Editor, I can move a subtree without cycles or partial updates.
 
@@ -1570,6 +1694,8 @@ Acceptance criteria:
 - [ ] Concurrent opposing moves retain a valid tree.
 
 #### STO-03 Move an Item and show history
+
+**Delivery horizon:** blocking for `0.1.0`; it owns the destination-path/root-lock obligation that could not be completed before STO-01.
 
 As an Editor, I can move an Item to a container and see its append-only history.
 
@@ -1584,6 +1710,8 @@ Acceptance criteria:
 
 #### SRCH-01 Maintain the search projection
 
+**Delivery horizon:** blocking for `0.1.0`; all eight invalidator paths and the shipped rebuild contracts are included.
+
 As the system, I maintain one safe `item_search` row for every active Item.
 
 Acceptance criteria:
@@ -1594,6 +1722,8 @@ Acceptance criteria:
 - [ ] Rebuild is idempotent and resumable.
 
 #### SRCH-02 Search and filter items
+
+**Delivery horizon:** split. Authenticated text search, category/status/location filters, stable cursors, mobile UI, and filter types exposed by the `0.1.0` API/UI block validation. Remaining generic typed filters, extensive relevance tuning, and 100k certification are `post-validation / revalidation required` under this same story.
 
 As a user, I can search all permitted fields and combine typed filters.
 
@@ -1607,6 +1737,8 @@ Acceptance criteria:
 
 #### SRCH-03 Enforce visibility without inference leaks
 
+**Delivery horizon:** blocking for every Search surface shipped in `0.1.0`. Viewer and Editor receive the full lower-role negative suite; Public Search is disabled and receives a negative availability test. The original Public search criterion below remains for revalidation if that production surface ships.
+
 As an Owner, I know lower roles cannot infer private values.
 
 Acceptance criteria:
@@ -1618,6 +1750,8 @@ Acceptance criteria:
 
 #### SRCH-04 Save views and perform bulk actions
 
+**Delivery horizon:** `post-validation / revalidation required`; original acceptance criteria are retained verbatim.
+
 As an Editor, I can save a search and apply an action to many Items safely.
 
 Acceptance criteria:
@@ -1628,9 +1762,42 @@ Acceptance criteria:
 - [ ] Response separates succeeded, conflicted, and failed.
 - [ ] Retry with the same idempotency key does not duplicate successful effects.
 
+### EPIC VAL - Validation release
+
+#### QR-CONV-01 Add an authenticated convenience QR
+
+**Delivery horizon:** non-blocking `0.1.0` stretch goal. This story is independent of LAB-01 and creates no scan-token contract.
+
+As an authenticated user, I can open a permitted Item or StorageNode route from a convenience QR.
+
+Acceptance criteria:
+
+- [ ] A native phone camera opens the canonical route.
+- [ ] Authentication returns the user to the requested permitted target.
+- [ ] The QR remains valid after rename because the stable public ID is unchanged.
+- [ ] No LAB-01 token, generation, revocation, key-ring, Code 128, batch, or scanner behavior is claimed.
+
+#### VAL-01 Dogfood the blocking inventory loop
+
+**Delivery horizon:** blocking calendar gate after Storage, Lean Search, and operational recovery are deployable.
+
+As the installation owner, I can validate the core hypothesis with representative real inventory before `0.1.0` is declared usable.
+
+Acceptance criteria:
+
+- [ ] Enter 50-100 representative real Items across several categories.
+- [ ] Create at least three storage levels.
+- [ ] Move Items and at least one container.
+- [ ] Find Items by name, delivered searchable values, and location.
+- [ ] Perform and record one clean restore smoke.
+- [ ] Use the installation for at least seven elapsed calendar days.
+- [ ] Record observed friction and rank the next feature candidates.
+
 ### EPIC LAB - Labels and scan
 
 #### LAB-01 Issue stable codes
+
+**Delivery horizon:** `post-validation / revalidation required`; optional convenience QR does not satisfy this story.
 
 As an Editor, I can issue/revoke QR and Code 128 codes for Items and containers.
 
@@ -1646,6 +1813,8 @@ Acceptance criteria:
 
 #### LAB-02 Render printable batches
 
+**Delivery horizon:** `post-validation / revalidation required`.
+
 As a user, I can select entities, choose a template, and download a repeatable label PDF.
 
 Acceptance criteria:
@@ -1656,6 +1825,8 @@ Acceptance criteria:
 - [ ] Physical scan test matrix passes.
 
 #### LAB-03 Scan on mobile
+
+**Delivery horizon:** `post-validation / revalidation required`.
 
 As a mobile user, I can scan a QR/barcode and open the permitted entity card.
 
@@ -1670,6 +1841,8 @@ Acceptance criteria:
 
 #### PORT-01 Export a portable archive
 
+**Delivery horizon:** `post-validation / revalidation required`.
+
 As an Owner, I can export database content and media into a versioned archive.
 
 Acceptance criteria:
@@ -1681,6 +1854,8 @@ Acceptance criteria:
 
 #### PORT-02 Validate and apply an import
 
+**Delivery horizon:** `post-validation / revalidation required`.
+
 As an Owner, I can inspect a dry-run report before importing.
 
 Acceptance criteria:
@@ -1691,6 +1866,8 @@ Acceptance criteria:
 - [ ] Fresh-instance counts, ordering, relations, and checksums match source.
 
 #### PORT-03 Back up and restore operations
+
+**Delivery horizon:** split. The section 3.5 operational recovery subset blocks `0.1.0`; production cadence and checks that require deferred scan/import surfaces remain post-validation.
 
 As an operator, I can restore the installation after database or host loss.
 

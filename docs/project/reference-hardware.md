@@ -2,11 +2,11 @@
 
 Stage 0 (HND-03) record of the reference hardware, storage profile, and
 performance acceptance dataset used by the release performance gates. Targets
-from blueprint section 20.3 become release gates only after the reference
+from blueprint section 20.4 become release gates only after the reference
 hardware and test procedure are recorded here and confirmed on the actual
 machine used for a release candidate.
 
-## Warm homelab reference targets (blueprint 20.3)
+## Warm homelab reference targets (blueprint 20.4)
 
 | Metric | Target |
 | --- | --- |
@@ -18,7 +18,7 @@ machine used for a release candidate.
 These are warm-cache targets on the recorded reference machine. A measurement is
 valid only when the dataset below and the recorded procedure are used.
 
-## Performance acceptance dataset (blueprint 20.3)
+## Performance acceptance dataset (blueprint 20.4)
 
 The dataset is generated (not committed as a large binary) by the generator that
 SRCH-02 owns; the small review seeds live in `db/fixtures/`.
