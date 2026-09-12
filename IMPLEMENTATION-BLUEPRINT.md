@@ -1719,10 +1719,10 @@ As an Editor, I can move an Item to a container and see its append-only history.
 
 Acceptance criteria:
 
-- [ ] Item destination and movement record commit atomically.
-- [ ] Item breadcrumb is immediately correct.
-- [ ] Movement history cannot be edited by normal roles.
-- [ ] Conflict/version behavior matches Item aggregate policy.
+- [x] Item destination and movement record commit atomically.
+- [x] Item breadcrumb is immediately correct.
+- [x] Movement history cannot be edited by normal roles.
+- [x] Conflict/version behavior matches Item aggregate policy.
 
 ### EPIC SRCH - Search and bulk work
 

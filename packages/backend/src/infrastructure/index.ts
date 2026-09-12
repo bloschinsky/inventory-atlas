@@ -10,6 +10,8 @@ export {
   type MovementHistoryPort,
   type MovementRecord,
   type SearchProjectionPort,
+  type SearchProjectionWriteResult,
+  type ResolvedSearchDestination,
   type StorageProjectionPort,
   StorageProjectionDestinationError,
   type AuditPort,

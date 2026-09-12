@@ -686,23 +686,23 @@ Suggested pull requests:
 
 Tasks:
 
-- [ ] Require the expected Item version and validate move authorization.
-- [ ] Use the Prisma source transaction and transaction-aware movement, projection, audit, outbox, and idempotency ports.
-- [ ] Acquire the destination root advisory lock inside the projection adapter.
-- [ ] Resolve a destination path through `SearchProjectionPort` under the shared root lock, including only writable destination path/visibility/root data through the named projection exception. This task moved from CAT-03 because STO-01 supplies the destination aggregate.
-- [ ] Reject missing/archived destinations by rolling back the complete mutation.
-- [ ] Persist before/after node and path snapshots in append-only movement history.
-- [ ] Increment Item version and return a new ETag.
-- [ ] Expose role-filtered, paginated movement history without normal-role mutation endpoints.
-- [ ] Build Item move control, destination picker, immediate breadcrumb update, and history timeline.
-- [ ] Test concurrent node move/rename versus Item move, stale versions, authorization, and forced port rollback.
+- [x] Require the expected Item version and validate move authorization.
+- [x] Use the Prisma source transaction and transaction-aware movement, projection, audit, outbox, and idempotency ports.
+- [x] Acquire the destination root advisory lock inside the projection adapter.
+- [x] Resolve a destination path through `SearchProjectionPort` under the shared root lock, including only writable destination path/visibility/root data through the named projection exception. This task moved from CAT-03 because STO-01 supplies the destination aggregate.
+- [x] Reject missing/archived destinations by rolling back the complete mutation.
+- [x] Persist before/after node and path snapshots in append-only movement history.
+- [x] Increment Item version and return a new ETag.
+- [x] Expose role-filtered, paginated movement history without normal-role mutation endpoints.
+- [x] Build Item move control, destination picker, immediate breadcrumb update, and history timeline.
+- [x] Test concurrent node move/rename versus Item move, stale versions, authorization, and forced port rollback.
 
 Acceptance criteria (verbatim from the approved blueprint):
 
-- [ ] Item destination and movement record commit atomically.
-- [ ] Item breadcrumb is immediately correct.
-- [ ] Movement history cannot be edited by normal roles.
-- [ ] Conflict/version behavior matches Item aggregate policy.
+- [x] Item destination and movement record commit atomically.
+- [x] Item breadcrumb is immediately correct.
+- [x] Movement history cannot be edited by normal roles.
+- [x] Conflict/version behavior matches Item aggregate policy.
 
 ### Stage 3 exit checklist
 

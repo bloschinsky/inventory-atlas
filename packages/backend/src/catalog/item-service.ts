@@ -5,6 +5,7 @@ import type {
   MovementHistoryPort,
   OutboxPort,
   SearchProjectionPort,
+  SearchProjectionWriteResult,
 } from '../infrastructure/index.js';
 import {
   requestFingerprint,
@@ -46,6 +47,7 @@ import {
   planItemInvalidation,
   type ItemInvalidatorEvent,
 } from './item-invalidation.js';
+import type { ItemMovementPage, ItemMovementReader } from './item-movement-repository.js';
 
 export interface CreateItemInput {
   categoryId: string;
@@ -87,13 +89,23 @@ export interface ItemUpdateMetadata {
   idempotencyKey?: string;
   correlationId?: string;
   requestId?: string;
+  operation?: 'update' | 'move';
+  movementReason?: string;
 }
 
 export type CreateItemOutcome =
   | { replayed: false; status: 201; item: CreatedItem }
   | { replayed: true; status: number; item: CreatedItem };
 
-export type UpdatedItem = CreatedItem;
+export interface UpdatedItem extends CreatedItem {
+  storageNodeId: string | null;
+  locationPath: string | null;
+}
+
+export interface MoveItemInput {
+  storageNodeId: string | null;
+  reason?: string;
+}
 
 export interface UpdateItemOutcome {
   replayed: boolean;
@@ -112,6 +124,7 @@ export interface ItemDetail {
   categoryId: string;
   lifecycleStatusId: string;
   storageNodeId: string | null;
+  locationPath: string | null;
   visibility: ItemVisibility;
   version: number;
   tags: string[];
@@ -189,6 +202,7 @@ export class ItemService {
       CatalogDictionaryRepository,
       'findCategoryById' | 'findLifecycleStatusById'
     >,
+    private readonly movementHistory: ItemMovementReader,
     private readonly now: () => Date = () => new Date(),
   ) {}
 
@@ -244,8 +258,20 @@ export class ItemService {
           assignments,
           fallback: normalized.displayName,
         });
-        const created = await this.items.createCore(transaction, { ...normalized, displayName });
         const context = { kind: 'prisma' as const, trx: transaction };
+        const destination = normalized.storageNodeId
+          ? await this.ports.search.resolveDestination(
+              context,
+              normalized.storageNodeId,
+              normalized.visibility,
+              can(actor.role, 'viewPrivateFields'),
+            )
+          : null;
+        const created = await this.items.createCore(transaction, {
+          ...normalized,
+          displayName,
+          storageNodeId: destination?.storageNodeId ?? null,
+        });
         await this.items.replaceTags(transaction, created.id, normalized.tags);
         await this.ports.attributes.replace(context, {
           owner: { kind: 'item', id: created.id },
@@ -257,7 +283,7 @@ export class ItemService {
         const discoverable =
           created.visibility === 'public' || created.visibility === 'authenticated';
         const publiclyDiscoverable = created.visibility === 'public';
-        await this.ports.search.writeSync(context, {
+        const projection = await this.ports.search.writeSync(context, {
           itemId: created.id,
           displayName: created.displayName,
           description: created.description,
@@ -273,6 +299,7 @@ export class ItemService {
           attrs: discoverable ? projected.attrs : {},
           publicAttrs: publiclyDiscoverable ? projected.publicAttrs : {},
           visibility: created.visibility,
+          allowPrivateDestination: can(actor.role, 'viewPrivateFields'),
           itemUpdatedAt: created.updatedAt,
           indexedAt: createdAt,
         });
@@ -303,8 +330,8 @@ export class ItemService {
             storageNodeId: null,
             fromNodeId: null,
             toNodeId: created.storageNodeId,
-            fromPathSnapshot: null,
-            toPathSnapshot: null,
+            fromPathSnapshot: projection.previousPathText,
+            toPathSnapshot: projection.pathText,
             actorUserId: actor.id,
             occurredAt: createdAt,
             correlationId: metadata.correlationId ?? metadata.requestId ?? created.publicId,
@@ -355,6 +382,9 @@ export class ItemService {
     const privileged = can(actor.role, 'viewPrivateFields');
     if (!item || item.archivedAt || (item.visibility === 'private' && !privileged))
       throw new ItemAccessError('ITEM_NOT_FOUND', 'The Item does not exist.');
+    const location = await this.movementHistory.locationFor(item.id, privileged);
+    if (!location.accessible)
+      throw new ItemAccessError('ITEM_NOT_FOUND', 'The Item does not exist.');
     const definitions = await this.fields.listDefinitions({
       scope: 'item',
       categoryId: item.categoryId,
@@ -373,13 +403,64 @@ export class ItemService {
       description: item.description,
       categoryId: item.categoryId,
       lifecycleStatusId: item.lifecycleStatusId,
-      storageNodeId: item.storageNodeId,
+      storageNodeId: location.storageNodePublicId,
+      locationPath: location.path,
       visibility: item.visibility,
       version: item.version,
       tags,
       attributes: visibleAttributes(definitions, assignments, privileged),
       updatedAt: item.updatedAt.toISOString(),
     };
+  }
+
+  async move(
+    actor: SessionActor,
+    publicId: string,
+    expectedVersion: number,
+    input: MoveItemInput,
+    metadata: ItemMutationMetadata,
+  ): Promise<UpdateItemOutcome> {
+    if (!can(actor.role, 'moveInventory'))
+      throw new ItemAccessError('ITEM_UPDATE_FORBIDDEN', 'The actor cannot move Items.');
+    if (!metadata.idempotencyKey.trim())
+      throw new ItemCreateError(
+        'ITEM_IDEMPOTENCY_KEY_INVALID',
+        'Idempotency-Key must contain between 1 and 200 characters.',
+      );
+    const reason = normalizeMovementReason(input.reason);
+    return this.update(
+      actor,
+      publicId,
+      expectedVersion,
+      { storageNodeId: input.storageNodeId },
+      {
+        ...metadata,
+        operation: 'move',
+        ...(reason ? { movementReason: reason } : {}),
+      },
+    );
+  }
+
+  async movements(
+    actor: SessionActor,
+    publicId: string,
+    query: { limit?: number; cursor?: string | null } = {},
+  ): Promise<ItemMovementPage> {
+    if (!can(actor.role, 'viewPublicCards'))
+      throw new ItemAccessError('ITEM_NOT_FOUND', 'The Item does not exist.');
+    const item = await this.items.findByPublicId(publicId);
+    const privileged = can(actor.role, 'viewPrivateFields');
+    if (!item || item.archivedAt || (item.visibility === 'private' && !privileged))
+      throw new ItemAccessError('ITEM_NOT_FOUND', 'The Item does not exist.');
+    const location = await this.movementHistory.locationFor(item.id, privileged);
+    if (!location.accessible)
+      throw new ItemAccessError('ITEM_NOT_FOUND', 'The Item does not exist.');
+    return this.movementHistory.list(
+      item.id,
+      requireMovementLimit(query.limit ?? 25),
+      query.cursor ?? null,
+      privileged,
+    );
   }
 
   /**
@@ -405,7 +486,7 @@ export class ItemService {
       return {
         replayed: true,
         status: reservation.responseStatus,
-        item: replayedItem(reservation.responseBody),
+        item: replayedUpdatedItem(reservation.responseBody),
         invalidators: [],
       };
 
@@ -416,11 +497,37 @@ export class ItemService {
         const current = await this.items.findByPublicId(publicId, transaction);
         if (!current || current.archivedAt)
           throw new ItemAccessError('ITEM_NOT_FOUND', 'The Item does not exist.');
+        if (current.visibility === 'private' && !privileged)
+          throw new ItemAccessError('ITEM_NOT_FOUND', 'The Item does not exist.');
+        if (normalized.visibility === 'private' && !privileged)
+          throw new ItemAccessError(
+            'ITEM_UPDATE_FORBIDDEN',
+            'The actor cannot make an Item private.',
+          );
         const categoryId = normalized.categoryId ?? current.categoryId;
         const definitions = await this.fields.listDefinitions({ scope: 'item', categoryId });
         const stored = await this.ports.attributes.read(context, { kind: 'item', id: current.id });
         if (current.version !== version)
           throw conflictFor(current, definitions, stored, normalized, privileged);
+
+        const destination =
+          normalized.storageNodeId === undefined || normalized.storageNodeId === null
+            ? null
+            : await this.ports.search.resolveDestination(
+                context,
+                normalized.storageNodeId,
+                normalized.visibility ?? current.visibility,
+                privileged,
+              );
+        if (
+          metadata.operation === 'move' &&
+          (destination?.storageNodeId ?? null) === current.storageNodeId
+        )
+          throw new ItemPolicyError(
+            'ITEM_STORAGE_DESTINATION_UNAVAILABLE',
+            'storageNodeId',
+            'The Item is already at that destination.',
+          );
 
         const submitted =
           normalized.attributes === undefined
@@ -438,7 +545,13 @@ export class ItemService {
           transaction,
           current.id,
           version,
-          { ...coreChanges(normalized), displayName },
+          {
+            ...coreChanges(normalized),
+            ...(normalized.storageNodeId === undefined
+              ? {}
+              : { storageNodeId: destination?.storageNodeId ?? null }),
+            displayName,
+          },
           updatedAt,
         );
         if (!updated) {
@@ -461,10 +574,17 @@ export class ItemService {
           coreProjectionChanged: projectionColumnsChanged(current, updated),
           visibilityChanged: current.visibility !== updated.visibility,
         });
-        await this.writeProjection(context, updated, definitions, assignments, updatedAt);
+        const projection = await this.writeProjection(
+          context,
+          updated,
+          definitions,
+          assignments,
+          updatedAt,
+          privileged,
+        );
         await this.ports.audit.record(context, {
           actorId: actor.id,
-          action: 'item.updated',
+          action: metadata.operation === 'move' ? 'item.moved' : 'item.updated',
           entityType: 'item',
           entityId: updated.id,
           ...(metadata.correlationId ? { correlationId: metadata.correlationId } : {}),
@@ -480,15 +600,17 @@ export class ItemService {
             storageNodeId: null,
             fromNodeId: current.storageNodeId,
             toNodeId: updated.storageNodeId,
-            fromPathSnapshot: null,
-            toPathSnapshot: null,
+            fromPathSnapshot: projection.previousPathText,
+            toPathSnapshot: projection.pathText,
             actorUserId: actor.id,
+            ...(metadata.movementReason ? { reason: metadata.movementReason } : {}),
             occurredAt: updatedAt,
             correlationId: metadata.correlationId ?? metadata.requestId ?? updated.publicId,
           });
         }
         await this.ports.outbox.enqueue(context, {
-          topic: 'catalog.item-updated.v1',
+          topic:
+            metadata.operation === 'move' ? 'catalog.item-moved.v1' : 'catalog.item-updated.v1',
           aggregateType: 'item',
           aggregateId: updated.id,
           payload: {
@@ -496,7 +618,7 @@ export class ItemService {
             version: updated.version,
             invalidators: [...plan.events],
           },
-          deduplicationKey: `item-updated:${updated.id}:${updated.version}`,
+          deduplicationKey: `${metadata.operation === 'move' ? 'item-moved' : 'item-updated'}:${updated.id}:${updated.version}`,
           createdAt: updatedAt,
         });
         for (const topic of plan.asynchronousTopics) {
@@ -509,7 +631,7 @@ export class ItemService {
             createdAt: updatedAt,
           });
         }
-        const response = responseFor(updated);
+        const response = updatedResponseFor(updated, projection, privileged);
         if (reservation?.kind === 'acquired') {
           await this.ports.idempotency.complete(context, {
             recordId: reservation.recordId,
@@ -596,7 +718,7 @@ export class ItemService {
       );
     const reservation = await this.idempotencyRecords.reserve({
       actorId: actor.id,
-      scope: 'catalog.items.update',
+      scope: metadata.operation === 'move' ? 'catalog.items.move' : 'catalog.items.update',
       key: idempotencyKey,
       fingerprint: requestFingerprint({ publicId, expectedVersion, ...normalized }),
     });
@@ -619,11 +741,12 @@ export class ItemService {
     definitions: readonly FieldDefinitionRecord[],
     assignments: readonly AttributeValueAssignment[],
     indexedAt: Date,
-  ): Promise<void> {
+    allowPrivateDestination: boolean,
+  ): Promise<SearchProjectionWriteResult> {
     const projected = projectionFor(definitions, assignments);
     const discoverable = item.visibility === 'public' || item.visibility === 'authenticated';
     const publiclyDiscoverable = item.visibility === 'public';
-    await this.ports.search.writeSync(context, {
+    return this.ports.search.writeSync(context, {
       itemId: item.id,
       displayName: item.displayName,
       description: item.description,
@@ -639,6 +762,7 @@ export class ItemService {
       attrs: discoverable ? projected.attrs : {},
       publicAttrs: publiclyDiscoverable ? projected.publicAttrs : {},
       visibility: item.visibility,
+      allowPrivateDestination,
       itemUpdatedAt: item.updatedAt,
       indexedAt,
     });
@@ -657,12 +781,6 @@ function normalizeInput(input: CreateItemInput): Required<
       'ITEM_DISPLAY_NAME_REQUIRED',
       'displayName',
       'Item display name is required.',
-    );
-  if (input.storageNodeId)
-    throw new ItemPolicyError(
-      'ITEM_STORAGE_DESTINATION_UNAVAILABLE',
-      'storageNodeId',
-      'Storage destinations become available with STO-01.',
     );
   return {
     categoryId: input.categoryId,
@@ -755,6 +873,19 @@ function responseFor(item: {
   };
 }
 
+function updatedResponseFor(
+  item: ItemCoreRecord,
+  projection: SearchProjectionWriteResult,
+  privileged: boolean,
+): UpdatedItem {
+  return {
+    ...responseFor(item),
+    storageNodeId: projection.storageNodePublicId,
+    locationPath:
+      privileged || projection.effectiveVisibility !== 'private' ? projection.pathText : null,
+  };
+}
+
 function replayedItem(value: Record<string, unknown>): CreatedItem {
   if (
     typeof value.publicId !== 'string' ||
@@ -768,6 +899,20 @@ function replayedItem(value: Record<string, unknown>): CreatedItem {
     slug: value.slug,
     displayName: value.displayName,
     version: value.version,
+  };
+}
+
+function replayedUpdatedItem(value: Record<string, unknown>): UpdatedItem {
+  const item = replayedItem(value);
+  if (
+    (value.storageNodeId !== null && typeof value.storageNodeId !== 'string') ||
+    (value.locationPath !== null && typeof value.locationPath !== 'string')
+  )
+    throw new Error('Stored idempotency response is invalid.');
+  return {
+    ...item,
+    storageNodeId: value.storageNodeId,
+    locationPath: value.locationPath,
   };
 }
 
@@ -794,12 +939,6 @@ function requireExpectedVersion(value: number): number {
 }
 
 function normalizeUpdateInput(input: UpdateItemInput): NormalizedUpdate {
-  if (input.storageNodeId)
-    throw new ItemPolicyError(
-      'ITEM_STORAGE_DESTINATION_UNAVAILABLE',
-      'storageNodeId',
-      'Storage destinations become available with STO-01.',
-    );
   const normalized: NormalizedUpdate = {};
   if (input.categoryId !== undefined) normalized.categoryId = input.categoryId;
   if (input.lifecycleStatusId !== undefined) normalized.lifecycleStatusId = input.lifecycleStatusId;
@@ -820,6 +959,28 @@ function normalizeUpdateInput(input: UpdateItemInput): NormalizedUpdate {
   if (input.tags !== undefined) normalized.tags = input.tags;
   if (input.attributes !== undefined) normalized.attributes = input.attributes;
   return normalized;
+}
+
+function normalizeMovementReason(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const normalized = value.trim();
+  if (!normalized || normalized.length > 512)
+    throw new ItemPolicyError(
+      'ITEM_MOVE_REASON_INVALID',
+      'reason',
+      'Move reason must contain between 1 and 512 characters.',
+    );
+  return normalized;
+}
+
+function requireMovementLimit(value: number): number {
+  if (!Number.isSafeInteger(value) || value < 1 || value > 100)
+    throw new ItemPolicyError(
+      'ITEM_MOVEMENT_LIMIT_INVALID',
+      'limit',
+      'Movement-history limit must be between 1 and 100.',
+    );
+  return value;
 }
 
 /** Splits the core columns out of a normalized update; tags and values have their own ports. */
@@ -961,7 +1122,6 @@ function conflictFor(
     ['displayName', current.displayName],
     ['description', current.description],
     ['visibility', current.visibility],
-    ['storageNodeId', current.storageNodeId],
   ];
   for (const [field, currentValue] of core) {
     const submittedValue = submitted[field];

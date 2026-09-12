@@ -24,12 +24,21 @@ export {
   type ItemCreateErrorCode,
   type ItemDetail,
   type ItemMutationMetadata,
+  type MoveItemInput,
   type ItemUpdateMetadata,
   type SafeDiffEntry,
   type UpdatedItem,
   type UpdateItemInput,
   type UpdateItemOutcome,
 } from './item-service.js';
+export {
+  ItemMovementCursorError,
+  ItemMovementRepository,
+  type ItemLocationProjection,
+  type ItemMovementEntry,
+  type ItemMovementPage,
+  type ItemMovementReader,
+} from './item-movement-repository.js';
 export {
   creationInvalidation,
   itemInvalidatorEvents,

@@ -66,15 +66,38 @@ export interface ItemSearchProjection {
   attrs: Record<string, unknown>;
   publicAttrs: Record<string, unknown>;
   visibility: 'public' | 'authenticated' | 'private' | 'unlisted';
+  allowPrivateDestination: boolean;
   itemUpdatedAt: Date;
   indexedAt: Date;
 }
 
+export interface SearchProjectionWriteResult {
+  previousPathText: string | null;
+  storageNodePublicId: string | null;
+  pathText: string | null;
+  publicPathText: string | null;
+  effectiveVisibility: ItemSearchProjection['visibility'];
+}
+
 export interface SearchProjectionPort {
+  resolveDestination<Database>(
+    context: TransactionContext<Database>,
+    storageNodePublicId: string,
+    itemVisibility: ItemSearchProjection['visibility'],
+    allowPrivateDestination: boolean,
+  ): Promise<ResolvedSearchDestination>;
   writeSync<Database>(
     context: TransactionContext<Database>,
     projection: ItemSearchProjection,
-  ): Promise<void>;
+  ): Promise<SearchProjectionWriteResult>;
+}
+
+export interface ResolvedSearchDestination {
+  storageNodeId: string;
+  storageNodePublicId: string;
+  pathText: string;
+  publicPathText: string;
+  visibility: ItemSearchProjection['visibility'];
 }
 
 /** Storage-triggered synchronous breadcrumb/visibility maintenance for affected Items. */
@@ -216,13 +239,41 @@ export class TransactionalMovementHistoryPort implements MovementHistoryPort {
 export class TransactionalSearchProjectionPort
   implements SearchProjectionPort, StorageProjectionPort
 {
+  async resolveDestination<Database>(
+    context: TransactionContext<Database>,
+    storageNodePublicId: string,
+    itemVisibility: ItemSearchProjection['visibility'],
+    allowPrivateDestination: boolean,
+  ): Promise<ResolvedSearchDestination> {
+    return resolveDestination(
+      context,
+      storageNodePublicId,
+      itemVisibility,
+      allowPrivateDestination,
+      true,
+    );
+  }
+
   async writeSync<Database>(
     context: TransactionContext<Database>,
     projection: ItemSearchProjection,
-  ): Promise<void> {
+  ): Promise<SearchProjectionWriteResult> {
+    const previousPathText = await projectedPath(context, projection.itemId);
     const destination = projection.storageNodeId
-      ? await resolveDestination(context, projection.storageNodeId, projection.visibility)
-      : { pathText: '', publicPathText: '', visibility: projection.visibility };
+      ? await resolveDestination(
+          context,
+          projection.storageNodeId,
+          projection.visibility,
+          projection.allowPrivateDestination,
+          false,
+        )
+      : {
+          storageNodeId: '',
+          storageNodePublicId: '',
+          pathText: '',
+          publicPathText: '',
+          visibility: projection.visibility,
+        };
     const attrs = JSON.stringify(projection.attrs);
     const publicAttrs = JSON.stringify(projection.publicAttrs);
     if (context.kind === 'prisma') {
@@ -249,7 +300,7 @@ export class TransactionalSearchProjectionPort
           visibility = excluded.visibility, index_state = excluded.index_state,
           item_updated_at = excluded.item_updated_at, indexed_at = excluded.indexed_at
       `;
-      return;
+      return projectionWriteResult(previousPathText, destination);
     }
     await kyselySql`
       insert into item_search (
@@ -274,6 +325,7 @@ export class TransactionalSearchProjectionPort
         visibility = excluded.visibility, index_state = excluded.index_state,
         item_updated_at = excluded.item_updated_at, indexed_at = excluded.indexed_at
     `.execute(context.trx);
+    return projectionWriteResult(previousPathText, destination);
   }
 
   async syncStorageSubtree<Database>(
@@ -335,18 +387,16 @@ export class TransactionalSearchProjectionPort
   }
 }
 
-interface ResolvedDestination {
-  pathText: string;
-  publicPathText: string;
-  visibility: ItemSearchProjection['visibility'];
-}
-
 async function resolveDestination<Database>(
   context: TransactionContext<Database>,
-  storageNodeId: string,
+  storageNodeIdentifier: string,
   itemVisibility: ItemSearchProjection['visibility'],
-): Promise<ResolvedDestination> {
+  allowPrivateDestination: boolean,
+  byPublicId: boolean,
+): Promise<ResolvedSearchDestination> {
   interface DestinationRow {
+    storage_node_id: string;
+    storage_node_public_id: string;
     path_text: string;
     path_is_public: boolean;
     path_is_private: boolean;
@@ -359,18 +409,24 @@ async function resolveDestination<Database>(
       select pg_advisory_xact_lock(hashtextextended(destination.tree_root_id::text, 0)) is null
         as locked
       from storage_nodes destination
-      where destination.id = ${storageNodeId}::uuid and destination.archived_at is null
+      where ((${byPublicId} and destination.public_id = ${storageNodeIdentifier}::uuid)
+          or (not ${byPublicId} and destination.id = ${storageNodeIdentifier}::uuid))
+        and destination.archived_at is null
     `;
     if (!locked.length) throw new StorageProjectionDestinationError();
     rows = await context.trx.$queryRaw<DestinationRow[]>`
-      select string_agg(ancestor.title, ' / ' order by ancestor.depth) as path_text,
+      select destination.id::text as storage_node_id,
+        destination.public_id::text as storage_node_public_id,
+        string_agg(ancestor.title, ' / ' order by ancestor.depth) as path_text,
         bool_and(ancestor.visibility = 'public') as path_is_public,
         bool_or(ancestor.visibility = 'private') as path_is_private,
         bool_or(ancestor.visibility = 'unlisted') as path_is_unlisted,
         bool_or(ancestor.visibility = 'authenticated') as path_is_authenticated
       from storage_nodes destination
       join storage_nodes ancestor on ancestor.path @> destination.path
-      where destination.id = ${storageNodeId}::uuid and destination.archived_at is null
+      where ((${byPublicId} and destination.public_id = ${storageNodeIdentifier}::uuid)
+          or (not ${byPublicId} and destination.id = ${storageNodeIdentifier}::uuid))
+        and destination.archived_at is null
       group by destination.id
       having bool_and(ancestor.archived_at is null)
     `;
@@ -379,19 +435,25 @@ async function resolveDestination<Database>(
       select pg_advisory_xact_lock(hashtextextended(destination.tree_root_id::text, 0)) is null
         as locked
       from storage_nodes destination
-      where destination.id = ${storageNodeId}::uuid and destination.archived_at is null
+      where ((${byPublicId} and destination.public_id = ${storageNodeIdentifier}::uuid)
+          or (not ${byPublicId} and destination.id = ${storageNodeIdentifier}::uuid))
+        and destination.archived_at is null
     `.execute(context.trx);
     if (!locked.rows.length) throw new StorageProjectionDestinationError();
     rows = (
       await kyselySql<DestinationRow>`
-        select string_agg(ancestor.title, ' / ' order by ancestor.depth) as path_text,
+        select destination.id::text as storage_node_id,
+          destination.public_id::text as storage_node_public_id,
+          string_agg(ancestor.title, ' / ' order by ancestor.depth) as path_text,
           bool_and(ancestor.visibility = 'public') as path_is_public,
           bool_or(ancestor.visibility = 'private') as path_is_private,
           bool_or(ancestor.visibility = 'unlisted') as path_is_unlisted,
           bool_or(ancestor.visibility = 'authenticated') as path_is_authenticated
         from storage_nodes destination
         join storage_nodes ancestor on ancestor.path @> destination.path
-        where destination.id = ${storageNodeId}::uuid and destination.archived_at is null
+        where ((${byPublicId} and destination.public_id = ${storageNodeIdentifier}::uuid)
+            or (not ${byPublicId} and destination.id = ${storageNodeIdentifier}::uuid))
+          and destination.archived_at is null
         group by destination.id
         having bool_and(ancestor.archived_at is null)
       `.execute(context.trx)
@@ -399,6 +461,8 @@ async function resolveDestination<Database>(
   }
   const row = rows[0];
   if (!row) throw new StorageProjectionDestinationError();
+  if (!allowPrivateDestination && row.path_is_private)
+    throw new StorageProjectionDestinationError();
   const visibility =
     itemVisibility === 'private' || row.path_is_private
       ? 'private'
@@ -408,9 +472,40 @@ async function resolveDestination<Database>(
           ? 'authenticated'
           : 'public';
   return {
+    storageNodeId: row.storage_node_id,
+    storageNodePublicId: row.storage_node_public_id,
     pathText: row.path_text,
     publicPathText: itemVisibility === 'public' && row.path_is_public ? row.path_text : '',
     visibility,
+  };
+}
+
+async function projectedPath<Database>(
+  context: TransactionContext<Database>,
+  itemId: string,
+): Promise<string | null> {
+  if (context.kind === 'prisma') {
+    const rows = await context.trx.$queryRaw<{ path_text: string }[]>`
+      select path_text from item_search where item_id = ${itemId}::uuid
+    `;
+    return rows[0]?.path_text.trim() || null;
+  }
+  const result = await kyselySql<{ path_text: string }>`
+    select path_text from item_search where item_id = ${itemId}::uuid
+  `.execute(context.trx);
+  return result.rows[0]?.path_text.trim() || null;
+}
+
+function projectionWriteResult(
+  previousPathText: string | null,
+  destination: ResolvedSearchDestination,
+): SearchProjectionWriteResult {
+  return {
+    previousPathText,
+    storageNodePublicId: destination.storageNodePublicId || null,
+    pathText: destination.pathText.trim() || null,
+    publicPathText: destination.publicPathText.trim() || null,
+    effectiveVisibility: destination.visibility,
   };
 }
 

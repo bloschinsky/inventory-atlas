@@ -42,7 +42,7 @@ export class ItemMutationRequestDto {
   @ApiProperty({ example: 'Cordless drill', maxLength: 200, minLength: 1, type: String })
   declare displayName: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: '01JBM4V6M9Q5Q2HTY0FQVN3M2D',
     pattern: '^[0-9A-HJKMNP-TV-Z]{26}$',
     type: String,
@@ -147,7 +147,34 @@ export class UpdateItemRequestDto {
   declare attributes?: Record<string, unknown>;
 }
 
+export class MoveItemRequestDto {
+  @ApiProperty({ minimum: 1, type: Number })
+  declare expectedVersion: number;
+
+  @ApiProperty({
+    description: 'Destination StorageNode public ID, or null to unassign.',
+    format: 'uuid',
+    nullable: true,
+    type: String,
+  })
+  declare storageNodeId: string | null;
+
+  @ApiPropertyOptional({ maxLength: 512, minLength: 1, type: String })
+  declare reason?: string;
+}
+
 export class UpdatedItemDto extends CreatedItemDto {
+  @ApiProperty({
+    description: 'Current StorageNode public ID.',
+    format: 'uuid',
+    nullable: true,
+    type: String,
+  })
+  declare storageNodeId: string | null;
+
+  @ApiProperty({ nullable: true, type: String })
+  declare locationPath: string | null;
+
   @ApiProperty({
     description: 'Search invalidation registry events this update fired.',
     enum: ['ItemCreated', 'AttributeChanged', 'ItemVisibilityChanged'],
@@ -170,8 +197,16 @@ export class ItemDetailDto {
 
   @ApiProperty({ format: 'uuid', type: String }) declare lifecycleStatusId: string;
 
-  @ApiPropertyOptional({ format: 'uuid', nullable: true, type: String })
+  @ApiProperty({
+    description: 'Current StorageNode public ID.',
+    format: 'uuid',
+    nullable: true,
+    type: String,
+  })
   declare storageNodeId: string | null;
+
+  @ApiProperty({ nullable: true, type: String })
+  declare locationPath: string | null;
 
   @ApiProperty({ enum: ['public', 'authenticated', 'private', 'unlisted'], type: String })
   declare visibility: string;
@@ -188,6 +223,32 @@ export class ItemDetailDto {
   declare attributes: Record<string, unknown>;
 
   @ApiProperty({ format: 'date-time', type: String }) declare updatedAt: string;
+}
+
+export class ItemMovementDto {
+  @ApiProperty({ type: Boolean }) declare fromAssigned: boolean;
+  @ApiProperty({ type: Boolean }) declare toAssigned: boolean;
+
+  @ApiProperty({ format: 'uuid', nullable: true, type: String })
+  declare fromNodePublicId: string | null;
+
+  @ApiProperty({ format: 'uuid', nullable: true, type: String })
+  declare toNodePublicId: string | null;
+
+  @ApiProperty({ nullable: true, type: String })
+  declare fromPathSnapshot: string | null;
+
+  @ApiProperty({ nullable: true, type: String })
+  declare toPathSnapshot: string | null;
+
+  @ApiProperty({ type: String }) declare actorDisplayName: string;
+  @ApiProperty({ nullable: true, type: String }) declare reason: string | null;
+  @ApiProperty({ format: 'date-time', type: String }) declare occurredAt: string;
+}
+
+export class ItemMovementPageDto {
+  @ApiProperty({ type: [ItemMovementDto] }) declare entries: ItemMovementDto[];
+  @ApiProperty({ nullable: true, type: String }) declare nextCursor: string | null;
 }
 
 export class BeginUploadRequestDto {
@@ -489,8 +550,11 @@ export const contractModels = [
   CreateItemRequestDto,
   CreatedItemDto,
   UpdateItemRequestDto,
+  MoveItemRequestDto,
   UpdatedItemDto,
   ItemDetailDto,
+  ItemMovementDto,
+  ItemMovementPageDto,
   BeginUploadRequestDto,
   UploadSessionDto,
   FinalizeUploadRequestDto,

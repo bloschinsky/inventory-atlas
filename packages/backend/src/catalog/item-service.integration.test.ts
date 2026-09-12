@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { Pool } from 'pg';
+import type { Kysely } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { permissionsFor, type SessionActor } from '../auth/index.js';
 import { createDatabase, migrateToLatest } from '../database.js';
@@ -11,14 +12,17 @@ import {
   TransactionalMovementHistoryPort,
   TransactionalOutboxPort,
   TransactionalSearchProjectionPort,
+  StorageProjectionDestinationError,
   type OutboxPort,
 } from '../infrastructure/index.js';
 import { TransactionalAttributeValuePort } from '../schema/attribute-value-port.js';
 import { FieldDefinitionRepository } from '../schema/field-definition-repository.js';
 import { createSettingsClient } from '../settings.repository.js';
+import { StorageRepository, StorageService, type StorageDatabase } from '../storage/index.js';
 import { CatalogDictionaryRepository } from './dictionary-repository.js';
 import { CatalogDictionaryService } from './dictionary-service.js';
 import { ItemRepository } from './item-repository.js';
+import { ItemMovementRepository } from './item-movement-repository.js';
 import { ItemService, ItemVersionConflictError, type CreatedItem } from './item-service.js';
 
 const integrationDatabaseUrl = process.env.INTEGRATION_DATABASE_URL;
@@ -330,6 +334,7 @@ function createService(outbox: OutboxPort = new TransactionalOutboxPort()): Item
       search: new TransactionalSearchProjectionPort(),
     },
     new CatalogDictionaryRepository(prisma, () => instant),
+    new ItemMovementRepository(database),
     () => instant,
   );
 }
@@ -711,6 +716,285 @@ suite('CAT-04 Item edit with optimistic concurrency', () => {
     });
   });
 
+  it('moves an Item atomically, snapshots both paths and filters paginated history by role', async () => {
+    const storage = createUpdateStorageService();
+    const root = await storage.create(admin, {
+      nodeType: 'site',
+      title: 'Main warehouse',
+      visibility: 'authenticated',
+    });
+    const source = await storage.create(admin, {
+      parentPublicId: root.publicId,
+      nodeType: 'shelf',
+      title: 'Shelf A',
+      visibility: 'authenticated',
+    });
+    const destination = await storage.create(admin, {
+      parentPublicId: root.publicId,
+      nodeType: 'shelf',
+      title: 'Shelf B',
+      visibility: 'authenticated',
+    });
+    const created = await createSubject('move-atomic', 'Move subject', 'SN-MOVE');
+    const assigned = await updateService.move(
+      admin,
+      created.publicId,
+      created.version,
+      { storageNodeId: source.publicId, reason: 'Initial assignment' },
+      { idempotencyKey: 'assign-move-subject' },
+    );
+    const moved = await updateService.move(
+      admin,
+      created.publicId,
+      assigned.item.version,
+      { storageNodeId: destination.publicId, reason: 'Reorganized' },
+      { idempotencyKey: 'move-subject-shelf-b' },
+    );
+    const replayed = await updateService.move(
+      admin,
+      created.publicId,
+      assigned.item.version,
+      { storageNodeId: destination.publicId, reason: 'Reorganized' },
+      { idempotencyKey: 'move-subject-shelf-b' },
+    );
+
+    expect(moved.item).toMatchObject({
+      storageNodeId: destination.publicId,
+      locationPath: 'Main warehouse / Shelf B',
+      version: created.version + 2,
+    });
+    expect(replayed).toMatchObject({ replayed: true, status: 200, item: moved.item });
+    expect(await updateService.get(admin, created.publicId)).toMatchObject({
+      storageNodeId: destination.publicId,
+      locationPath: 'Main warehouse / Shelf B',
+    });
+    const stored = (
+      await updatePool.query(
+        `select item.storage_node_id::text, item.version, search.path_text
+           from items item join item_search search on search.item_id = item.id
+          where item.public_id = $1`,
+        [created.publicId],
+      )
+    ).rows[0];
+    const destinationRow = await updatePool.query(
+      'select id::text from storage_nodes where public_id = $1',
+      [destination.publicId],
+    );
+    expect(stored).toEqual({
+      storage_node_id: destinationRow.rows[0].id,
+      version: '3',
+      path_text: 'Main warehouse / Shelf B',
+    });
+    const movementRows = (
+      await updatePool.query(
+        `select from_path_snapshot, to_path_snapshot, reason
+           from movements
+          where item_id = (select id from items where public_id = $1)
+          order by occurred_at, id`,
+        [created.publicId],
+      )
+    ).rows;
+    expect(movementRows).toEqual(
+      expect.arrayContaining([
+        {
+          from_path_snapshot: null,
+          to_path_snapshot: 'Main warehouse / Shelf A',
+          reason: 'Initial assignment',
+        },
+        {
+          from_path_snapshot: 'Main warehouse / Shelf A',
+          to_path_snapshot: 'Main warehouse / Shelf B',
+          reason: 'Reorganized',
+        },
+      ]),
+    );
+    expect(
+      (
+        await updatePool.query(
+          "select count(*)::int as count from audit_events where action = 'item.moved' and entity_id = (select id from items where public_id = $1)",
+          [created.publicId],
+        )
+      ).rows[0].count,
+    ).toBe(2);
+    expect(
+      (
+        await updatePool.query(
+          "select count(*)::int as count from outbox where topic = 'catalog.item-moved.v1' and aggregate_id = (select id from items where public_id = $1)",
+          [created.publicId],
+        )
+      ).rows[0].count,
+    ).toBe(2);
+
+    const firstPage = await updateService.movements(admin, created.publicId, { limit: 1 });
+    const secondPage = await updateService.movements(admin, created.publicId, {
+      limit: 1,
+      cursor: firstPage.nextCursor,
+    });
+    const historyEntries = [...firstPage.entries, ...secondPage.entries];
+    expect(historyEntries.find((entry) => entry.reason === 'Reorganized')).toMatchObject({
+      fromPathSnapshot: 'Main warehouse / Shelf A',
+      toPathSnapshot: 'Main warehouse / Shelf B',
+      actorDisplayName: 'Synthetic Admin',
+      reason: 'Reorganized',
+    });
+    expect(historyEntries.find((entry) => entry.reason === 'Initial assignment')).toMatchObject({
+      fromPathSnapshot: null,
+      toPathSnapshot: 'Main warehouse / Shelf A',
+    });
+    expect(secondPage.nextCursor).toBeNull();
+    const editorPage = await updateService.movements(editor, created.publicId);
+    expect(editorPage.entries).toHaveLength(2);
+    expect(editorPage.entries.every((entry) => entry.fromPathSnapshot === null)).toBe(true);
+    expect(editorPage.entries.every((entry) => entry.toPathSnapshot === null)).toBe(true);
+    expect(editorPage.entries.every((entry) => entry.fromNodePublicId === null)).toBe(true);
+    expect(editorPage.entries.every((entry) => entry.toNodePublicId === null)).toBe(true);
+
+    await expect(
+      updatePool.query(
+        `update movements set reason = 'rewritten'
+          where item_id = (select id from items where public_id = $1)`,
+        [created.publicId],
+      ),
+    ).rejects.toThrow(/append-only/iu);
+  });
+
+  it('rejects stale or unavailable destinations and rolls every move effect back', async () => {
+    const storage = createUpdateStorageService();
+    const archived = await storage.create(admin, {
+      nodeType: 'container',
+      title: 'Archived destination',
+    });
+    await storage.update(admin, archived.publicId, archived.version, { archived: true });
+    const created = await createSubject('move-rejected', 'Rejected move', 'SN-REJECT');
+    const before = await movementEffects(created.publicId);
+
+    await expect(
+      updateService.move(
+        admin,
+        created.publicId,
+        created.version,
+        { storageNodeId: archived.publicId },
+        { idempotencyKey: 'move-archived' },
+      ),
+    ).rejects.toBeInstanceOf(StorageProjectionDestinationError);
+    await expect(
+      updateService.move(
+        admin,
+        created.publicId,
+        created.version,
+        { storageNodeId: randomUUID() },
+        { idempotencyKey: 'move-missing' },
+      ),
+    ).rejects.toBeInstanceOf(StorageProjectionDestinationError);
+    expect(await movementEffects(created.publicId)).toEqual(before);
+
+    const rollbackDestination = await storage.create(admin, {
+      nodeType: 'container',
+      title: 'Rollback destination',
+    });
+    const failingOutbox: OutboxPort = {
+      async enqueue() {
+        throw new Error('synthetic move outbox failure');
+      },
+    };
+    await expect(
+      createUpdateService(failingOutbox).move(
+        admin,
+        created.publicId,
+        created.version,
+        { storageNodeId: rollbackDestination.publicId },
+        { idempotencyKey: 'move-port-rollback' },
+      ),
+    ).rejects.toThrow('synthetic move outbox failure');
+    expect(await movementEffects(created.publicId)).toEqual(before);
+
+    const destination = await storage.create(admin, {
+      nodeType: 'container',
+      title: 'Valid destination',
+    });
+    const moved = await updateService.move(
+      admin,
+      created.publicId,
+      created.version,
+      { storageNodeId: destination.publicId },
+      { idempotencyKey: 'move-valid' },
+    );
+    await expect(
+      updateService.move(
+        admin,
+        created.publicId,
+        created.version,
+        { storageNodeId: null },
+        { idempotencyKey: 'move-stale' },
+      ),
+    ).rejects.toMatchObject({ code: 'ITEM_VERSION_CONFLICT', currentVersion: moved.item.version });
+    expect((await movementEffects(created.publicId)).movements).toBe(before.movements + 1);
+  });
+
+  it('keeps the committed breadcrumb correct during a destination rename race', async () => {
+    const storage = createUpdateStorageService();
+    const destination = await storage.create(admin, {
+      nodeType: 'container',
+      title: 'Destination before rename',
+    });
+    const created = await createSubject('move-race', 'Race move', 'SN-RACE');
+    await Promise.all([
+      storage.update(admin, destination.publicId, destination.version, {
+        title: 'Destination after rename',
+      }),
+      updateService.move(
+        admin,
+        created.publicId,
+        created.version,
+        { storageNodeId: destination.publicId },
+        { idempotencyKey: 'move-race' },
+      ),
+    ]);
+    expect(await updateService.get(admin, created.publicId)).toMatchObject({
+      locationPath: 'Destination after rename',
+      version: created.version + 1,
+    });
+  });
+
+  it('requires move permission and rejects a private destination for an Editor', async () => {
+    const storage = createUpdateStorageService();
+    const privateDestination = await storage.create(admin, {
+      nodeType: 'container',
+      title: 'Private destination',
+      visibility: 'private',
+    });
+    const created = await createSubject('move-auth', 'Authorized move', 'SN-AUTH');
+    const viewer: SessionActor = {
+      ...editor,
+      role: 'viewer',
+      permissions: permissionsFor('viewer'),
+    };
+    await expect(
+      updateService.move(
+        viewer,
+        created.publicId,
+        created.version,
+        { storageNodeId: privateDestination.publicId },
+        { idempotencyKey: 'viewer-move' },
+      ),
+    ).rejects.toMatchObject({ code: 'ITEM_UPDATE_FORBIDDEN' });
+    await expect(
+      updateService.move(
+        editor,
+        created.publicId,
+        created.version,
+        { storageNodeId: privateDestination.publicId },
+        { idempotencyKey: 'editor-private-move' },
+      ),
+    ).rejects.toBeInstanceOf(StorageProjectionDestinationError);
+    expect(await movementEffects(created.publicId)).toMatchObject({
+      storageNodeId: null,
+      version: created.version,
+      pathText: '',
+      movements: 0,
+    });
+  });
+
   describe('CAT-05 rendered display names', () => {
     let templateCategoryId: string;
     let dictionaryService: CatalogDictionaryService;
@@ -960,6 +1244,60 @@ function createUpdateService(outbox: OutboxPort = new TransactionalOutboxPort())
       search: new TransactionalSearchProjectionPort(),
     },
     new CatalogDictionaryRepository(updatePrisma, () => instant),
+    new ItemMovementRepository(updateDatabase),
     () => instant,
   );
+}
+
+function createUpdateStorageService(): StorageService {
+  const repository = new StorageRepository(
+    updateDatabase as unknown as Kysely<StorageDatabase>,
+    randomUUID,
+    () => instant,
+  );
+  return new StorageService(
+    repository,
+    new FieldDefinitionRepository(updatePrisma, () => instant),
+    {
+      attributes: new TransactionalAttributeValuePort(),
+      audit: new TransactionalAuditPort(),
+      movements: new TransactionalMovementHistoryPort(),
+      outbox: new TransactionalOutboxPort(),
+      search: new TransactionalSearchProjectionPort(),
+    },
+    () => instant,
+  );
+}
+
+async function movementEffects(publicId: string): Promise<{
+  storageNodeId: string | null;
+  version: number;
+  pathText: string;
+  movements: number;
+  audits: number;
+  outbox: number;
+}> {
+  const result = await updatePool.query(
+    `select item.storage_node_id::text,
+       item.version::int,
+       search.path_text,
+       (select count(*)::int from movements movement where movement.item_id = item.id) movements,
+       (select count(*)::int from audit_events audit
+         where audit.entity_id = item.id and audit.action = 'item.moved') audits,
+       (select count(*)::int from outbox message
+         where message.aggregate_id = item.id and message.topic = 'catalog.item-moved.v1') outbox
+     from items item
+     join item_search search on search.item_id = item.id
+     where item.public_id = $1`,
+    [publicId],
+  );
+  const row = result.rows[0];
+  return {
+    storageNodeId: row.storage_node_id,
+    version: row.version,
+    pathText: row.path_text,
+    movements: row.movements,
+    audits: row.audits,
+    outbox: row.outbox,
+  };
 }

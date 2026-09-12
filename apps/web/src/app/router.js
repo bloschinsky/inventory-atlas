@@ -11,6 +11,7 @@ import FieldDesignerPage from '../pages/FieldDesignerPage.vue';
 import ItemsPage from '../pages/ItemsPage.vue';
 import ItemCreatePage from '../pages/ItemCreatePage.vue';
 import ItemEditPage from '../pages/ItemEditPage.vue';
+import ItemDetailPage from '../pages/ItemDetailPage.vue';
 import StoragePage from '../pages/StoragePage.vue';
 import StorageDetailPage from '../pages/StorageDetailPage.vue';
 
@@ -18,6 +19,7 @@ const routeComponents = {
   '/items': ItemsPage,
   '/items/new': ItemCreatePage,
   '/items/:publicId/edit': ItemEditPage,
+  '/items/:publicId': ItemDetailPage,
   '/storage': StoragePage,
   '/storage/:publicId': StorageDetailPage,
   '/admin/categories': DictionaryPage,

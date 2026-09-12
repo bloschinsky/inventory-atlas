@@ -6,11 +6,13 @@ import {
   ForbiddenException,
   Get,
   Headers,
+  HttpCode,
   Inject,
   NotFoundException,
   Param,
   Patch,
   Post,
+  Query,
   Req,
   Res,
   ServiceUnavailableException,
@@ -20,6 +22,7 @@ import {
   AttributeValidationError,
   ItemAccessError,
   ItemCreateError,
+  ItemMovementCursorError,
   ItemPolicyError,
   ItemVersionConflictError,
   SessionError,
@@ -52,6 +55,8 @@ import {
   CreatedItemDto,
   CreateItemRequestDto,
   ItemDetailDto,
+  ItemMovementPageDto,
+  MoveItemRequestDto,
   ProblemDetailsDto,
   UpdatedItemDto,
   UpdateItemRequestDto,
@@ -172,6 +177,78 @@ export class ItemsController {
       response.header('ETag', `"${outcome.item.version}"`);
       if (outcome.replayed) response.header('Idempotency-Replayed', 'true');
       return { ...outcome.item, invalidators: [...outcome.invalidators] };
+    } catch (error) {
+      throw mapItemError(error, requestId);
+    }
+  }
+
+  @Post(':publicId/move')
+  @HttpCode(200)
+  @ApiOperation({ operationId: 'moveItem' })
+  @ApiParam({ format: 'uuid', name: 'publicId', type: String })
+  @ApiHeader({ name: 'If-Match', required: true })
+  @ApiHeader({ name: 'Idempotency-Key', required: true })
+  @ApiBody({ type: MoveItemRequestDto })
+  @ApiOkResponse({ type: UpdatedItemDto })
+  @ApiBadRequestResponse({ type: ProblemDetailsDto })
+  @ApiConflictResponse({ type: VersionConflictProblemDto })
+  @ApiNotFoundResponse({ type: ProblemDetailsDto })
+  @ApiServiceUnavailableResponse({ type: ProblemDetailsDto })
+  async moveItem(
+    @Param('publicId') publicId: string,
+    @Body() body: unknown,
+    @Headers('cookie') cookie: string | undefined,
+    @Headers('x-csrf-token') csrf: string | undefined,
+    @Headers('if-match') ifMatch: string | undefined,
+    @Headers('idempotency-key') idempotencyKey: string | undefined,
+    @Req() request: { headers: Record<string, string | undefined> },
+    @Res({ passthrough: true }) response: { header(name: string, value: string): void },
+  ): Promise<UpdatedItemDto> {
+    const requestId = request.headers['x-request-id'];
+    requirePublicId(publicId);
+    try {
+      const input = readMoveItem(body, ifMatch, requestId);
+      const outcome = await this.items.catalogItems().move(
+        await this.actor(cookie, csrf),
+        publicId,
+        input.expectedVersion,
+        { storageNodeId: input.storageNodeId, ...(input.reason ? { reason: input.reason } : {}) },
+        {
+          idempotencyKey: idempotencyKey ?? '',
+          ...(requestId ? { requestId } : {}),
+          ...(request.headers['x-correlation-id']
+            ? { correlationId: request.headers['x-correlation-id'] }
+            : {}),
+        },
+      );
+      response.header('ETag', `"${outcome.item.version}"`);
+      if (outcome.replayed) response.header('Idempotency-Replayed', 'true');
+      return { ...outcome.item, invalidators: [...outcome.invalidators] };
+    } catch (error) {
+      throw mapItemError(error, requestId);
+    }
+  }
+
+  @Get(':publicId/movements')
+  @ApiOperation({ operationId: 'listItemMovements' })
+  @ApiParam({ format: 'uuid', name: 'publicId', type: String })
+  @ApiOkResponse({ type: ItemMovementPageDto })
+  @ApiBadRequestResponse({ type: ProblemDetailsDto })
+  @ApiNotFoundResponse({ type: ProblemDetailsDto })
+  async listItemMovements(
+    @Param('publicId') publicId: string,
+    @Query('limit') limit: string | undefined,
+    @Query('cursor') cursor: string | undefined,
+    @Headers('cookie') cookie: string | undefined,
+    @Req() request: { headers: Record<string, string | undefined> },
+  ): Promise<ItemMovementPageDto> {
+    const requestId = request.headers['x-request-id'];
+    requirePublicId(publicId);
+    try {
+      return await this.items.catalogItems().movements(await this.reader(cookie), publicId, {
+        limit: readMovementLimit(limit, requestId),
+        ...(cursor ? { cursor } : {}),
+      });
     } catch (error) {
       throw mapItemError(error, requestId);
     }
@@ -309,6 +386,8 @@ function mapItemError(error: unknown, requestId = 'unknown'): Error {
       })),
       requestId,
     );
+  if (error instanceof ItemMovementCursorError)
+    return validationProblem([{ field: 'cursor', messages: [error.code] }], requestId);
   if (error instanceof ItemCreateError) {
     if (error.code === 'ITEM_CREATE_FORBIDDEN') return new ForbiddenException(error.message);
     if (error.code === 'ITEM_IDEMPOTENCY_IN_PROGRESS')
@@ -332,6 +411,64 @@ function mapItemError(error: unknown, requestId = 'unknown'): Error {
     return validationProblem([{ field: 'idempotencyKey', messages: [error.code] }], requestId);
   }
   return error as Error;
+}
+
+function readMoveItem(
+  value: unknown,
+  ifMatch: string | undefined,
+  requestId: string | undefined,
+): { expectedVersion: number; storageNodeId: string | null; reason?: string } {
+  const headerVersion = parseIfMatch(ifMatch);
+  if (!isRecord(value))
+    throw validationProblem([{ field: '$', messages: ['Expected an object.'] }], requestId);
+  const expectedVersion =
+    value.expectedVersion === undefined ? headerVersion : Number(value.expectedVersion);
+  if (!Number.isSafeInteger(expectedVersion) || Number(expectedVersion) < 1)
+    throw validationProblem(
+      [{ field: 'expectedVersion', messages: ['Expected a positive integer.'] }],
+      requestId,
+    );
+  if (headerVersion === null || headerVersion !== expectedVersion)
+    throw validationProblem(
+      [{ field: 'expectedVersion', messages: ['IF_MATCH_MISMATCH'] }],
+      requestId,
+    );
+  const storageNodeId = value.storageNodeId;
+  if (
+    storageNodeId !== null &&
+    (typeof storageNodeId !== 'string' ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(
+        storageNodeId,
+      ))
+  )
+    throw validationProblem(
+      [{ field: 'storageNodeId', messages: ['Expected a UUID or null.'] }],
+      requestId,
+    );
+  if (
+    value.reason !== undefined &&
+    (typeof value.reason !== 'string' || !value.reason.trim() || value.reason.trim().length > 512)
+  )
+    throw validationProblem(
+      [{ field: 'reason', messages: ['Expected between 1 and 512 characters.'] }],
+      requestId,
+    );
+  return {
+    expectedVersion: Number(expectedVersion),
+    storageNodeId,
+    ...(typeof value.reason === 'string' ? { reason: value.reason.trim() } : {}),
+  };
+}
+
+function readMovementLimit(value: string | undefined, requestId: string | undefined): number {
+  if (value === undefined) return 25;
+  const limit = Number(value);
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)
+    throw validationProblem(
+      [{ field: 'limit', messages: ['Expected an integer between 1 and 100.'] }],
+      requestId,
+    );
+  return limit;
 }
 
 function validationProblem(

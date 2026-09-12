@@ -479,9 +479,15 @@
           "description": { "nullable": true, "type": "string" },
           "displayName": { "type": "string" },
           "lifecycleStatusId": { "format": "uuid", "type": "string" },
+          "locationPath": { "nullable": true, "type": "string" },
           "publicId": { "format": "uuid", "type": "string" },
           "slug": { "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "type": "string" },
-          "storageNodeId": { "format": "uuid", "nullable": true, "type": "string" },
+          "storageNodeId": {
+            "description": "Current StorageNode public ID.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "tags": { "items": { "type": "string" }, "type": "array" },
           "updatedAt": { "format": "date-time", "type": "string" },
           "version": { "minimum": 1, "type": "number" },
@@ -495,13 +501,51 @@
           "categoryId",
           "displayName",
           "lifecycleStatusId",
+          "locationPath",
           "publicId",
           "slug",
+          "storageNodeId",
           "tags",
           "updatedAt",
           "version",
           "visibility"
         ],
+        "type": "object"
+      },
+      "ItemMovementDto": {
+        "properties": {
+          "actorDisplayName": { "type": "string" },
+          "fromAssigned": { "type": "boolean" },
+          "fromNodePublicId": { "format": "uuid", "nullable": true, "type": "string" },
+          "fromPathSnapshot": { "nullable": true, "type": "string" },
+          "occurredAt": { "format": "date-time", "type": "string" },
+          "reason": { "nullable": true, "type": "string" },
+          "toAssigned": { "type": "boolean" },
+          "toNodePublicId": { "format": "uuid", "nullable": true, "type": "string" },
+          "toPathSnapshot": { "nullable": true, "type": "string" }
+        },
+        "required": [
+          "actorDisplayName",
+          "fromAssigned",
+          "fromNodePublicId",
+          "fromPathSnapshot",
+          "occurredAt",
+          "reason",
+          "toAssigned",
+          "toNodePublicId",
+          "toPathSnapshot"
+        ],
+        "type": "object"
+      },
+      "ItemMovementPageDto": {
+        "properties": {
+          "entries": {
+            "items": { "$ref": "#/components/schemas/ItemMovementDto" },
+            "type": "array"
+          },
+          "nextCursor": { "nullable": true, "type": "string" }
+        },
+        "required": ["entries", "nextCursor"],
         "type": "object"
       },
       "ItemMutationRequestDto": {
@@ -524,7 +568,7 @@
             "type": "number"
           }
         },
-        "required": ["displayName", "expectedVersion"],
+        "required": ["categoryId", "displayName", "expectedVersion"],
         "type": "object"
       },
       "ItemPageResponseDto": {
@@ -636,6 +680,20 @@
           "width": { "minimum": 1, "nullable": true, "type": "number" }
         },
         "required": ["byteSize", "contentUrl", "mimeType", "name"],
+        "type": "object"
+      },
+      "MoveItemRequestDto": {
+        "properties": {
+          "expectedVersion": { "minimum": 1, "type": "number" },
+          "reason": { "maxLength": 512, "minLength": 1, "type": "string" },
+          "storageNodeId": {
+            "description": "Destination StorageNode public ID, or null to unassign.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": ["expectedVersion", "storageNodeId"],
         "type": "object"
       },
       "MoveStorageNodeRequestDto": {
@@ -903,11 +961,26 @@
             },
             "type": "array"
           },
+          "locationPath": { "nullable": true, "type": "string" },
           "publicId": { "format": "uuid", "type": "string" },
           "slug": { "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "type": "string" },
+          "storageNodeId": {
+            "description": "Current StorageNode public ID.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "version": { "minimum": 1, "type": "number" }
         },
-        "required": ["displayName", "invalidators", "publicId", "slug", "version"],
+        "required": [
+          "displayName",
+          "invalidators",
+          "locationPath",
+          "publicId",
+          "slug",
+          "storageNodeId",
+          "version"
+        ],
         "type": "object"
       },
       "UpdateFieldDefinitionDto": {
@@ -2442,6 +2515,131 @@
         "tags": ["media"]
       }
     },
+    "/api/v1/items/{publicId}/move": {
+      "post": {
+        "operationId": "moveItem",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          { "in": "header", "name": "If-Match", "required": true, "schema": { "type": "string" } },
+          {
+            "in": "path",
+            "name": "publicId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/MoveItemRequestDto" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/UpdatedItemDto" } }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VersionConflictProblemDto" }
+              }
+            },
+            "description": ""
+          },
+          "503": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["items"]
+      }
+    },
+    "/api/v1/items/{publicId}/movements": {
+      "get": {
+        "operationId": "listItemMovements",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "publicId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ItemMovementPageDto" }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["items"]
+      }
+    },
     "/api/v1/lifecycle-statuses": {
       "get": {
         "operationId": "listLifecycleStatuses",
@@ -3340,5 +3538,5 @@
   },
   "servers": [],
   "tags": [],
-  "x-spec-checksum": "10314b4059539e550af7a0d1438abd91b5a5a880149e059ddb40bfeade134a0e"
+  "x-spec-checksum": "34503f679ac2ff0d5f87ecd58b9b61a5c1d208b33068635303156e606fcda5bd"
 }

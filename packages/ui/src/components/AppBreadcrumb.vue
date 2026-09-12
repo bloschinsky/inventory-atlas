@@ -11,7 +11,9 @@ const breadcrumbItems = computed(
 );
 </script>
 <template>
-  <Breadcrumb :model="breadcrumbItems" :home="home" v-bind="$attrs"
-    ><template #item="slotProps"><slot name="item" v-bind="slotProps" /></template
-  ></Breadcrumb>
+  <Breadcrumb :model="breadcrumbItems" :home="home" v-bind="$attrs">
+    <template v-if="$slots.item" #item="slotProps">
+      <slot name="item" v-bind="slotProps" />
+    </template>
+  </Breadcrumb>
 </template>

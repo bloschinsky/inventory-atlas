@@ -17,6 +17,7 @@ import {
   createJobRuntime,
   createMediaRuntime,
   ItemRepository,
+  ItemMovementRepository,
   ItemService,
   MediaService,
   TransactionalAttributeValuePort,
@@ -147,6 +148,7 @@ export class FoundationRuntime
           search: new TransactionalSearchProjectionPort(),
         },
         dictionaryRepository,
+        new ItemMovementRepository(database),
       );
       const storageRepository = new StorageRepository(
         database as unknown as Kysely<StorageDatabase>,

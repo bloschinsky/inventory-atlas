@@ -3,6 +3,7 @@ import {
   CatalogDictionaryAuthorizationError,
   DisplayTemplateError,
   ItemVersionConflictError,
+  type ItemMovementEntry,
   MediaVersionConflictError,
   SchemaAuthorizationError,
   SchemaPolicyError,
@@ -252,6 +253,7 @@ const catalogItems = {
     categoryId: '0198f40c-92f3-7a12-bc9a-653f97786c41',
     lifecycleStatusId: '0198f40c-92f3-7a12-bc9a-653f97786c42',
     storageNodeId: null,
+    locationPath: null,
     visibility: 'authenticated' as const,
     version: 3,
     tags: ['workshop'],
@@ -266,9 +268,25 @@ const catalogItems = {
       slug: 'cordless-drill',
       displayName: 'Cordless drill',
       version: 4,
+      storageNodeId: null,
+      locationPath: null,
     },
     invalidators: ['AttributeChanged' as const],
   })),
+  move: vi.fn(async () => ({
+    replayed: false,
+    status: 200,
+    item: {
+      publicId: itemPublicId,
+      slug: 'cordless-drill',
+      displayName: 'Cordless drill',
+      version: 4,
+      storageNodeId: storagePublicId,
+      locationPath: 'Workshop',
+    },
+    invalidators: [] as const,
+  })),
+  movements: vi.fn(async () => ({ entries: [] as ItemMovementEntry[], nextCursor: null })),
 };
 const storageNodes = {
   list: vi.fn(async () => ({ entries: [], nextCursor: null })),
@@ -419,9 +437,11 @@ describe('API composition root', () => {
       'listFieldDefinitions',
       'listInvitations',
       'listItemMedia',
+      'listItemMovements',
       'listLifecycleStatuses',
       'listStorageNodes',
       'listUsers',
+      'moveItem',
       'moveStorageNode',
       'previewCategoryDisplayName',
       'previewFieldDefinitionConversion',
@@ -449,9 +469,11 @@ describe('API composition root', () => {
       MoveStorageNodeRequestDto: expect.any(Object),
       BeginUploadRequestDto: expect.any(Object),
       ItemDetailDto: expect.any(Object),
+      ItemMovementPageDto: expect.any(Object),
       MediaItemDto: expect.any(Object),
       ItemMutationRequestDto: expect.any(Object),
       ItemPageResponseDto: expect.any(Object),
+      MoveItemRequestDto: expect.any(Object),
       ProblemDetailsDto: expect.any(Object),
       StorageNodeDetailDto: expect.any(Object),
       UpdatedItemDto: expect.any(Object),
@@ -723,6 +745,80 @@ describe('API composition root', () => {
       { displayName: 'Cordless drill mk2' },
       expect.objectContaining({ requestId: 'request-update-item' }),
     );
+    await app.close();
+  });
+
+  it('moves an Item with a version and idempotency key and exposes read-only history', async () => {
+    catalogItems.move.mockClear();
+    catalogItems.movements.mockClear();
+    catalogItems.movements.mockResolvedValueOnce({
+      entries: [
+        {
+          fromAssigned: false,
+          toAssigned: true,
+          fromNodePublicId: null,
+          toNodePublicId: storagePublicId,
+          fromPathSnapshot: null,
+          toPathSnapshot: 'Workshop',
+          actorDisplayName: 'Synthetic Owner',
+          reason: 'Put away',
+          occurredAt: issuedAt.toISOString(),
+        },
+      ],
+      nextCursor: null,
+    });
+    const app = await createApiApplication(runtime);
+    await app.init();
+    const headers = {
+      cookie: `inventory_atlas_session=${sessionToken}`,
+      'x-csrf-token': csrfToken,
+      'if-match': '"3"',
+      'idempotency-key': 'move-cordless-drill',
+      'x-request-id': 'request-move-item',
+    };
+    const moved = await app.inject({
+      method: 'POST',
+      url: `/api/v1/items/${itemPublicId}/move`,
+      headers,
+      payload: { expectedVersion: 3, storageNodeId: storagePublicId, reason: 'Put away' },
+    });
+    expect(moved.statusCode).toBe(200);
+    expect(moved.headers.etag).toBe('"4"');
+    expect(moved.json()).toMatchObject({
+      storageNodeId: storagePublicId,
+      locationPath: 'Workshop',
+      version: 4,
+    });
+    expect(catalogItems.move).toHaveBeenCalledWith(
+      actor,
+      itemPublicId,
+      3,
+      { storageNodeId: storagePublicId, reason: 'Put away' },
+      expect.objectContaining({
+        idempotencyKey: 'move-cordless-drill',
+        requestId: 'request-move-item',
+      }),
+    );
+
+    const history = await app.inject({
+      method: 'GET',
+      url: `/api/v1/items/${itemPublicId}/movements?limit=10`,
+      headers: { cookie: `inventory_atlas_session=${sessionToken}` },
+    });
+    expect(history.statusCode).toBe(200);
+    expect(history.json()).toMatchObject({
+      entries: [{ toPathSnapshot: 'Workshop', reason: 'Put away' }],
+      nextCursor: null,
+    });
+    expect(catalogItems.movements).toHaveBeenCalledWith(actor, itemPublicId, { limit: 10 });
+
+    const mutation = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/items/${itemPublicId}/movements`,
+      headers,
+      payload: {},
+    });
+    expect(mutation.statusCode).toBe(404);
     await app.close();
   });
 
