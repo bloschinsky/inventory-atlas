@@ -17,6 +17,7 @@ import type { CatalogRuntimePort } from './catalog.runtime.js';
 import type { SchemaRuntimePort } from './schema.runtime.js';
 import type { ItemsRuntimePort } from './items.runtime.js';
 import type { MediaRuntimePort } from './media.runtime.js';
+import type { StorageRuntimePort } from './storage.runtime.js';
 import { createApiApplication } from './main.js';
 import { createOpenApiDocument } from './openapi-document.js';
 
@@ -231,6 +232,7 @@ function createSchemaRuntime() {
 }
 const schemaFields = createSchemaRuntime();
 const itemPublicId = '0198f40c-92f3-7a12-bc9a-653f97786c40';
+const storagePublicId = '0198f40c-92f3-7a12-bc9a-653f97786c60';
 const catalogItems = {
   create: vi.fn(async () => ({
     replayed: false as const,
@@ -268,12 +270,50 @@ const catalogItems = {
     invalidators: ['AttributeChanged' as const],
   })),
 };
+const storageNodes = {
+  list: vi.fn(async () => ({ entries: [], nextCursor: null })),
+  create: vi.fn(async () => ({
+    publicId: storagePublicId,
+    parentPublicId: null,
+    nodeType: 'site' as const,
+    title: 'Workshop',
+    code: null,
+    visibility: 'authenticated' as const,
+    depth: 0,
+    version: 1,
+  })),
+  get: vi.fn(async () => ({
+    publicId: storagePublicId,
+    parentPublicId: null,
+    nodeType: 'site' as const,
+    title: 'Workshop',
+    code: null,
+    visibility: 'authenticated' as const,
+    depth: 0,
+    version: 1,
+    breadcrumb: [{ publicId: storagePublicId, title: 'Workshop', depth: 0 }],
+    contents: { entries: [], nextCursor: null },
+    attributes: {},
+    updatedAt: issuedAt.toISOString(),
+  })),
+  update: vi.fn(async () => ({
+    publicId: storagePublicId,
+    parentPublicId: null,
+    nodeType: 'site' as const,
+    title: 'Main workshop',
+    code: null,
+    visibility: 'authenticated' as const,
+    depth: 0,
+    version: 2,
+  })),
+};
 const runtime: FoundationRuntimePort &
   AuthRuntimePort &
   CatalogRuntimePort &
   SchemaRuntimePort &
   ItemsRuntimePort &
-  MediaRuntimePort = {
+  MediaRuntimePort &
+  StorageRuntimePort = {
   async readiness() {
     return {
       status: 'ready',
@@ -321,6 +361,9 @@ const runtime: FoundationRuntimePort &
   media() {
     return media;
   },
+  storage() {
+    return storageNodes;
+  },
 };
 
 describe('API composition root', () => {
@@ -349,6 +392,7 @@ describe('API composition root', () => {
       'createFieldOption',
       'createItem',
       'createLifecycleStatus',
+      'createStorageNode',
       'deleteAuthSession',
       'detachItemMedia',
       'finalizeMediaUpload',
@@ -358,6 +402,7 @@ describe('API composition root', () => {
       'getLiveness',
       'getMetadata',
       'getReadiness',
+      'getStorageNode',
       'issueInvitation',
       'listAuthSessions',
       'listCategories',
@@ -365,6 +410,7 @@ describe('API composition root', () => {
       'listInvitations',
       'listItemMedia',
       'listLifecycleStatuses',
+      'listStorageNodes',
       'listUsers',
       'previewCategoryDisplayName',
       'previewFieldDefinitionConversion',
@@ -379,6 +425,7 @@ describe('API composition root', () => {
       'updateFieldOption',
       'updateItem',
       'updateLifecycleStatus',
+      'updateStorageNode',
       'updateUser',
       'uploadMediaContent',
     ]);
@@ -387,12 +434,14 @@ describe('API composition root', () => {
       CursorPageDto: expect.any(Object),
       CreatedItemDto: expect.any(Object),
       CreateItemRequestDto: expect.any(Object),
+      CreateStorageNodeRequestDto: expect.any(Object),
       BeginUploadRequestDto: expect.any(Object),
       ItemDetailDto: expect.any(Object),
       MediaItemDto: expect.any(Object),
       ItemMutationRequestDto: expect.any(Object),
       ItemPageResponseDto: expect.any(Object),
       ProblemDetailsDto: expect.any(Object),
+      StorageNodeDetailDto: expect.any(Object),
       UpdatedItemDto: expect.any(Object),
       UpdateItemRequestDto: expect.any(Object),
       VersionConflictProblemDto: expect.any(Object),
@@ -1181,6 +1230,66 @@ describe('API composition root', () => {
     await app.close();
   });
 
+  it('protects StorageNode writes and exposes versioned browse contracts', async () => {
+    const app = await createApiApplication(runtime);
+    await app.init();
+    const cookie = `inventory_atlas_session=${sessionToken}`;
+
+    const listed = await app.inject({
+      method: 'GET',
+      url: '/api/v1/storage-nodes?limit=20',
+      headers: { cookie },
+    });
+    expect(listed.statusCode).toBe(200);
+    expect(listed.json()).toEqual({ entries: [], nextCursor: null });
+
+    const rejected = await app.inject({
+      method: 'POST',
+      url: '/api/v1/storage-nodes',
+      headers: { cookie },
+      payload: { nodeType: 'site', title: 'Workshop' },
+    });
+    expect(rejected.statusCode).toBe(401);
+
+    const created = await app.inject({
+      method: 'POST',
+      url: '/api/v1/storage-nodes',
+      headers: { cookie, 'x-csrf-token': csrfToken, 'x-request-id': 'storage-create' },
+      payload: { nodeType: 'site', title: 'Workshop', attributes: {} },
+    });
+    expect(created.statusCode).toBe(201);
+    expect(created.headers.etag).toBe('"1"');
+    expect(created.json()).toMatchObject({ publicId: storagePublicId, version: 1 });
+
+    const detail = await app.inject({
+      method: 'GET',
+      url: `/api/v1/storage-nodes/${storagePublicId}`,
+      headers: { cookie },
+    });
+    expect(detail.statusCode).toBe(200);
+    expect(detail.json()).not.toHaveProperty('path');
+    expect(detail.json().breadcrumb).toEqual([
+      { publicId: storagePublicId, title: 'Workshop', depth: 0 },
+    ]);
+
+    const updated = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/storage-nodes/${storagePublicId}`,
+      headers: { cookie, 'x-csrf-token': csrfToken, 'if-match': '"1"' },
+      payload: { title: 'Main workshop' },
+    });
+    expect(updated.statusCode).toBe(200);
+    expect(updated.headers.etag).toBe('"2"');
+    expect(storageNodes.update).toHaveBeenCalledWith(
+      actor,
+      storagePublicId,
+      1,
+      { title: 'Main workshop' },
+      expect.any(Object),
+    );
+    await app.close();
+  });
+
   it('initializes and closes the Fastify application', async () => {
     const app = await createApiApplication(runtime);
     await app.init();
@@ -1221,7 +1330,8 @@ describe('API composition root', () => {
       CatalogRuntimePort &
       SchemaRuntimePort &
       ItemsRuntimePort &
-      MediaRuntimePort = {
+      MediaRuntimePort &
+      StorageRuntimePort = {
       ...runtime,
       async readiness() {
         return {

@@ -13,6 +13,8 @@ import { ItemsController } from './items.controller.js';
 import { ITEMS_RUNTIME, type ItemsRuntimePort } from './items.runtime.js';
 import { MediaController } from './media.controller.js';
 import { MEDIA_RUNTIME, type MediaRuntimePort } from './media.runtime.js';
+import { StorageNodesController } from './storage-nodes.controller.js';
+import { STORAGE_RUNTIME, type StorageRuntimePort } from './storage.runtime.js';
 
 @Module({})
 export class AppModule {
@@ -22,7 +24,8 @@ export class AppModule {
       CatalogRuntimePort &
       SchemaRuntimePort &
       ItemsRuntimePort &
-      MediaRuntimePort,
+      MediaRuntimePort &
+      StorageRuntimePort,
   ): DynamicModule {
     return {
       module: AppModule,
@@ -36,6 +39,7 @@ export class AppModule {
         MediaController,
         MetaController,
         SchemaFieldsController,
+        StorageNodesController,
       ],
       providers: [
         { provide: AUTH_RUNTIME, useValue: runtime },
@@ -44,6 +48,7 @@ export class AppModule {
         { provide: SCHEMA_RUNTIME, useValue: runtime },
         { provide: ITEMS_RUNTIME, useValue: runtime },
         { provide: MEDIA_RUNTIME, useValue: runtime },
+        { provide: STORAGE_RUNTIME, useValue: runtime },
       ],
     };
   }

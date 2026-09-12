@@ -84,6 +84,8 @@
     "loadFailed": "Could not load this information.",
     "saveFailed": "Could not save the change.",
     "saving": "Saving…",
+    "create": "Create",
+    "next": "Next page",
     "yes": "Yes",
     "no": "No"
   },
@@ -322,6 +324,29 @@
       "public": "Public"
     },
     "currency": "Currency"
+  },
+  "storage": {
+    "description": "Browse nested storage locations and their direct contents.",
+    "addRoot": "Add root location",
+    "addChild": "Add child location",
+    "backToRoots": "Back to root locations",
+    "title": "Location name",
+    "type": "Location type",
+    "code": "Human-readable code",
+    "contents": "Direct contents",
+    "edit": "Edit location",
+    "empty": "No storage locations found.",
+    "emptyContents": "This location has no direct contents.",
+    "kinds": { "node": "Location", "item": "Item" },
+    "types": {
+      "site": "Site",
+      "room": "Room",
+      "zone": "Zone",
+      "rack": "Rack",
+      "shelf": "Shelf",
+      "container": "Container",
+      "custom": "Custom"
+    }
   },
   "statuses": {
     "active": "Active",

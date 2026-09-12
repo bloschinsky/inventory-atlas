@@ -618,26 +618,26 @@ Suggested pull requests:
 
 Tasks:
 
-- [ ] Enable `ltree` and add StorageNode/movement schema, checks, GiST/B-tree indexes, and Kysely types.
-- [ ] Implement immutable public IDs and lowercase UUID-hex `ltree` labels.
-- [ ] Maintain `parent_id`, `path`, `depth`, `tree_root_id`, visibility, version, and archive state.
-- [ ] Implement create/update StorageNode as a Kysely transaction including node attributes through `AttributeValuePort`.
-- [ ] Increment node version for core or attribute aggregate changes.
-- [ ] Implement indexed breadcrumb, ancestor, children, subtree, and paged direct-content queries.
-- [ ] Ensure rename changes display data but never rewrites `storage_nodes.path`.
-- [ ] Enforce exact-path privacy and safe public breadcrumb behavior.
-- [ ] Build the mobile-first tree browser and core container card with breadcrumb, child nodes, and direct Items; include attributes, node media, and convenience QR only when their complete conditional packages ship.
+- [x] Enable `ltree` and add StorageNode/movement schema, checks, GiST/B-tree indexes, and Kysely types.
+- [x] Implement immutable public IDs and lowercase UUID-hex `ltree` labels.
+- [x] Maintain `parent_id`, `path`, `depth`, `tree_root_id`, visibility, version, and archive state.
+- [x] Implement create/update StorageNode as a Kysely transaction including node attributes through `AttributeValuePort`.
+- [x] Increment node version for core or attribute aggregate changes.
+- [x] Implement indexed breadcrumb, ancestor, children, subtree, and paged direct-content queries.
+- [x] Ensure rename changes display data but never rewrites `storage_nodes.path`.
+- [x] Enforce exact-path privacy and safe public breadcrumb behavior.
+- [x] Build the mobile-first tree browser and core container card with breadcrumb, child nodes, and direct Items; include attributes, node media, and convenience QR only when their complete conditional packages ship.
 - [ ] Complete StorageNode-specific media authorization, attachment/reorder UI wiring, and integration/E2E cases against the shared MED-01 implementation.
-- [ ] Add deep-tree, pagination, rename, privacy, node-attribute rollback, and index-plan tests.
+- [x] Add deep-tree, pagination, rename, privacy, node-attribute rollback, and index-plan tests.
 
 Conditional package: if StorageNode dynamic attributes do not ship in `0.1.0`, defer the node-attribute mutation task, node attribute UI, and owned rollback test together. Extended StorageNode media UI may also remain post-validation. Neither deferral permits the release to claim those container-card capabilities.
 
 Acceptance criteria (verbatim from the approved blueprint):
 
-- [ ] Node path labels follow the frozen UUID-hex format.
-- [ ] Breadcrumb, children, and paged contents queries use `ltree` indexes.
-- [ ] Rename does not rewrite `storage_nodes.path`.
-- [ ] Exact path is private by default.
+- [x] Node path labels follow the frozen UUID-hex format.
+- [x] Breadcrumb, children, and paged contents queries use `ltree` indexes.
+- [x] Rename does not rewrite `storage_nodes.path`.
+- [x] Exact path is private by default.
 
 ### STO-02 Move a node atomically
 
@@ -1307,7 +1307,7 @@ Every mandatory test from blueprint section 20.2 has an explicit delivery owner 
 | [ ] | Reject moving a node into its own descendant without partial updates. | STO-02 | Required |
 | [ ] | Serialize opposing concurrent moves and retain an acyclic connected tree. | STO-02 | Required |
 | [ ] | Update `path`, `depth`, and `tree_root_id` for every descendant on cross-root move. | STO-02 | Required |
-| [ ] | Rename a container and synchronously update breadcrumbs for all nested Items. | STO-01 + SRCH-01 | Required |
+| [x] | Rename a container and synchronously update breadcrumbs for all nested Items. | STO-01 + SRCH-01 | Required |
 | [ ] | Keep allowed catalog rows visible while vector rebuild marks them stale. | SRCH-01 | Required |
 | [x] | Create/update an Item through Prisma and atomically write projection/outbox through ports in the same transaction. | CAT-03 + CAT-04 | Required; inherited |
 | [x] | Roll back source, projection, and outbox together when either port fails. | CAT-03 + CAT-04 | Required; inherited |
@@ -1315,7 +1315,7 @@ Every mandatory test from blueprint section 20.2 has an explicit delivery owner 
 | [ ] | Move an Item through Prisma and atomically update destination, movement history, audit, projection, and outbox through Prisma-aware ports. | STO-03 | Required |
 | [ ] | Reject an archived/missing Item destination when the projection path-resolution statement finds no writable node, rolling back the entire Prisma transaction. | STO-03 | Required |
 | [ ] | Serialize a concurrent Item create/move against destination-node move/rename with the shared root advisory lock and commit only a path consistent with the final tree state. | CAT-03 + STO-03 | Required |
-| [ ] | Replace StorageNode attributes through the Kysely `AttributeValuePort`; required-field failure rolls back node, values, version, projection, audit, and outbox together. | STO-01 | Conditional if node attributes ship |
+| [x] | Replace StorageNode attributes through the Kysely `AttributeValuePort`; required-field failure rolls back node, values, version, projection, audit, and outbox together. | STO-01 | Conditional if node attributes ship |
 | [x] | Persist multiselect as ordered scalar option rows only; reject wrong-field options, duplicates, gaps, and any array-shaped persistence representation. | CAT-02 | Required; inherited |
 | [ ] | Reprint the same active scan token, invalidate its prior generation on revoke/reissue, and resolve retained key versions during rotation. | LAB-01 | Deferred with LAB-01 |
 | [x] | Apply bootstrap/database configuration precedence and fail startup on production conflicts for canonical base URL or public catalog mode. | FND-02 | Required; inherited |

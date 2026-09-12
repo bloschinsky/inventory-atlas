@@ -77,6 +77,24 @@ export interface SearchProjectionPort {
   ): Promise<void>;
 }
 
+/** Storage-triggered synchronous breadcrumb/visibility maintenance for affected Items. */
+export interface StorageProjectionPort {
+  syncStorageSubtree<Database>(
+    context: TransactionContext<Database>,
+    storageNodeId: string,
+    indexedAt: Date,
+  ): Promise<void>;
+}
+
+export class StorageProjectionDestinationError extends Error {
+  readonly code = 'ITEM_STORAGE_DESTINATION_UNAVAILABLE';
+
+  constructor() {
+    super('The destination StorageNode is missing or archived.');
+    this.name = 'StorageProjectionDestinationError';
+  }
+}
+
 export interface IdempotencyCompletion {
   recordId: string;
   reservationTokenHash: string;
@@ -195,14 +213,16 @@ export class TransactionalMovementHistoryPort implements MovementHistoryPort {
   }
 }
 
-export class TransactionalSearchProjectionPort implements SearchProjectionPort {
+export class TransactionalSearchProjectionPort
+  implements SearchProjectionPort, StorageProjectionPort
+{
   async writeSync<Database>(
     context: TransactionContext<Database>,
     projection: ItemSearchProjection,
   ): Promise<void> {
-    if (projection.storageNodeId !== null) {
-      throw new Error('Storage destinations are unavailable until STO-01 creates storage_nodes.');
-    }
+    const destination = projection.storageNodeId
+      ? await resolveDestination(context, projection.storageNodeId, projection.visibility)
+      : { pathText: '', publicPathText: '', visibility: projection.visibility };
     const attrs = JSON.stringify(projection.attrs);
     const publicAttrs = JSON.stringify(projection.publicAttrs);
     if (context.kind === 'prisma') {
@@ -213,10 +233,11 @@ export class TransactionalSearchProjectionPort implements SearchProjectionPort {
           attrs, public_attrs, visibility, index_state, item_updated_at, indexed_at
         ) values (
           ${projection.itemId}::uuid, ${projection.displayName}, ${projection.description},
-          ${projection.categoryId}::uuid, ${projection.lifecycleStatusId}::uuid, '', '',
+          ${projection.categoryId}::uuid, ${projection.lifecycleStatusId}::uuid,
+          ${destination.pathText}, ${destination.publicPathText},
           to_tsvector('simple', ${projection.searchableText}),
           to_tsvector('simple', ${projection.publicSearchableText}),
-          ${attrs}::jsonb, ${publicAttrs}::jsonb, ${projection.visibility}, 'ready',
+          ${attrs}::jsonb, ${publicAttrs}::jsonb, ${destination.visibility}, 'ready',
           ${projection.itemUpdatedAt}, ${projection.indexedAt}
         ) on conflict (item_id) do update set
           display_name = excluded.display_name, description = excluded.description,
@@ -237,10 +258,11 @@ export class TransactionalSearchProjectionPort implements SearchProjectionPort {
         attrs, public_attrs, visibility, index_state, item_updated_at, indexed_at
       ) values (
         ${projection.itemId}::uuid, ${projection.displayName}, ${projection.description},
-        ${projection.categoryId}::uuid, ${projection.lifecycleStatusId}::uuid, '', '',
+        ${projection.categoryId}::uuid, ${projection.lifecycleStatusId}::uuid,
+        ${destination.pathText}, ${destination.publicPathText},
         to_tsvector('simple', ${projection.searchableText}),
         to_tsvector('simple', ${projection.publicSearchableText}),
-        ${attrs}::jsonb, ${publicAttrs}::jsonb, ${projection.visibility}, 'ready',
+        ${attrs}::jsonb, ${publicAttrs}::jsonb, ${destination.visibility}, 'ready',
         ${projection.itemUpdatedAt}, ${projection.indexedAt}
       ) on conflict (item_id) do update set
         display_name = excluded.display_name, description = excluded.description,
@@ -253,6 +275,143 @@ export class TransactionalSearchProjectionPort implements SearchProjectionPort {
         item_updated_at = excluded.item_updated_at, indexed_at = excluded.indexed_at
     `.execute(context.trx);
   }
+
+  async syncStorageSubtree<Database>(
+    context: TransactionContext<Database>,
+    storageNodeId: string,
+    indexedAt: Date,
+  ): Promise<void> {
+    const statement = kyselySql`
+      with source as (
+        select path from storage_nodes where id = ${storageNodeId}::uuid
+      ), affected as (
+        select item.id as item_id,
+          string_agg(ancestor.title, ' / ' order by ancestor.depth) as path_text,
+          bool_and(ancestor.visibility = 'public') as path_is_public,
+          bool_or(ancestor.visibility = 'private') as path_is_private,
+          bool_or(ancestor.visibility = 'unlisted') as path_is_unlisted,
+          bool_or(ancestor.visibility = 'authenticated') as path_is_authenticated,
+          bool_or(ancestor.archived_at is not null) as path_is_archived
+        from source
+        join storage_nodes destination on destination.path <@ source.path
+        join items item on item.storage_node_id = destination.id and item.archived_at is null
+        join storage_nodes ancestor on ancestor.path @> destination.path
+        group by item.id
+      )
+      update item_search search set
+        path_text = affected.path_text,
+        public_path_text = case
+          when item.visibility = 'public' and affected.path_is_public and not affected.path_is_archived
+            then affected.path_text else ''
+        end,
+        visibility = case
+          when affected.path_is_archived then 'unlisted'
+          when item.visibility = 'private' or affected.path_is_private then 'private'
+          when item.visibility = 'unlisted' or affected.path_is_unlisted then 'unlisted'
+          when item.visibility = 'authenticated' or affected.path_is_authenticated then 'authenticated'
+          else 'public'
+        end,
+        search_vector = to_tsvector(
+          'simple', concat_ws(' ', item.display_name, item.description, affected.path_text,
+            search.attrs::text)
+        ),
+        public_search_vector = case
+          when item.visibility = 'public' and affected.path_is_public
+            and not affected.path_is_archived
+            then to_tsvector('simple', concat_ws(' ', item.display_name, item.description,
+              affected.path_text, search.public_attrs::text))
+          else to_tsvector('simple', '')
+        end,
+        index_state = 'ready', indexed_at = ${indexedAt}
+      from affected join items item on item.id = affected.item_id
+      where search.item_id = affected.item_id
+    `;
+    if (context.kind === 'prisma') {
+      throw new Error(
+        'Storage subtree projection maintenance requires a Kysely source transaction.',
+      );
+    }
+    await statement.execute(context.trx);
+  }
+}
+
+interface ResolvedDestination {
+  pathText: string;
+  publicPathText: string;
+  visibility: ItemSearchProjection['visibility'];
+}
+
+async function resolveDestination<Database>(
+  context: TransactionContext<Database>,
+  storageNodeId: string,
+  itemVisibility: ItemSearchProjection['visibility'],
+): Promise<ResolvedDestination> {
+  interface DestinationRow {
+    path_text: string;
+    path_is_public: boolean;
+    path_is_private: boolean;
+    path_is_unlisted: boolean;
+    path_is_authenticated: boolean;
+  }
+  let rows: DestinationRow[];
+  if (context.kind === 'prisma') {
+    const locked = await context.trx.$queryRaw<{ locked: boolean }[]>`
+      select pg_advisory_xact_lock(hashtextextended(destination.tree_root_id::text, 0)) is null
+        as locked
+      from storage_nodes destination
+      where destination.id = ${storageNodeId}::uuid and destination.archived_at is null
+    `;
+    if (!locked.length) throw new StorageProjectionDestinationError();
+    rows = await context.trx.$queryRaw<DestinationRow[]>`
+      select string_agg(ancestor.title, ' / ' order by ancestor.depth) as path_text,
+        bool_and(ancestor.visibility = 'public') as path_is_public,
+        bool_or(ancestor.visibility = 'private') as path_is_private,
+        bool_or(ancestor.visibility = 'unlisted') as path_is_unlisted,
+        bool_or(ancestor.visibility = 'authenticated') as path_is_authenticated
+      from storage_nodes destination
+      join storage_nodes ancestor on ancestor.path @> destination.path
+      where destination.id = ${storageNodeId}::uuid and destination.archived_at is null
+      group by destination.id
+      having bool_and(ancestor.archived_at is null)
+    `;
+  } else {
+    const locked = await kyselySql<{ locked: boolean }>`
+      select pg_advisory_xact_lock(hashtextextended(destination.tree_root_id::text, 0)) is null
+        as locked
+      from storage_nodes destination
+      where destination.id = ${storageNodeId}::uuid and destination.archived_at is null
+    `.execute(context.trx);
+    if (!locked.rows.length) throw new StorageProjectionDestinationError();
+    rows = (
+      await kyselySql<DestinationRow>`
+        select string_agg(ancestor.title, ' / ' order by ancestor.depth) as path_text,
+          bool_and(ancestor.visibility = 'public') as path_is_public,
+          bool_or(ancestor.visibility = 'private') as path_is_private,
+          bool_or(ancestor.visibility = 'unlisted') as path_is_unlisted,
+          bool_or(ancestor.visibility = 'authenticated') as path_is_authenticated
+        from storage_nodes destination
+        join storage_nodes ancestor on ancestor.path @> destination.path
+        where destination.id = ${storageNodeId}::uuid and destination.archived_at is null
+        group by destination.id
+        having bool_and(ancestor.archived_at is null)
+      `.execute(context.trx)
+    ).rows;
+  }
+  const row = rows[0];
+  if (!row) throw new StorageProjectionDestinationError();
+  const visibility =
+    itemVisibility === 'private' || row.path_is_private
+      ? 'private'
+      : itemVisibility === 'unlisted' || row.path_is_unlisted
+        ? 'unlisted'
+        : itemVisibility === 'authenticated' || row.path_is_authenticated
+          ? 'authenticated'
+          : 'public';
+  return {
+    pathText: row.path_text,
+    publicPathText: itemVisibility === 'public' && row.path_is_public ? row.path_text : '',
+    visibility,
+  };
 }
 
 export class TransactionalIdempotencyPort implements IdempotencyPort {

@@ -123,6 +123,14 @@ No Prisma transaction may write this table. Rollback drops the queue and therefo
 scheduled, waiting and dead job; committed source state is unaffected because a job is always
 rebuildable from its outbox message or re-enqueued by hand.
 
+`0009_storage.mjs` delivers the STO-01 storage aggregate. It enables `ltree`, creates
+`storage_nodes` with immutable UUID public IDs, UUID-hex path labels, parent/depth/root integrity,
+visibility, aggregate version and archive state, and adds GiST plus browse indexes. It also adds
+the deferred StorageNode foreign keys for Items, attributes, movements, media relations and upload
+sessions. Kysely owns node writes and path queries; Prisma models the table only to validate the
+foreign-key schema. Rollback removes the table and those deferred foreign keys, but leaves the
+shared `ltree` extension installed.
+
 Movement rows are append-only. Search projections include separate authenticated
 and public vectors/attribute objects, while privacy-safe construction stays in
 `SearchProjectionPort`. Idempotency keys and fingerprints are stored only as

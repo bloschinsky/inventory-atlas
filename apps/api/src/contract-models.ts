@@ -366,6 +366,111 @@ export class VersionConflictProblemDto extends ProblemDetailsDto {
   declare safeDiff: Record<string, unknown>;
 }
 
+export class CreateStorageNodeRequestDto {
+  @ApiPropertyOptional({ format: 'uuid', nullable: true, type: String })
+  declare parentPublicId?: string | null;
+
+  @ApiProperty({
+    enum: ['site', 'room', 'zone', 'rack', 'shelf', 'container', 'custom'],
+    type: String,
+  })
+  declare nodeType: string;
+
+  @ApiProperty({ maxLength: 500, minLength: 1, type: String })
+  declare title: string;
+
+  @ApiPropertyOptional({ maxLength: 128, nullable: true, type: String })
+  declare code?: string | null;
+
+  @ApiPropertyOptional({
+    enum: ['public', 'authenticated', 'private', 'unlisted'],
+    type: String,
+  })
+  declare visibility?: string;
+
+  @ApiPropertyOptional({ additionalProperties: true, type: 'object' })
+  declare attributes?: Record<string, unknown>;
+}
+
+export class UpdateStorageNodeRequestDto {
+  @ApiProperty({ minimum: 1, type: Number })
+  declare expectedVersion: number;
+
+  @ApiPropertyOptional({
+    enum: ['site', 'room', 'zone', 'rack', 'shelf', 'container', 'custom'],
+    type: String,
+  })
+  declare nodeType?: string;
+
+  @ApiPropertyOptional({ maxLength: 500, minLength: 1, type: String })
+  declare title?: string;
+
+  @ApiPropertyOptional({ maxLength: 128, nullable: true, type: String })
+  declare code?: string | null;
+
+  @ApiPropertyOptional({
+    enum: ['public', 'authenticated', 'private', 'unlisted'],
+    type: String,
+  })
+  declare visibility?: string;
+
+  @ApiPropertyOptional({ type: Boolean })
+  declare archived?: boolean;
+
+  @ApiPropertyOptional({ additionalProperties: true, type: 'object' })
+  declare attributes?: Record<string, unknown>;
+}
+
+export class StorageNodeSummaryDto {
+  @ApiProperty({ format: 'uuid', type: String }) declare publicId: string;
+  @ApiPropertyOptional({ format: 'uuid', nullable: true, type: String })
+  declare parentPublicId: string | null;
+  @ApiProperty({
+    enum: ['site', 'room', 'zone', 'rack', 'shelf', 'container', 'custom'],
+    type: String,
+  })
+  declare nodeType: string;
+  @ApiProperty({ type: String }) declare title: string;
+  @ApiPropertyOptional({ nullable: true, type: String }) declare code: string | null;
+  @ApiProperty({ enum: ['public', 'authenticated', 'private', 'unlisted'], type: String })
+  declare visibility: string;
+  @ApiProperty({ minimum: 0, type: Number }) declare depth: number;
+  @ApiProperty({ minimum: 1, type: Number }) declare version: number;
+}
+
+export class StorageBreadcrumbDto {
+  @ApiProperty({ format: 'uuid', type: String }) declare publicId: string;
+  @ApiProperty({ type: String }) declare title: string;
+  @ApiProperty({ minimum: 0, type: Number }) declare depth: number;
+}
+
+export class StorageContentDto {
+  @ApiProperty({ enum: ['node', 'item'], type: String }) declare kind: string;
+  @ApiProperty({ format: 'uuid', type: String }) declare publicId: string;
+  @ApiProperty({ type: String }) declare title: string;
+  @ApiProperty({ enum: ['public', 'authenticated', 'private', 'unlisted'], type: String })
+  declare visibility: string;
+  @ApiProperty({ minimum: 1, type: Number }) declare version: number;
+}
+
+export class StorageContentPageDto {
+  @ApiProperty({ type: [StorageContentDto] }) declare entries: StorageContentDto[];
+  @ApiPropertyOptional({ nullable: true, type: String }) declare nextCursor: string | null;
+}
+
+export class StorageNodePageDto {
+  @ApiProperty({ type: [StorageNodeSummaryDto] }) declare entries: StorageNodeSummaryDto[];
+  @ApiPropertyOptional({ nullable: true, type: String }) declare nextCursor: string | null;
+}
+
+export class StorageNodeDetailDto extends StorageNodeSummaryDto {
+  @ApiProperty({ type: [StorageBreadcrumbDto] }) declare breadcrumb: StorageBreadcrumbDto[];
+  @ApiProperty({ type: StorageContentPageDto }) declare contents: StorageContentPageDto;
+  @ApiProperty({ additionalProperties: true, type: 'object' })
+  declare attributes: Record<string, unknown>;
+  @ApiProperty({ format: 'date-time', type: String }) declare updatedAt: string;
+}
+
 export const contractModels = [
   ProblemFieldErrorDto,
   ProblemDetailsDto,
@@ -385,4 +490,12 @@ export const contractModels = [
   CursorPageDto,
   ItemPageResponseDto,
   VersionConflictProblemDto,
+  CreateStorageNodeRequestDto,
+  UpdateStorageNodeRequestDto,
+  StorageNodeSummaryDto,
+  StorageBreadcrumbDto,
+  StorageContentDto,
+  StorageContentPageDto,
+  StorageNodePageDto,
+  StorageNodeDetailDto,
 ] as const;

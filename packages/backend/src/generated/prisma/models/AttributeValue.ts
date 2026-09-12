@@ -432,7 +432,6 @@ export type AttributeValueScalarWhereWithAggregatesInput = {
 
 export type AttributeValueCreateInput = {
   id: string
-  storageNodeId?: string | null
   position: number
   valueText?: string | null
   valueNumber?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -441,7 +440,6 @@ export type AttributeValueCreateInput = {
   valueDatetime?: Date | string | null
   valueMoneyAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   valueMoneyCurrency?: string | null
-  valueReferenceNodeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   definition: Prisma.FieldDefinitionCreateNestedOneWithoutAttributeValuesInput
@@ -472,7 +470,6 @@ export type AttributeValueUncheckedCreateInput = {
 
 export type AttributeValueUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   valueText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   valueNumber?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -481,7 +478,6 @@ export type AttributeValueUpdateInput = {
   valueDatetime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   valueMoneyAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   valueMoneyCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  valueReferenceNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   definition?: Prisma.FieldDefinitionUpdateOneRequiredWithoutAttributeValuesNestedInput
@@ -532,7 +528,6 @@ export type AttributeValueCreateManyInput = {
 
 export type AttributeValueUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   valueText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   valueNumber?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -541,7 +536,6 @@ export type AttributeValueUpdateManyMutationInput = {
   valueDatetime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   valueMoneyAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   valueMoneyCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  valueReferenceNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -854,7 +848,6 @@ export type AttributeValueUncheckedUpdateManyWithoutReferencedItemNestedInput = 
 
 export type AttributeValueCreateWithoutDefinitionInput = {
   id: string
-  storageNodeId?: string | null
   position: number
   valueText?: string | null
   valueNumber?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -863,7 +856,6 @@ export type AttributeValueCreateWithoutDefinitionInput = {
   valueDatetime?: Date | string | null
   valueMoneyAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   valueMoneyCurrency?: string | null
-  valueReferenceNodeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   item?: Prisma.ItemCreateNestedOneWithoutAttributeValuesInput
@@ -941,7 +933,6 @@ export type AttributeValueScalarWhereInput = {
 
 export type AttributeValueCreateWithoutOptionInput = {
   id: string
-  storageNodeId?: string | null
   position: number
   valueText?: string | null
   valueNumber?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -950,7 +941,6 @@ export type AttributeValueCreateWithoutOptionInput = {
   valueDatetime?: Date | string | null
   valueMoneyAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   valueMoneyCurrency?: string | null
-  valueReferenceNodeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   definition: Prisma.FieldDefinitionCreateNestedOneWithoutAttributeValuesInput
@@ -1004,7 +994,6 @@ export type AttributeValueUpdateManyWithWhereWithoutOptionInput = {
 
 export type AttributeValueCreateWithoutItemInput = {
   id: string
-  storageNodeId?: string | null
   position: number
   valueText?: string | null
   valueNumber?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1013,7 +1002,6 @@ export type AttributeValueCreateWithoutItemInput = {
   valueDatetime?: Date | string | null
   valueMoneyAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   valueMoneyCurrency?: string | null
-  valueReferenceNodeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   definition: Prisma.FieldDefinitionCreateNestedOneWithoutAttributeValuesInput
@@ -1052,7 +1040,6 @@ export type AttributeValueCreateManyItemInputEnvelope = {
 
 export type AttributeValueCreateWithoutReferencedItemInput = {
   id: string
-  storageNodeId?: string | null
   position: number
   valueText?: string | null
   valueNumber?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1061,7 +1048,6 @@ export type AttributeValueCreateWithoutReferencedItemInput = {
   valueDatetime?: Date | string | null
   valueMoneyAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   valueMoneyCurrency?: string | null
-  valueReferenceNodeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   definition: Prisma.FieldDefinitionCreateNestedOneWithoutAttributeValuesInput
@@ -1151,7 +1137,6 @@ export type AttributeValueCreateManyDefinitionInput = {
 
 export type AttributeValueUpdateWithoutDefinitionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   valueText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   valueNumber?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1160,7 +1145,6 @@ export type AttributeValueUpdateWithoutDefinitionInput = {
   valueDatetime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   valueMoneyAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   valueMoneyCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  valueReferenceNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   item?: Prisma.ItemUpdateOneWithoutAttributeValuesNestedInput
@@ -1226,7 +1210,6 @@ export type AttributeValueCreateManyOptionInput = {
 
 export type AttributeValueUpdateWithoutOptionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   valueText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   valueNumber?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1235,7 +1218,6 @@ export type AttributeValueUpdateWithoutOptionInput = {
   valueDatetime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   valueMoneyAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   valueMoneyCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  valueReferenceNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   definition?: Prisma.FieldDefinitionUpdateOneRequiredWithoutAttributeValuesNestedInput
@@ -1319,7 +1301,6 @@ export type AttributeValueCreateManyReferencedItemInput = {
 
 export type AttributeValueUpdateWithoutItemInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   valueText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   valueNumber?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1328,7 +1309,6 @@ export type AttributeValueUpdateWithoutItemInput = {
   valueDatetime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   valueMoneyAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   valueMoneyCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  valueReferenceNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   definition?: Prisma.FieldDefinitionUpdateOneRequiredWithoutAttributeValuesNestedInput
@@ -1376,7 +1356,6 @@ export type AttributeValueUncheckedUpdateManyWithoutItemInput = {
 
 export type AttributeValueUpdateWithoutReferencedItemInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   valueText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   valueNumber?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1385,7 +1364,6 @@ export type AttributeValueUpdateWithoutReferencedItemInput = {
   valueDatetime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   valueMoneyAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   valueMoneyCurrency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  valueReferenceNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   definition?: Prisma.FieldDefinitionUpdateOneRequiredWithoutAttributeValuesNestedInput

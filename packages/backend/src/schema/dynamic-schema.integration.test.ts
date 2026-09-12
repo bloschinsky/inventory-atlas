@@ -35,6 +35,16 @@ async function ensureItem(id: string): Promise<void> {
   );
 }
 
+async function ensureStorageNode(id: string): Promise<void> {
+  await pool.query(
+    `insert into storage_nodes (
+       id, public_id, path, depth, tree_root_id, node_type, title, created_at, updated_at
+     ) values ($1, $2, $3::ltree, 0, $1, 'custom', 'Schema fixture node', $4, $4)
+     on conflict (id) do nothing`,
+    [id, randomUUID(), `n${id.replaceAll('-', '')}`, createdAt],
+  );
+}
+
 // Only synthetic fixture identifiers enter SQL; values are always bound parameters.
 async function insert(
   table: 'categories' | 'field_definitions' | 'field_options' | 'attribute_values',
@@ -44,6 +54,9 @@ async function insert(
     if (typeof values.item_id === 'string') await ensureItem(values.item_id);
     if (typeof values.value_reference_item_id === 'string')
       await ensureItem(values.value_reference_item_id);
+    if (typeof values.storage_node_id === 'string') await ensureStorageNode(values.storage_node_id);
+    if (typeof values.value_reference_node_id === 'string')
+      await ensureStorageNode(values.value_reference_node_id);
   }
   const entries = Object.entries(values);
   const columns = entries.map(([key]) => `"${key.replaceAll('"', '""')}"`).join(', ');
@@ -487,6 +500,8 @@ suite('CAT-02 dynamic schema on PostgreSQL', () => {
 
   it('rolls back the dynamic schema and reapplies cleanly', async () => {
     // Roll back every migration layered above the dynamic schema first.
+    expect((await migrator.migrateDown()).error).toBeUndefined();
+    expect(await currentSchemaVersion(database)).toBe('0008_jobs');
     expect((await migrator.migrateDown()).error).toBeUndefined();
     expect(await currentSchemaVersion(database)).toBe('0007_media');
     expect((await migrator.migrateDown()).error).toBeUndefined();

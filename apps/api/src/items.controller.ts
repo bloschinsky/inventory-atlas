@@ -23,6 +23,7 @@ import {
   ItemPolicyError,
   ItemVersionConflictError,
   SessionError,
+  StorageProjectionDestinationError,
   type CreateItemInput,
   type ItemDetail,
   type SessionActor,
@@ -298,6 +299,8 @@ function mapItemError(error: unknown, requestId = 'unknown'): Error {
     });
   if (error instanceof ItemPolicyError)
     return validationProblem([{ field: error.fieldKey, messages: [error.code] }], requestId);
+  if (error instanceof StorageProjectionDestinationError)
+    return validationProblem([{ field: 'storageNodeId', messages: [error.code] }], requestId);
   if (error instanceof AttributeValidationError)
     return validationProblem(
       error.issues.map((issue) => ({

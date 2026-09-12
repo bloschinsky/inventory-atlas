@@ -1692,10 +1692,10 @@ As a user, I can model Warehouse -> Box -> Case with arbitrary supported depth.
 
 Acceptance criteria:
 
-- [ ] Node path labels follow the frozen UUID-hex format.
-- [ ] Breadcrumb, children, and paged contents queries use `ltree` indexes.
-- [ ] Rename does not rewrite `storage_nodes.path`.
-- [ ] Exact path is private by default.
+- [x] Node path labels follow the frozen UUID-hex format.
+- [x] Breadcrumb, children, and paged contents queries use `ltree` indexes.
+- [x] Rename does not rewrite `storage_nodes.path`.
+- [x] Exact path is private by default.
 
 #### STO-02 Move a node atomically
 

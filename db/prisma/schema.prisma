@@ -238,6 +238,8 @@ model AttributeValue {
   item                 Item?           @relation("ItemAttributeValues", fields: [itemId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "attribute_values_item_fk")
   option               FieldOption?    @relation(fields: [valueOptionId, fieldDefinitionId], references: [id, fieldDefinitionId], onUpdate: NoAction, map: "attribute_values_option_fk")
   referencedItem       Item?           @relation("ReferencedItemAttributeValues", fields: [valueReferenceItemId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "attribute_values_reference_item_fk")
+  referencedNode       StorageNode?    @relation("ReferencedStorageNodeAttributes", fields: [valueReferenceNodeId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "attribute_values_reference_node_fk") @ignore
+  storageNode          StorageNode?    @relation("StorageNodeAttributes", fields: [storageNodeId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "attribute_values_storage_node_fk") @ignore
 
   @@unique([itemId, fieldDefinitionId, valueOptionId], map: "attribute_values_item_option_idx", where: raw("((item_id IS NOT NULL) AND (value_option_id IS NOT NULL))"))
   @@unique([itemId, fieldDefinitionId, position], map: "attribute_values_item_position_idx", where: raw("(item_id IS NOT NULL)"))
@@ -326,6 +328,7 @@ model Item {
   tags              ItemTag[]
   category          Category         @relation(fields: [categoryId], references: [id], onUpdate: NoAction)
   lifecycleStatus   LifecycleStatus  @relation(fields: [lifecycleStatusId], references: [id], onUpdate: NoAction)
+  storageNode       StorageNode?     @relation(fields: [storageNodeId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "items_storage_node_fk") @ignore
   mediaRelations    MediaRelation[]
   movements         Movement[]       @ignore
   uploadSessions    UploadSession[]
@@ -394,20 +397,23 @@ model ItemSearch {
 
 /// Database checks and the append-only trigger remain authoritative; writes use MovementHistoryPort.
 model Movement {
-  id               String   @id @db.Uuid
-  entityType       String   @map("entity_type") @db.VarChar(16)
-  itemId           String?  @map("item_id") @db.Uuid
-  storageNodeId    String?  @map("storage_node_id") @db.Uuid
-  fromNodeId       String?  @map("from_node_id") @db.Uuid
-  toNodeId         String?  @map("to_node_id") @db.Uuid
-  fromPathSnapshot String?  @map("from_path_snapshot")
-  toPathSnapshot   String?  @map("to_path_snapshot")
-  actorUserId      String   @map("actor_user_id") @db.Uuid
-  reason           String?  @db.VarChar(512)
-  occurredAt       DateTime @default(now()) @map("occurred_at") @db.Timestamptz(6)
-  correlationId    String   @map("correlation_id") @db.VarChar(128)
-  actor            User     @relation(fields: [actorUserId], references: [id], onUpdate: NoAction)
-  item             Item?    @relation(fields: [itemId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  id               String       @id @db.Uuid
+  entityType       String       @map("entity_type") @db.VarChar(16)
+  itemId           String?      @map("item_id") @db.Uuid
+  storageNodeId    String?      @map("storage_node_id") @db.Uuid
+  fromNodeId       String?      @map("from_node_id") @db.Uuid
+  toNodeId         String?      @map("to_node_id") @db.Uuid
+  fromPathSnapshot String?      @map("from_path_snapshot")
+  toPathSnapshot   String?      @map("to_path_snapshot")
+  actorUserId      String       @map("actor_user_id") @db.Uuid
+  reason           String?      @db.VarChar(512)
+  occurredAt       DateTime     @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  correlationId    String       @map("correlation_id") @db.VarChar(128)
+  actor            User         @relation(fields: [actorUserId], references: [id], onUpdate: NoAction)
+  fromNode         StorageNode? @relation("StorageNodeMovementFrom", fields: [fromNodeId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "movements_from_node_fk") @ignore
+  item             Item?        @relation(fields: [itemId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  storageNode      StorageNode? @relation("StorageNodeMovements", fields: [storageNodeId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "movements_storage_node_fk") @ignore
+  toNode           StorageNode? @relation("StorageNodeMovementTo", fields: [toNodeId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "movements_to_node_fk") @ignore
 
   @@index([itemId, occurredAt(sort: Desc), id(sort: Desc)], map: "movements_item_idx", where: raw("(item_id IS NOT NULL)"))
   @@index([storageNodeId, occurredAt(sort: Desc), id(sort: Desc)], map: "movements_node_idx", where: raw("(storage_node_id IS NOT NULL)"))
@@ -468,19 +474,20 @@ model MediaAsset {
 }
 
 model MediaRelation {
-  id            String     @id @db.Uuid
-  assetId       String     @map("asset_id") @db.Uuid
-  itemId        String?    @map("item_id") @db.Uuid
-  storageNodeId String?    @map("storage_node_id") @db.Uuid
-  role          String     @db.VarChar(20)
-  position      Int        @default(0)
-  altText       String?    @map("alt_text")
-  visibility    String     @default("authenticated") @db.VarChar(16)
-  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime   @default(now()) @map("updated_at") @db.Timestamptz(6)
-  archivedAt    DateTime?  @map("archived_at") @db.Timestamptz(6)
-  asset         MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  item          Item?      @relation(fields: [itemId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id            String       @id @db.Uuid
+  assetId       String       @map("asset_id") @db.Uuid
+  itemId        String?      @map("item_id") @db.Uuid
+  storageNodeId String?      @map("storage_node_id") @db.Uuid
+  role          String       @db.VarChar(20)
+  position      Int          @default(0)
+  altText       String?      @map("alt_text")
+  visibility    String       @default("authenticated") @db.VarChar(16)
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  archivedAt    DateTime?    @map("archived_at") @db.Timestamptz(6)
+  asset         MediaAsset   @relation(fields: [assetId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  item          Item?        @relation(fields: [itemId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  storageNode   StorageNode? @relation(fields: [storageNodeId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "media_relations_storage_node_fk") @ignore
 
   @@unique([itemId, role], map: "media_relations_primary_item_idx", where: raw("(((role)::text = 'primary'::text) AND (archived_at IS NULL) AND (item_id IS NOT NULL))"))
   @@unique([storageNodeId, role], map: "media_relations_primary_node_idx", where: raw("(((role)::text = 'primary'::text) AND (archived_at IS NULL) AND (storage_node_id IS NOT NULL))"))
@@ -494,26 +501,64 @@ model MediaRelation {
 }
 
 model UploadSession {
-  id               String    @id @db.Uuid
-  actorId          String    @map("actor_id") @db.Uuid
-  itemId           String?   @map("item_id") @db.Uuid
-  storageNodeId    String?   @map("storage_node_id") @db.Uuid
-  declaredFilename String    @map("declared_filename")
-  declaredMimeType String    @map("declared_mime_type") @db.VarChar(128)
-  declaredByteSize BigInt    @map("declared_byte_size")
-  tempStorageKey   String    @unique @map("temp_storage_key")
-  receivedByteSize BigInt?   @map("received_byte_size")
-  checksumSha256   String?   @map("checksum_sha256") @db.Char(64)
-  state            String    @default("pending") @db.VarChar(16)
-  failureCode      String?   @map("failure_code") @db.VarChar(64)
-  expiresAt        DateTime  @map("expires_at") @db.Timestamptz(6)
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
-  finalizedAt      DateTime? @map("finalized_at") @db.Timestamptz(6)
-  actor            User      @relation(fields: [actorId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  item             Item?     @relation(fields: [itemId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id               String       @id @db.Uuid
+  actorId          String       @map("actor_id") @db.Uuid
+  itemId           String?      @map("item_id") @db.Uuid
+  storageNodeId    String?      @map("storage_node_id") @db.Uuid
+  declaredFilename String       @map("declared_filename")
+  declaredMimeType String       @map("declared_mime_type") @db.VarChar(128)
+  declaredByteSize BigInt       @map("declared_byte_size")
+  tempStorageKey   String       @unique @map("temp_storage_key")
+  receivedByteSize BigInt?      @map("received_byte_size")
+  checksumSha256   String?      @map("checksum_sha256") @db.Char(64)
+  state            String       @default("pending") @db.VarChar(16)
+  failureCode      String?      @map("failure_code") @db.VarChar(64)
+  expiresAt        DateTime     @map("expires_at") @db.Timestamptz(6)
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  finalizedAt      DateTime?    @map("finalized_at") @db.Timestamptz(6)
+  actor            User         @relation(fields: [actorId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  item             Item?        @relation(fields: [itemId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  storageNode      StorageNode? @relation(fields: [storageNodeId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "upload_sessions_storage_node_fk") @ignore
 
   @@index([actorId, createdAt(sort: Desc)], map: "upload_sessions_actor_idx")
   @@index([expiresAt], map: "upload_sessions_open_expiry_idx", where: raw("((state)::text = ANY ((ARRAY['pending'::character varying, 'received'::character varying])::text[]))"))
   @@map("upload_sessions")
+}
+
+/// Kysely owns StorageNode queries and mutations because Prisma does not support ltree.
+model StorageNode {
+  id                String               @id @db.Uuid
+  publicId          String               @unique @map("public_id") @db.Uuid
+  parentId          String?              @map("parent_id") @db.Uuid
+  path              Unsupported("ltree")
+  depth             Int
+  treeRootId        String               @map("tree_root_id") @db.Uuid
+  nodeType          String               @map("node_type") @db.VarChar(16)
+  title             String
+  code              String?              @unique(map: "storage_nodes_active_code_idx", where: raw("((archived_at IS NULL) AND (code IS NOT NULL))")) @db.VarChar(128)
+  visibility        String               @default("authenticated") @db.VarChar(16)
+  version           BigInt               @default(1)
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime             @default(now()) @map("updated_at") @db.Timestamptz(6)
+  archivedAt        DateTime?            @map("archived_at") @db.Timestamptz(6)
+  referencingValues AttributeValue[]     @relation("ReferencedStorageNodeAttributes")
+  attributeValues   AttributeValue[]     @relation("StorageNodeAttributes")
+  items             Item[]
+  mediaRelations    MediaRelation[]
+  movementsFrom     Movement[]           @relation("StorageNodeMovementFrom") @ignore
+  movements         Movement[]           @relation("StorageNodeMovements") @ignore
+  movementsTo       Movement[]           @relation("StorageNodeMovementTo") @ignore
+  parent            StorageNode?         @relation("StorageNodeTree", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: NoAction) @ignore
+  children          StorageNode[]        @relation("StorageNodeTree") @ignore
+  treeRoot          StorageNode          @relation("StorageNodeRoots", fields: [treeRootId], references: [id], onDelete: NoAction, onUpdate: NoAction) @ignore
+  rootedNodes       StorageNode[]        @relation("StorageNodeRoots") @ignore
+  uploadSessions    UploadSession[]
+
+  @@index([title, id], map: "storage_nodes_active_roots_idx", where: raw("((parent_id IS NULL) AND (archived_at IS NULL))"))
+  @@index([parentId, title, id], map: "storage_nodes_parent_idx")
+  @@index([path], map: "storage_nodes_path_gist_idx", type: Gist)
+  @@index([treeRootId, depth, id], map: "storage_nodes_root_depth_idx")
+  @@map("storage_nodes")
+  @@ignore
 }

@@ -347,7 +347,6 @@ export type MediaRelationScalarWhereWithAggregatesInput = {
 
 export type MediaRelationCreateInput = {
   id: string
-  storageNodeId?: string | null
   role: string
   position?: number
   altText?: string | null
@@ -375,7 +374,6 @@ export type MediaRelationUncheckedCreateInput = {
 
 export type MediaRelationUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
   position?: Prisma.IntFieldUpdateOperationsInput | number
   altText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -417,7 +415,6 @@ export type MediaRelationCreateManyInput = {
 
 export type MediaRelationUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
   position?: Prisma.IntFieldUpdateOperationsInput | number
   altText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -619,7 +616,6 @@ export type MediaRelationUncheckedUpdateManyWithoutAssetNestedInput = {
 
 export type MediaRelationCreateWithoutItemInput = {
   id: string
-  storageNodeId?: string | null
   role: string
   position?: number
   altText?: string | null
@@ -688,7 +684,6 @@ export type MediaRelationScalarWhereInput = {
 
 export type MediaRelationCreateWithoutAssetInput = {
   id: string
-  storageNodeId?: string | null
   role: string
   position?: number
   altText?: string | null
@@ -753,7 +748,6 @@ export type MediaRelationCreateManyItemInput = {
 
 export type MediaRelationUpdateWithoutItemInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
   position?: Prisma.IntFieldUpdateOperationsInput | number
   altText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -805,7 +799,6 @@ export type MediaRelationCreateManyAssetInput = {
 
 export type MediaRelationUpdateWithoutAssetInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
   position?: Prisma.IntFieldUpdateOperationsInput | number
   altText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null

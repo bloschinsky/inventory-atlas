@@ -9,6 +9,7 @@ import type { CatalogRuntimePort } from './catalog.runtime.js';
 import type { SchemaRuntimePort } from './schema.runtime.js';
 import type { ItemsRuntimePort } from './items.runtime.js';
 import type { MediaRuntimePort } from './media.runtime.js';
+import type { StorageRuntimePort } from './storage.runtime.js';
 
 export async function createApiApplication(
   runtime: FoundationRuntimePort &
@@ -16,7 +17,8 @@ export async function createApiApplication(
     CatalogRuntimePort &
     SchemaRuntimePort &
     ItemsRuntimePort &
-    MediaRuntimePort,
+    MediaRuntimePort &
+    StorageRuntimePort,
 ): Promise<NestFastifyApplication> {
   const adapter = new FastifyAdapter({ trustProxy: runtime.trustProxy() });
   // Media content arrives as the raw object, so the body reaches the handler unparsed and is

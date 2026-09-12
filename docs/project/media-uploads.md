@@ -116,9 +116,9 @@ is dropped rather than trusted, and the adapter refuses any key that would resol
 root. An S3-compatible adapter implements the same port without changing a caller; S3 stays
 optional and is not required by the MVP.
 
-## Deferred to STO-01
+## StorageNode delivery status
 
 The shared model already supports StorageNode owners: `media_relations.storage_node_id`, the
-`container_photo` role and the node-side unique indexes exist. The foreign key, node
-authorization, UI wiring and node integration tests wait for STO-01 to create the
-`storage_nodes` table, exactly as `items.storage_node_id` already does.
+`container_photo` role and the node-side unique indexes exist. STO-01 adds the foreign key when it
+creates `storage_nodes`. Node authorization, UI wiring and node integration tests remain the
+separate extended StorageNode media package allowed by the validation-release scope.

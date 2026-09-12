@@ -382,7 +382,6 @@ export type ItemCreateInput = {
   id: string
   publicId: string
   slug: string
-  storageNodeId?: string | null
   displayName: string
   description?: string | null
   visibility?: string
@@ -424,7 +423,6 @@ export type ItemUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   publicId?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   visibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -482,7 +480,6 @@ export type ItemUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   publicId?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   visibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -750,7 +747,6 @@ export type ItemCreateWithoutCategoryInput = {
   id: string
   publicId: string
   slug: string
-  storageNodeId?: string | null
   displayName: string
   description?: string | null
   visibility?: string
@@ -835,7 +831,6 @@ export type ItemCreateWithoutLifecycleStatusInput = {
   id: string
   publicId: string
   slug: string
-  storageNodeId?: string | null
   displayName: string
   description?: string | null
   visibility?: string
@@ -901,7 +896,6 @@ export type ItemCreateWithoutAttributeValuesInput = {
   id: string
   publicId: string
   slug: string
-  storageNodeId?: string | null
   displayName: string
   description?: string | null
   visibility?: string
@@ -946,7 +940,6 @@ export type ItemCreateWithoutReferencingValuesInput = {
   id: string
   publicId: string
   slug: string
-  storageNodeId?: string | null
   displayName: string
   description?: string | null
   visibility?: string
@@ -1002,7 +995,6 @@ export type ItemUpdateWithoutAttributeValuesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   publicId?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   visibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1053,7 +1045,6 @@ export type ItemUpdateWithoutReferencingValuesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   publicId?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   visibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1093,7 +1084,6 @@ export type ItemCreateWithoutTagsInput = {
   id: string
   publicId: string
   slug: string
-  storageNodeId?: string | null
   displayName: string
   description?: string | null
   visibility?: string
@@ -1149,7 +1139,6 @@ export type ItemUpdateWithoutTagsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   publicId?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   visibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1189,7 +1178,6 @@ export type ItemCreateWithoutMediaRelationsInput = {
   id: string
   publicId: string
   slug: string
-  storageNodeId?: string | null
   displayName: string
   description?: string | null
   visibility?: string
@@ -1245,7 +1233,6 @@ export type ItemUpdateWithoutMediaRelationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   publicId?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   visibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1285,7 +1272,6 @@ export type ItemCreateWithoutUploadSessionsInput = {
   id: string
   publicId: string
   slug: string
-  storageNodeId?: string | null
   displayName: string
   description?: string | null
   visibility?: string
@@ -1341,7 +1327,6 @@ export type ItemUpdateWithoutUploadSessionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   publicId?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   visibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1396,7 +1381,6 @@ export type ItemUpdateWithoutCategoryInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   publicId?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   visibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1466,7 +1450,6 @@ export type ItemUpdateWithoutLifecycleStatusInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   publicId?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   visibility?: Prisma.StringFieldUpdateOperationsInput | string

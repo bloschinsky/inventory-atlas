@@ -231,6 +231,24 @@
         "required": ["categoryId", "displayName", "lifecycleStatusId"],
         "type": "object"
       },
+      "CreateStorageNodeRequestDto": {
+        "properties": {
+          "attributes": { "additionalProperties": true, "type": "object" },
+          "code": { "maxLength": 128, "nullable": true, "type": "string" },
+          "nodeType": {
+            "enum": ["container", "custom", "rack", "room", "shelf", "site", "zone"],
+            "type": "string"
+          },
+          "parentPublicId": { "format": "uuid", "nullable": true, "type": "string" },
+          "title": { "maxLength": 500, "minLength": 1, "type": "string" },
+          "visibility": {
+            "enum": ["authenticated", "private", "public", "unlisted"],
+            "type": "string"
+          }
+        },
+        "required": ["nodeType", "title"],
+        "type": "object"
+      },
       "CurrentSessionResponseDto": {
         "properties": {
           "absoluteExpiresAt": { "format": "date-time", "type": "string" },
@@ -762,6 +780,109 @@
         ],
         "type": "object"
       },
+      "StorageBreadcrumbDto": {
+        "properties": {
+          "depth": { "minimum": 0, "type": "number" },
+          "publicId": { "format": "uuid", "type": "string" },
+          "title": { "type": "string" }
+        },
+        "required": ["depth", "publicId", "title"],
+        "type": "object"
+      },
+      "StorageContentDto": {
+        "properties": {
+          "kind": { "enum": ["item", "node"], "type": "string" },
+          "publicId": { "format": "uuid", "type": "string" },
+          "title": { "type": "string" },
+          "version": { "minimum": 1, "type": "number" },
+          "visibility": {
+            "enum": ["authenticated", "private", "public", "unlisted"],
+            "type": "string"
+          }
+        },
+        "required": ["kind", "publicId", "title", "version", "visibility"],
+        "type": "object"
+      },
+      "StorageContentPageDto": {
+        "properties": {
+          "entries": {
+            "items": { "$ref": "#/components/schemas/StorageContentDto" },
+            "type": "array"
+          },
+          "nextCursor": { "nullable": true, "type": "string" }
+        },
+        "required": ["entries"],
+        "type": "object"
+      },
+      "StorageNodeDetailDto": {
+        "properties": {
+          "attributes": { "additionalProperties": true, "type": "object" },
+          "breadcrumb": {
+            "items": { "$ref": "#/components/schemas/StorageBreadcrumbDto" },
+            "type": "array"
+          },
+          "code": { "nullable": true, "type": "string" },
+          "contents": { "$ref": "#/components/schemas/StorageContentPageDto" },
+          "depth": { "minimum": 0, "type": "number" },
+          "nodeType": {
+            "enum": ["container", "custom", "rack", "room", "shelf", "site", "zone"],
+            "type": "string"
+          },
+          "parentPublicId": { "format": "uuid", "nullable": true, "type": "string" },
+          "publicId": { "format": "uuid", "type": "string" },
+          "title": { "type": "string" },
+          "updatedAt": { "format": "date-time", "type": "string" },
+          "version": { "minimum": 1, "type": "number" },
+          "visibility": {
+            "enum": ["authenticated", "private", "public", "unlisted"],
+            "type": "string"
+          }
+        },
+        "required": [
+          "attributes",
+          "breadcrumb",
+          "contents",
+          "depth",
+          "nodeType",
+          "publicId",
+          "title",
+          "updatedAt",
+          "version",
+          "visibility"
+        ],
+        "type": "object"
+      },
+      "StorageNodePageDto": {
+        "properties": {
+          "entries": {
+            "items": { "$ref": "#/components/schemas/StorageNodeSummaryDto" },
+            "type": "array"
+          },
+          "nextCursor": { "nullable": true, "type": "string" }
+        },
+        "required": ["entries"],
+        "type": "object"
+      },
+      "StorageNodeSummaryDto": {
+        "properties": {
+          "code": { "nullable": true, "type": "string" },
+          "depth": { "minimum": 0, "type": "number" },
+          "nodeType": {
+            "enum": ["container", "custom", "rack", "room", "shelf", "site", "zone"],
+            "type": "string"
+          },
+          "parentPublicId": { "format": "uuid", "nullable": true, "type": "string" },
+          "publicId": { "format": "uuid", "type": "string" },
+          "title": { "type": "string" },
+          "version": { "minimum": 1, "type": "number" },
+          "visibility": {
+            "enum": ["authenticated", "private", "public", "unlisted"],
+            "type": "string"
+          }
+        },
+        "required": ["depth", "nodeType", "publicId", "title", "version", "visibility"],
+        "type": "object"
+      },
       "UpdatedItemDto": {
         "properties": {
           "displayName": { "type": "string" },
@@ -881,6 +1002,25 @@
       "UpdateLocaleRequestDto": {
         "properties": { "locale": { "enum": ["en", "uk"], "type": "string" } },
         "required": ["locale"],
+        "type": "object"
+      },
+      "UpdateStorageNodeRequestDto": {
+        "properties": {
+          "archived": { "type": "boolean" },
+          "attributes": { "additionalProperties": true, "type": "object" },
+          "code": { "maxLength": 128, "nullable": true, "type": "string" },
+          "expectedVersion": { "minimum": 1, "type": "number" },
+          "nodeType": {
+            "enum": ["container", "custom", "rack", "room", "shelf", "site", "zone"],
+            "type": "string"
+          },
+          "title": { "maxLength": 500, "minLength": 1, "type": "string" },
+          "visibility": {
+            "enum": ["authenticated", "private", "public", "unlisted"],
+            "type": "string"
+          }
+        },
+        "required": ["expectedVersion"],
         "type": "object"
       },
       "UploadSessionDto": {
@@ -2876,6 +3016,222 @@
         "tags": ["system"]
       }
     },
+    "/api/v1/storage-nodes": {
+      "get": {
+        "operationId": "listStorageNodes",
+        "parameters": [
+          { "in": "query", "name": "cursor", "required": false, "schema": { "type": "string" } },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": { "maximum": 100, "minimum": 1, "type": "number" }
+          },
+          {
+            "in": "query",
+            "name": "parentPublicId",
+            "required": false,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StorageNodePageDto" }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["storage"]
+      },
+      "post": {
+        "operationId": "createStorageNode",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateStorageNodeRequestDto" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StorageNodeSummaryDto" }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["storage"]
+      }
+    },
+    "/api/v1/storage-nodes/{publicId}": {
+      "get": {
+        "operationId": "getStorageNode",
+        "parameters": [
+          { "in": "query", "name": "cursor", "required": false, "schema": { "type": "string" } },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": { "maximum": 100, "minimum": 1, "type": "number" }
+          },
+          {
+            "in": "path",
+            "name": "publicId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StorageNodeDetailDto" }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["storage"]
+      },
+      "patch": {
+        "operationId": "updateStorageNode",
+        "parameters": [
+          { "in": "header", "name": "If-Match", "required": false, "schema": { "type": "string" } },
+          {
+            "in": "path",
+            "name": "publicId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateStorageNodeRequestDto" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StorageNodeSummaryDto" }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ProblemDetailsDto" } }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VersionConflictProblemDto" }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [{ "cookie": [] }],
+        "summary": "",
+        "tags": ["storage"]
+      }
+    },
     "/health/live": {
       "get": {
         "operationId": "getLiveness",
@@ -2910,5 +3266,5 @@
   },
   "servers": [],
   "tags": [],
-  "x-spec-checksum": "a47ff4825b2b2f63bcb6392bdc66310cb65b0787480edfbc2726b4fb6a45a85e"
+  "x-spec-checksum": "fbb338334cbb5ee93faeff7d9cb0d767d649cc740acd3648e7b199753e628787"
 }

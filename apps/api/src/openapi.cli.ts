@@ -9,6 +9,7 @@ import type { CatalogRuntimePort } from './catalog.runtime.js';
 import type { SchemaRuntimePort } from './schema.runtime.js';
 import type { ItemsRuntimePort } from './items.runtime.js';
 import type { MediaRuntimePort } from './media.runtime.js';
+import type { StorageRuntimePort } from './storage.runtime.js';
 
 const output = process.argv[2];
 if (!output) throw new Error('An output path is required.');
@@ -19,7 +20,8 @@ const documentationRuntime: FoundationRuntimePort &
   CatalogRuntimePort &
   SchemaRuntimePort &
   ItemsRuntimePort &
-  MediaRuntimePort = {
+  MediaRuntimePort &
+  StorageRuntimePort = {
   async readiness() {
     throw new Error('The documentation runtime does not serve requests.');
   },
@@ -58,6 +60,9 @@ const documentationRuntime: FoundationRuntimePort &
   },
   media() {
     throw new Error('The documentation runtime does not serve media requests.');
+  },
+  storage() {
+    throw new Error('The documentation runtime does not serve Storage requests.');
   },
 };
 

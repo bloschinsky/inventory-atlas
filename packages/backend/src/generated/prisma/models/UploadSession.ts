@@ -405,7 +405,6 @@ export type UploadSessionScalarWhereWithAggregatesInput = {
 
 export type UploadSessionCreateInput = {
   id: string
-  storageNodeId?: string | null
   declaredFilename: string
   declaredMimeType: string
   declaredByteSize: bigint | number
@@ -443,7 +442,6 @@ export type UploadSessionUncheckedCreateInput = {
 
 export type UploadSessionUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   declaredFilename?: Prisma.StringFieldUpdateOperationsInput | string
   declaredMimeType?: Prisma.StringFieldUpdateOperationsInput | string
   declaredByteSize?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -500,7 +498,6 @@ export type UploadSessionCreateManyInput = {
 
 export type UploadSessionUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   declaredFilename?: Prisma.StringFieldUpdateOperationsInput | string
   declaredMimeType?: Prisma.StringFieldUpdateOperationsInput | string
   declaredByteSize?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -705,7 +702,6 @@ export type NullableBigIntFieldUpdateOperationsInput = {
 
 export type UploadSessionCreateWithoutActorInput = {
   id: string
-  storageNodeId?: string | null
   declaredFilename: string
   declaredMimeType: string
   declaredByteSize: bigint | number
@@ -789,7 +785,6 @@ export type UploadSessionScalarWhereInput = {
 
 export type UploadSessionCreateWithoutItemInput = {
   id: string
-  storageNodeId?: string | null
   declaredFilename: string
   declaredMimeType: string
   declaredByteSize: bigint | number
@@ -869,7 +864,6 @@ export type UploadSessionCreateManyActorInput = {
 
 export type UploadSessionUpdateWithoutActorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   declaredFilename?: Prisma.StringFieldUpdateOperationsInput | string
   declaredMimeType?: Prisma.StringFieldUpdateOperationsInput | string
   declaredByteSize?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -941,7 +935,6 @@ export type UploadSessionCreateManyItemInput = {
 
 export type UploadSessionUpdateWithoutItemInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  storageNodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   declaredFilename?: Prisma.StringFieldUpdateOperationsInput | string
   declaredMimeType?: Prisma.StringFieldUpdateOperationsInput | string
   declaredByteSize?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number

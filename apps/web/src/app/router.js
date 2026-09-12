@@ -11,11 +11,15 @@ import FieldDesignerPage from '../pages/FieldDesignerPage.vue';
 import ItemsPage from '../pages/ItemsPage.vue';
 import ItemCreatePage from '../pages/ItemCreatePage.vue';
 import ItemEditPage from '../pages/ItemEditPage.vue';
+import StoragePage from '../pages/StoragePage.vue';
+import StorageDetailPage from '../pages/StorageDetailPage.vue';
 
 const routeComponents = {
   '/items': ItemsPage,
   '/items/new': ItemCreatePage,
   '/items/:publicId/edit': ItemEditPage,
+  '/storage': StoragePage,
+  '/storage/:publicId': StorageDetailPage,
   '/admin/categories': DictionaryPage,
   '/admin/statuses': DictionaryPage,
   '/admin/fields': FieldDesignerPage,
@@ -52,9 +56,7 @@ export const routeRecords = [
   component: componentFor(path),
   meta: {
     titleKey,
-    layout: ['/', '/items/:publicId', '/storage/:publicId'].includes(path)
-      ? 'public'
-      : 'authenticated',
+    layout: ['/', '/items/:publicId'].includes(path) ? 'public' : 'authenticated',
   },
 }));
 

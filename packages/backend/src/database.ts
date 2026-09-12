@@ -11,7 +11,7 @@ export interface FoundationDatabase {
   };
 }
 
-export const expectedSchemaVersion = '0008_jobs';
+export const expectedSchemaVersion = '0009_storage';
 
 export function createDatabase(
   connectionString: string,

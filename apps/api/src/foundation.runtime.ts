@@ -25,6 +25,9 @@ import {
   TransactionalMovementHistoryPort,
   TransactionalOutboxPort,
   TransactionalSearchProjectionPort,
+  StorageRepository,
+  StorageService,
+  type StorageDatabase,
 } from '@inventory-atlas/backend';
 import type { BackgroundRuntime, CapabilityReport } from '@inventory-atlas/backend';
 import {
@@ -38,6 +41,8 @@ import type { AuthRuntimePort } from './auth.runtime.js';
 import type { CatalogRuntimePort } from './catalog.runtime.js';
 import type { SchemaRuntimePort } from './schema.runtime.js';
 import type { ItemsRuntimePort } from './items.runtime.js';
+import type { StorageRuntimePort } from './storage.runtime.js';
+import type { Kysely } from 'kysely';
 
 export const FOUNDATION_RUNTIME = Symbol('FOUNDATION_RUNTIME');
 
@@ -70,6 +75,7 @@ export class FoundationRuntime
     CatalogRuntimePort,
     SchemaRuntimePort,
     ItemsRuntimePort,
+    StorageRuntimePort,
     OnApplicationShutdown
 {
   private schemaVersion: string | null = null;
@@ -81,6 +87,7 @@ export class FoundationRuntime
   private dictionaries: CatalogDictionaryService | null = null;
   private schemaFieldService: FieldDefinitionService | null = null;
   private itemService: ItemService | null = null;
+  private storageService: StorageService | null = null;
   private mediaService: MediaService | null = null;
   private readonly rateLimiter: AuthRateLimiter;
 
@@ -141,6 +148,15 @@ export class FoundationRuntime
         },
         dictionaryRepository,
       );
+      const storageRepository = new StorageRepository(
+        database as unknown as Kysely<StorageDatabase>,
+      );
+      runtime.storageService = new StorageService(storageRepository, fieldRepository, {
+        attributes: attributeValues,
+        audit: new TransactionalAuditPort(),
+        outbox: new TransactionalOutboxPort(),
+        search: new TransactionalSearchProjectionPort(),
+      });
       const mediaRuntime = createMediaRuntime(configuration, settingsClient);
       runtime.mediaService = mediaRuntime.media;
       runtime.checkCapabilities = mediaRuntime.checkCapabilities;
@@ -254,6 +270,11 @@ export class FoundationRuntime
   catalogItems(): ItemService {
     if (!this.itemService) throw new Error('Catalog Items are not initialized.');
     return this.itemService;
+  }
+
+  storage(): StorageService {
+    if (!this.storageService) throw new Error('Storage is not initialized.');
+    return this.storageService;
   }
 
   media(): MediaService {

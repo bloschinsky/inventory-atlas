@@ -15,6 +15,7 @@
     "catalog.*",
     "items.*",
     "media.*",
-    "schema.*"
+    "schema.*",
+    "storage.*"
   ]
 }
