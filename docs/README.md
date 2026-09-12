@@ -19,8 +19,9 @@ This directory contains supporting product, architecture, API, operations, secur
 ## Project policies
 
 - [Versioning and release procedure](project/versioning.md)
-- [MVP scope-simplification audit](project/mvp-scope-simplification-audit.md)
-- [MVP scope and sequencing change request v2](project/inventory-atlas-mvp-scope-simplification-task-v2.md)
+- [Documentation follow-up fixes for Blueprint/Roadmap v0.3.1](project/INVENTORY-ATLAS-DOCUMENTATION-FOLLOWUP-FIXES.md)
+- [Validation-release scope-simplification audit](project/mvp-scope-simplification-audit.md)
+- [Validation-release scope and sequencing change request v2](project/inventory-atlas-mvp-scope-simplification-task-v2.md)
 - [Toolchain baseline and update policy](project/toolchain.md)
 - [Initial dependencies and license review](project/dependencies.md)
 - [Browser support baseline](project/browser-support.md)

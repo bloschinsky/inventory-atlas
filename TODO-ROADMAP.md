@@ -2,16 +2,24 @@
 
 > Status: Ready for execution
 >
-> Roadmap version: 0.3
+> Roadmap version: 0.3.1
 >
-> Source of truth: `IMPLEMENTATION-BLUEPRINT.md`, approved blueprint v0.3
+> Source of truth: `IMPLEMENTATION-BLUEPRINT.md`, approved blueprint v0.3.1
 >
 > Product baseline: `docs/product/inventory-atlas-design-document-v0.3.1.pdf`  
 > Prepared: 2026-08-28; scope revision: 2026-09-12
 >
 > Current development version: `0.1.0-dev.1`
 > Default product locale: English  
-> Required MVP locale: Ukrainian
+> Required `0.1.0 Usable Validation Release` locale: Ukrainian
+
+## Changes in roadmap v0.3.1
+
+| Review item | Implemented correction |
+| --- | --- |
+| DOC-F1 | Matched Blueprint v0.3.1: restrictive `FieldDefinitionChanged` mutations synchronously remove unsafe public projection content and have blocking rollback/retry tests |
+| DOC-F2 | Assigned every SRCH-02 task to `0.1.0 blocking` or `Post-validation / revalidation required` and added an independent subset exit |
+| DOC-F3 | Made the horizon-specific release checklists authoritative and kept production-only artifacts and certification out of the `0.1.0` blocking gate |
 
 ## Changes in roadmap v0.3
 
@@ -145,9 +153,9 @@ For `0.1.0`, the hard chain is the audited foundation -> STO-01/02/03 -> SRCH-01
 ### HND-04 Confirm deferred choices do not block schema v1
 
 - [x] Confirm the final public domain is not required to create schema v1.
-- [x] Confirm printer-specific profiles are deferred beyond the two approved MVP templates.
-- [x] Confirm marketplace and carrier connectors remain post-MVP.
-- [x] Confirm local media is the MVP default and S3/MinIO remains optional.
+- [x] Confirm printer-specific profiles are deferred beyond the two templates approved for the `1.0.0 Production Baseline`.
+- [x] Confirm marketplace and carrier connectors remain post-`1.0.0 Production Baseline`.
+- [x] Confirm local media is the `1.0.0 Production Baseline` default and S3/MinIO remains optional.
 - [x] Confirm compact job execution is the default and a separate worker remains an optional deployment profile.
 
 ### Stage 0 exit checklist
@@ -311,7 +319,7 @@ Suggested pull requests:
 | --- | --- |
 | FND-05A | Shared `en`/`uk` resources and locale resolver |
 | FND-05B | Persistent locale selection in public and authenticated UI |
-| FND-05C | MVP translation coverage gate |
+| FND-05C | `0.1.0 Usable Validation Release` translation coverage gate |
 
 Tasks:
 
@@ -322,7 +330,7 @@ Tasks:
 - [x] Persist anonymous locale locally and authenticated locale on the user record.
 - [x] Add a locale selector to public and authenticated shells.
 - [x] Localize validation, problem details, dates, numbers, and accessibility labels.
-- [x] Implement `check-i18n-coverage.mjs` for all MVP-marked keys.
+- [x] Implement `check-i18n-coverage.mjs` for all keys required by the `0.1.0 Usable Validation Release`.
 - [x] Add an E2E test that starts in English and switches to Ukrainian without restart.
 
 Implementation evidence: [Localization foundation and verification](docs/project/localization.md).
@@ -733,7 +741,7 @@ Tasks:
 - [ ] Implement `NodeRenamed` synchronous nested-Item breadcrumbs and subtree-vector rebuild enqueue.
 - [ ] Implement `NodeVisibilityChanged` effective visibility and public-projection synchronization.
 - [ ] Preserve `CategoryRenamed` outbox emission and implement/test its affected-Item rebuild consumer.
-- [ ] Preserve `FieldDefinitionChanged` outbox emission and implement/test affected attrs/vector rebuild.
+- [ ] Preserve `FieldDefinitionChanged` outbox emission; implement/test ordinary affected attrs/vector rebuild and synchronous public-projection cleanup for restrictive changes.
 - [ ] Preserve `FieldOptionLabelChanged` outbox emission and implement/test its affected-Item vector rebuild.
 - [ ] Complete and regression-test `ItemVisibilityChanged` removal/update of public projections.
 - [ ] Keep safety-critical rows/columns synchronous with the source transaction.
@@ -743,6 +751,10 @@ Tasks:
 - [ ] Add source/projection rollback, adapter parity, privacy, restart, and reconciliation tests.
 
 Category and option label rebuilds are asynchronous. Operator guidance MUST document the bounded prior-label window, while retry/restart tests prove the idempotent jobs eventually close it. Container breadcrumbs and visibility-sensitive projections remain synchronous.
+
+Ordinary `FieldDefinitionChanged` label/schema changes may use the documented asynchronous affected-Item rebuild. Any change that reduces `public_visibility`, disables public searchability or filterability, or otherwise makes a field more restrictive MUST synchronously remove the affected values from `public_attrs`, `public_search_vector`, derived public tokens, facets, and counts before commit. The source transaction may conservatively clear affected public projection content and mark rows `stale`; an idempotent job may rebuild only currently permitted content afterward. No background-job delay may expose a value that has become private. Failure of the synchronous privacy update rolls back the field-definition mutation and its outbox record.
+
+Blocking `0.1.0` integration tests MUST prove that immediately after commit, Viewer and Editor cannot find or confirm the removed value through hits, filters, facets, or counts, and that retry/restart rebuilds restore only values permitted by the updated definition.
 
 Acceptance criteria (verbatim from the approved blueprint):
 
@@ -767,18 +779,31 @@ Suggested pull requests:
 
 Tasks:
 
-- [ ] Define versioned search/filter/sort request contracts and stable problem codes.
+`0.1.0 blocking`:
+
+- [ ] Define versioned contracts and stable problem codes for authenticated text search, category/lifecycle-status/storage-location filters, exposed typed filters, and stable bounded cursor pagination.
 - [ ] Select full or public projection columns from actor capability before query construction.
-- [ ] Implement normalized English/Ukrainian text matching and configured trigram behavior.
-- [ ] Implement type-aware text, number, date, boolean, option, money, and reference filters supported by the approved field types.
-- [ ] Implement stable default keyset cursor independent of technical reindex timestamp.
-- [ ] Implement bounded relevance cursor/window with the approved 500-result/20-page limit.
-- [ ] Validate requested filters/sorts against active searchable/filterable/sortable definitions.
-- [ ] Build mobile search, filter builder, active-filter chips, sort controls, loading/empty/error states, and desktop result layout.
+- [ ] Implement normalized English/Ukrainian text matching over permitted content and the configured trigram behavior required by shipped queries.
+- [ ] Implement category, lifecycle-status, and storage-location filters plus every typed filter actually exposed by the `0.1.0` API/UI.
+- [ ] Implement a stable bounded default keyset cursor independent of technical reindex timestamp.
+- [ ] Validate every shipped filter and sort against active searchable/filterable/sortable definitions.
+- [ ] Return the current permitted location in every search result.
+- [ ] Build the mobile and desktop Lean Search UI with complete English/Ukrainian loading, empty, error, result, and shipped filter states.
+- [ ] Add API contract, authorization, privacy, cursor-stability, localization, and relevant real-PostgreSQL integration tests for the shipped query and filter surface.
+
+`Post-validation / revalidation required`:
+
+- [ ] Complete generic type-aware text, number, date, boolean, option, money, and reference filter breadth beyond the types shipped in `0.1.0`.
+- [ ] Implement the bounded relevance cursor/window with the approved 500-result/20-page limit, advanced relevance tuning, and the full relevance UI.
+- [ ] Complete generic filter-builder, active-filter-chip, sorting, and other UI capabilities not required by the shipped Lean Search contract.
 - [ ] Generate the 100k Item acceptance dataset and record query plans/reference hardware.
-- [ ] Add API contract, authorization, cursor-stability, localization, and performance tests.
+- [ ] Add the deferred generic-filter, relevance, sorting, UI, and performance certification tests.
 
 `0.1.0` blocks on authenticated text search, category/lifecycle/storage filters, stable bounded cursors, current permitted location, and only the typed filter kinds exposed by its API/UI. The remaining generic typed-filter builder, extensive relevance tuning, and 100k performance suite stay under SRCH-02 as `post-validation / revalidation required`.
+
+`0.1.0` subset exit (tracked independently; checking it does not complete SRCH-02):
+
+- [ ] The `0.1.0 blocking` subset and its API, authorization, privacy, cursor, localization, and PostgreSQL integration tests pass.
 
 Acceptance criteria (verbatim from the approved blueprint):
 
@@ -787,6 +812,8 @@ Acceptance criteria (verbatim from the approved blueprint):
 - [ ] Default cursor is stable under technical reindex.
 - [ ] Relevance mode is bounded to 500 results/20 pages.
 - [ ] 100k acceptance dataset meets recorded reference targets.
+
+SRCH-02 remains incomplete until its post-validation work is revalidated and every original production acceptance criterion above passes.
 
 ### SRCH-03 Enforce visibility without inference leaks
 
@@ -1200,7 +1227,7 @@ UI facade and tokens:
 - [x] Add a boundary rule forbidding direct `primevue` imports anywhere under `apps/web/src`; only the `packages/ui` adapter implementation may import PrimeVue.
 - [x] Add positive/negative import fixtures proving the PrimeVue rule fails CI when violated.
 - [x] Create `docs/frontend/ui-facade-gaps.md` with owner, reason, affected route, replacement target, and due stage for every temporary gap.
-- [x] Fail the MVP release checklist while any facade-gap entry remains open.
+- [x] Fail the `0.1.0 Usable Validation Release` checklist while any facade-gap entry remains open.
 
 Stable token names:
 
@@ -1262,12 +1289,14 @@ Audit boundary: media process/cleanup handlers are wired and tested. The job pol
 
 ### CI and release
 
-- [ ] Run formatting, lint, module boundaries, JS/TS checks, unit tests, migrations, client generation, drift checks, integration tests, contract generation, i18n coverage, builds, Docker E2E, security audit, and Compose validation in the approved order.
-- [ ] Build immutable versioned web/API/worker images.
-- [ ] Produce SBOM and dependency/license report.
-- [ ] Attach migration compatibility, changelog, and backup compatibility notes.
-- [ ] Run fresh-install and upgrade-from-previous-release smoke tests.
-- [ ] Run the restore drill when a release candidate contains migrations.
+Checks required for behavior shipped in the `0.1.0 Usable Validation Release` remain mandatory. SBOM, the complete release-artifact set, the previous-version upgrade matrix, physical label certification, portable round trip, and other production-only gates block the `1.0.0 Production Baseline`, not `0.1.0`, unless they are already automated and explicitly adopted earlier. When a generic CI/release item is broader than a horizon-specific release checklist, section 14 is authoritative.
+
+- [ ] **Every shipped horizon:** run the formatting, lint, module-boundary, JS/TS, unit, migration, client-generation, drift, integration, contract-generation, i18n, build, Docker E2E, security, and Compose checks required by the shipped behavior in the approved order.
+- [ ] **`1.0.0 Production Baseline`:** build the complete set of immutable versioned web/API/worker images.
+- [ ] **`1.0.0 Production Baseline`:** produce the SBOM and dependency/license report.
+- [ ] **`1.0.0 Production Baseline`:** attach migration compatibility, changelog, and backup compatibility notes as part of the complete release-artifact set.
+- [ ] **`1.0.0 Production Baseline`:** run the fresh-install and previous-version upgrade matrix.
+- [ ] **`1.0.0 Production Baseline`:** run the recurring restore drill when a release candidate contains migrations; the separate `0.1.0` clean-environment restore smoke remains mandatory.
 
 ### Critical acceptance test ownership
 
@@ -1305,6 +1334,7 @@ Additional validation-scope tests required by the explicit role decision:
 - [ ] Reject unauthenticated/Public access to every `0.1.0` Search API and keep the Public Search UI unavailable.
 - [ ] Prove both Viewer and Editor cannot infer a private value through hits, shipped filters, or result counts.
 - [ ] Permit the separate exact private-EAV lookup only to Owner/Admin and exclude its values from shared vectors, facets, and counts.
+- [ ] After a restrictive `FieldDefinitionChanged` commit, prove immediately that Viewer and Editor cannot find or confirm the removed value through hits, filters, facets, or counts; retry/restart rebuilds restore only values allowed by the updated definition.
 
 ## 13. Definition of Done
 
@@ -1316,7 +1346,7 @@ A story is complete only when every applicable item below passes. This checklist
 - [ ] Generated declarations/JSDoc types and Zod schemas come from the same spec revision.
 - [ ] Database change has a forward migration and rollback/restore note.
 - [ ] Source transaction, projection, movement history where applicable, audit, and outbox behavior is tested.
-- [ ] English and Ukrainian strings are complete for changed MVP UI.
+- [ ] English and Ukrainian strings are complete for changed `0.1.0 Usable Validation Release` or `1.0.0 Production Baseline` UI.
 - [ ] Keyboard, focus, mobile layout, and validation UX are tested.
 - [ ] Logs and errors contain no secrets or private field values.
 - [ ] Operational docs and `.env.example` are updated.

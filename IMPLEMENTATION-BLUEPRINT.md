@@ -2,14 +2,22 @@
 
 > Status: Approved for implementation
 >
-> Blueprint version: 0.3
+> Blueprint version: 0.3.1
 >
 > Source baseline: `docs/product/inventory-atlas-design-document-v0.3.1.pdf`  
 > Source status: Final and approved after errata E1  
 > Prepared: 2026-08-28; scope revision: 2026-09-12
 >
 > Default product locale: English  
-> Required MVP locale: Ukrainian
+> Required `0.1.0 Usable Validation Release` locale: Ukrainian
+
+## Changes in blueprint v0.3.1
+
+| Review item | Implemented correction |
+| --- | --- |
+| DOC-F1 | Split `FieldDefinitionChanged` into ordinary asynchronous rebuilds and synchronous privacy cleanup for restrictive definition changes, with blocking rollback and retry/restart tests |
+| DOC-F2 | Made the `0.1.0` SRCH-02 subset independently trackable without completing the retained production story |
+| DOC-F3 | Made horizon-specific release checklists authoritative and assigned production-only artifacts and certification gates to `1.0.0 Production Baseline` |
 
 ## Changes in blueprint v0.3
 
@@ -57,7 +65,7 @@ The following decisions are frozen for schema v1 and both release horizons:
 | Architecture | Modular monolith, not microservices |
 | Runtime | Node.js 24 LTS |
 | Frontend | Vue 3 SFC, Composition API, modern JavaScript, Vite, `checkJs` |
-| UI | PrimeVue behind an internal UI facade; one modern theme in MVP |
+| UI | PrimeVue behind an internal UI facade; one modern theme in the `0.1.0 Usable Validation Release` |
 | Backend | NestJS with TypeScript and Fastify adapter |
 | API | REST under `/api/v1`; OpenAPI is the contract source |
 | Database | PostgreSQL is the only required infrastructure dependency |
@@ -69,18 +77,18 @@ The following decisions are frozen for schema v1 and both release horizons:
 | Authentication | Opaque server-side sessions; Argon2id password hashing |
 | Media | Local storage by default; S3-compatible adapter optional |
 | Jobs | PostgreSQL queue with `FOR UPDATE SKIP LOCKED`, lease, retry, and dead-letter state |
-| Localization | English source/default; complete Ukrainian UI selectable in MVP |
+| Localization | English source/default; complete Ukrainian UI selectable in the `0.1.0 Usable Validation Release` |
 | Deployment | Docker Compose for local, homelab, and dedicated server use |
 | Public access | Configurable; exact storage path and sensitive fields private by default |
 | Remaining `0.1.0` forecast | 7-11 person-weeks for one experienced full-time developer, followed by at least seven elapsed calendar days of dogfooding |
 
 Forbidden implementation drift:
 
-- Do not introduce Redis, RabbitMQ, Kafka, OpenSearch, Elasticsearch, or a mandatory S3 service in MVP.
+- Do not introduce Redis, RabbitMQ, Kafka, OpenSearch, Elasticsearch, or a mandatory S3 service in the `1.0.0 Production Baseline`.
 - Do not split the system into deployable microservices.
 - Do not replace typed EAV with a single untyped JSON document.
 - Do not expose private values to any search vector or result count available to Viewer/Editor roles.
-- Do not add offline mutations, automatic marketplace publication, or carrier shipment creation to MVP.
+- Do not add offline mutations, automatic marketplace publication, or carrier shipment creation to the `1.0.0 Production Baseline`.
 - Do not use both Prisma and Kysely clients inside one database transaction.
 
 ## 3. Delivery scope and horizons
@@ -140,7 +148,11 @@ The existing `item_search` table/index foundation and CAT-owned synchronous writ
 
 Lean Search MUST deliver `pg_trgm`/`unaccent` and the indexes used by shipped queries; role-safe full/public vector and typed-attribute builders; Prisma and Kysely projection behavior; authenticated text search; category, lifecycle-status, and storage-location filters; stable bounded pagination; current permitted location; mobile English/Ukrainian UI states; server-side authorization; and query/rollback/rebuild tests on real PostgreSQL. Only filter types exposed by the `0.1.0` API/UI block the release; the complete generic typed-filter contract remains with SRCH-02 in the Post-validation Backlog.
 
-All eight section 9.4 invalidator paths apply to shipped mutable data. `ItemCreated`/`AttributeChanged`, `NodeMoved`, `NodeRenamed`, `NodeVisibilityChanged`, and `ItemVisibilityChanged` retain their synchronous correctness duties. `CategoryRenamed`, `FieldDefinitionChanged`, and `FieldOptionLabelChanged` use transactional outbox plus idempotent affected-Item rebuild handlers. Category and option label changes may show their prior label until that job completes; this bounded eventual-consistency window MUST be documented in operator guidance and MUST close after retry or process restart. It cannot expose private values, hide committed source data permanently, or affect mutation atomicity. Container rename remains synchronous for every nested Item breadcrumb visible in default results.
+All eight section 9.4 invalidator paths apply to shipped mutable data. `ItemCreated`/`AttributeChanged`, `NodeMoved`, `NodeRenamed`, `NodeVisibilityChanged`, and `ItemVisibilityChanged` retain their synchronous correctness duties. `CategoryRenamed` and `FieldOptionLabelChanged` use transactional outbox plus idempotent affected-Item rebuild handlers. Category and option label changes may show their prior label until that job completes; this bounded eventual-consistency window MUST be documented in operator guidance and MUST close after retry or process restart. It cannot expose private values, hide committed source data permanently, or affect mutation atomicity. Container rename remains synchronous for every nested Item breadcrumb visible in default results.
+
+Ordinary `FieldDefinitionChanged` label/schema changes may use the documented asynchronous affected-Item rebuild. Any change that reduces `public_visibility`, disables public searchability or filterability, or otherwise makes a field more restrictive MUST synchronously remove the affected values from `public_attrs`, `public_search_vector`, derived public tokens, facets, and counts before commit. The source transaction may conservatively clear affected public projection content and mark rows `stale`; an idempotent job may rebuild only currently permitted content afterward. No background-job delay may expose a value that has become private. Failure of the synchronous privacy update rolls back the field-definition mutation and its outbox record.
+
+Blocking `0.1.0` integration tests MUST prove that immediately after commit, Viewer and Editor cannot find or confirm the removed value through hits, filters, facets, or counts, and that retry/restart rebuilds restore only values permitted by the updated definition.
 
 ### 3.5 Operational recovery contract for `0.1.0`
 
@@ -805,13 +817,17 @@ Rules:
 | `NodeRenamed` | Paths for subtree | Both search vectors |
 | `NodeVisibilityChanged` | Visibility and all public projections | None |
 | `CategoryRenamed` | Outbox record | Vectors for category items |
-| `FieldDefinitionChanged` | Outbox record | Attrs and vectors for affected items; UI warning |
+| `FieldDefinitionChanged` | Outbox record; restrictive changes synchronously remove affected public projection content and may mark rows `stale` | Attrs and vectors for affected items; UI warning |
 | `FieldOptionLabelChanged` | Outbox record | Vectors for affected items |
 | `ItemVisibilityChanged` | Visibility and public projections | None unless searchable content changes |
 
 `stale` excludes a row only from relevance mode. It remains visible in permitted catalog/default-search results.
 
 The `CategoryRenamed` and `FieldOptionLabelChanged` rebuilds may expose the previous label until their idempotent job succeeds. This documented eventual-consistency window closes across retry and worker restart; the source transaction still commits its deduplicated outbox record atomically. Node breadcrumbs, visibility-sensitive public projections, and Item mutation projections have no such window.
+
+Ordinary `FieldDefinitionChanged` label/schema changes may use the documented asynchronous affected-Item rebuild. Any change that reduces `public_visibility`, disables public searchability or filterability, or otherwise makes a field more restrictive MUST synchronously remove the affected values from `public_attrs`, `public_search_vector`, derived public tokens, facets, and counts before commit. The source transaction may conservatively clear affected public projection content and mark rows `stale`; an idempotent job may rebuild only currently permitted content afterward. No background-job delay may expose a value that has become private. Failure of the synchronous privacy update rolls back the field-definition mutation and its outbox record.
+
+Blocking `0.1.0` integration tests MUST prove that immediately after commit, Viewer and Editor cannot find or confirm the removed value through hits, filters, facets, or counts, and that retry/restart rebuilds restore only values permitted by the updated definition.
 
 ### 9.5 Search execution
 
@@ -1025,7 +1041,7 @@ AppFileUpload
 AppPagination
 ```
 
-PrimeVue components are wrapped inside `packages/ui`. Exceptions require a documented facade gap and must be removed before MVP release.
+PrimeVue components are wrapped inside `packages/ui`. Exceptions require a documented facade gap and must be removed before the `0.1.0 Usable Validation Release`.
 
 ### 11.6 Semantic design tokens
 
@@ -1062,7 +1078,7 @@ Contrast, focus visibility, keyboard operation, touch targets, reduced motion, a
 ### 11.7 Localization
 
 - `en` is the source and fallback locale.
-- `uk` must have 100% coverage for all MVP routes, validation messages, statuses, fields, and empty/error states.
+- `uk` must have 100% coverage for all `0.1.0 Usable Validation Release` routes, validation messages, statuses, fields, and empty/error states, and for each additional route when it joins the `1.0.0 Production Baseline`.
 - No hardcoded UI strings in domain components.
 - Browser locale may suggest Ukrainian but cannot change the default automatically.
 - Anonymous preference is stored locally; authenticated preference is stored in the user profile.
@@ -1077,7 +1093,7 @@ Contrast, focus visibility, keyboard operation, touch targets, reduced motion, a
 3. Client uploads multipart in local mode or to a presigned URL in S3 mode.
 4. Finalize verifies size and checksum, creates `media_assets`, and enqueues processing.
 5. Processor strips unsafe metadata, applies orientation, creates thumbnails/WebP variants, and records dimensions.
-6. Client polls/subscribes through normal API refresh; no WebSocket is required for MVP.
+6. Client polls/subscribes through normal API refresh; no WebSocket is required for the `1.0.0 Production Baseline`.
 
 ### 12.2 HEIC isolation
 
@@ -1475,6 +1491,8 @@ Run in this order where dependencies allow parallel execution:
 
 ### 21.2 Release pipeline
 
+Checks required for behavior shipped in the `0.1.0 Usable Validation Release` remain mandatory. The complete release pipeline below describes the `1.0.0 Production Baseline`: SBOM, the complete release-artifact set, the previous-version upgrade matrix, physical label certification, portable round trip, and other production-only gates do not block `0.1.0` unless they are already automated and explicitly adopted earlier. When a generic release-pipeline item is broader than a horizon-specific release checklist, section 21.3 is authoritative.
+
 - Versioned immutable web/API/worker images.
 - SBOM and dependency/license report.
 - Migration artifact and migration compatibility note.
@@ -1735,6 +1753,12 @@ Acceptance criteria:
 - [ ] Relevance mode is bounded to 500 results/20 pages.
 - [ ] 100k acceptance dataset meets recorded reference targets.
 
+`0.1.0` subset exit (tracked independently; checking it does not complete SRCH-02):
+
+- [ ] The `0.1.0 blocking` subset and its API, authorization, privacy, cursor, localization, and PostgreSQL integration tests pass.
+
+SRCH-02 remains incomplete until its post-validation work is revalidated and every original production acceptance criterion above passes.
+
 #### SRCH-03 Enforce visibility without inference leaks
 
 **Delivery horizon:** blocking for every Search surface shipped in `0.1.0`. Viewer and Editor receive the full lower-role negative suite; Public Search is disabled and receives a negative availability test. The original Public search criterion below remains for revalidation if that production surface ships.
@@ -1888,7 +1912,7 @@ A story is done only when all applicable items pass:
 - [ ] Generated declarations/JSDoc types and Zod schemas come from the same spec revision.
 - [ ] Database change has a forward migration and rollback/restore note.
 - [ ] Source transaction, projection, movement history where applicable, audit, and outbox behavior is tested.
-- [ ] English and Ukrainian strings are complete for changed MVP UI.
+- [ ] English and Ukrainian strings are complete for changed `0.1.0 Usable Validation Release` or `1.0.0 Production Baseline` UI.
 - [ ] Keyboard, focus, mobile layout, and validation UX are tested.
 - [ ] Logs and errors contain no secrets or private field values.
 - [ ] Operational docs and `.env.example` are updated.
@@ -1912,7 +1936,7 @@ A story is done only when all applicable items pass:
 | ADR-011 | Section 12.2: isolated HEIC pipeline and release gate |
 | ADR-012 | Sections 7.1-7.2: Prisma CRUD plus Kysely specialized access |
 | ADR-013 | Sections 9.4 and 14: synchronous safety projections, async vectors/import |
-| ADR-014 | Sections 11.7 and FND-05: English default, Ukrainian complete in MVP |
+| ADR-014 | Sections 11.7 and FND-05: English default, Ukrainian complete in the `0.1.0 Usable Validation Release` |
 | ADR-015 | Sections 7.3-7.4: one client per transaction and transaction-aware write ports |
 | ADR-016 | Sections 8.8 and 16.2: private not indexed; unlisted direct-only discoverability |
 | ADR-017 | Section 9.4 and SRCH-01: complete invalidator registry |

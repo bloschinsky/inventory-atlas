@@ -30,7 +30,7 @@ Keep this section current. Any change that adds, removes, moves, renames, or mat
 | `packages/backend` | Backend domain, application services, ports, and data adapters, grouped by module under `src/` (`auth`, `catalog`, `schema`, `media`, `jobs`, and shared `infrastructure`), with `runtime.ts` assembling the media and job runtime both composition roots share. Other workspaces import only its public `src/index.ts` surface. |
 | `packages/config` | Shared environment parsing, validation, and runtime configuration types. |
 | `packages/contracts` | OpenAPI-generated types, Fetch client, JSDoc declarations, and Zod schemas. Files under `src/generated/` are generator-owned. |
-| `packages/i18n` | Locale setup, the MVP message inventory, and English/Ukrainian translations. |
+| `packages/i18n` | Locale setup, the `0.1.0 Usable Validation Release` message inventory, and English/Ukrainian translations. |
 | `packages/ui` | Semantic `App*` component facade, PrimeVue integration, and design tokens. |
 | `packages/testkit` | Shared synthetic test helpers and fixtures intended for reuse across workspaces. |
 | `db/migrations` | Ordered Kysely migrations; the sole schema-migration authority. |
@@ -60,7 +60,7 @@ Keep this section current. Any change that adds, removes, moves, renames, or mat
 - Vue Query owns server state, caching, invalidation, cancellation, and mutation state.
 - Pinia owns session summary, preferences, navigation, and local UI state only.
 - PrimeVue may be imported only inside `packages/ui`; application code uses the semantic `App*` facade.
-- English is the source/default locale. Ukrainian must be complete and selectable in the MVP.
+- English is the source/default locale. Ukrainian must be complete and selectable in the `0.1.0 Usable Validation Release`.
 
 ### Backend
 
@@ -78,7 +78,7 @@ Keep this section current. Any change that adds, removes, moves, renames, or mat
 - One business transaction uses exactly one client. Cross-owner writes use the supplied transaction-aware ports.
 - Local media is the default; S3-compatible storage is optional.
 - Docker Compose is the deployment baseline.
-- Do not introduce Redis, a message broker, an external search engine, microservices, or mandatory S3 in the MVP.
+- Do not introduce Redis, a message broker, an external search engine, microservices, or mandatory S3 in the `1.0.0 Production Baseline`.
 
 ### Testing
 
